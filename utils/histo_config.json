@@ -1,0 +1,388 @@
+{
+    "Ranges": [{
+        "type":"config",
+        "phi":[[-180,180,120],"Deg."],
+        "theta":[[0,70,100],"Deg."],
+        "nothadron_theta":[[0,30,100],"Deg."],
+        "phitrento":[[0,360,120],"Deg."],
+        "t":[[0,7,120],"-$GeV^2$"],
+        "pmom":[[0,2,120],"$GeV$"],
+        "gmom":[[0,4,120],"$GeV$"],
+        "xB":[[0.05,0.8,120],"None"],
+        "Q2":[[0.5,11,120],"$GeV^2$"],
+        "W":[[1,4.5,120],"$GeV$"]
+    }],
+
+    "Etheta": [{
+        "type":"1D",
+        "label":"Electron \\theta",
+        "unit":"Degrees",
+        "title":"Electron_Theta"        
+    }],
+
+    "Ptheta": [{
+        "type":"1D",
+        "label_x":"Proton \\theta",
+        "label_y":"Counts",
+        "unit":"Degrees",
+        "title":"Proton_Theta"        
+    }],
+
+    "PthetaPphi": [{
+        "type":"2D",
+        "data_x":"Pphi",
+        "data_y":"Ptheta",
+        "type_x":"phi",
+        "type_y":"theta",
+        "label_x":"Proton $\\phi$",
+        "label_y":"Proton $\\theta$",
+        "filename":"Proton_Theta_Proton_Phi"       
+    }],
+
+    "GthetaGphi": [{
+        "type":"2D",
+        "data_x":"Gphi",
+        "data_y":"Gtheta",
+        "type_x":"phi",
+        "type_y":"nothadron_theta",
+        "label_x":"Photon $\\phi$",
+        "label_y":"Photon $\\theta$",
+        "filename":"Photon_Theta_Photon_Phi"       
+    }],
+
+    "G2thetaG2phi": [{
+        "type":"2D",
+        "data_x":"Gphi2",
+        "data_y":"Gtheta2",
+        "type_x":"phi",
+        "type_y":"nothadron_theta",
+        "label_x":"Photon 2 $\\phi$",
+        "label_y":"Photon 2 $\\theta$",
+        "filename":"Photon_Theta_Photon_Phi"       
+    }],
+
+    "PthetaGtheta": [{
+        "type":"2D",
+        "data_x":"Ptheta",
+        "data_y":"Gtheta",
+        "type_x":"theta",
+        "type_y":"nothadron_theta",
+        "label_x":"Proton $\\theta$",
+        "label_y":"Photon1 $\\theta$",
+        "filename":"Proton_Theta_Photon1_Theta"       
+    }],
+
+    "GthetaGtheta2": [{
+        "type":"2D",
+        "data_x":"Gtheta",
+        "data_y":"Gtheta2",
+        "type_x":"nothadron_theta",
+        "type_y":"nothadron_theta",
+        "label_x":"Photon1 $\\theta$",
+        "label_y":"Photon2 $\\theta$",
+        "filename":"Photon1_Theta_Photon2s_Theta"       
+    }],
+
+    "PthetaGtheta2": [{
+        "type":"2D",
+        "data_x":"Ptheta",
+        "data_y":"Gtheta2",
+        "type_x":"theta",
+        "type_y":"nothadron_theta",
+        "label_x":"Proton $\\theta$",
+        "label_y":"Photon2 $\\theta$",
+        "filename":"Proton_Theta_Photon2_Theta"       
+    }],
+
+    "EthetaGtheta2": [{
+        "type":"2D",
+        "data_x":"Etheta",
+        "data_y":"Gtheta2",
+        "type_x":"nothadron_theta",
+        "type_y":"nothadron_theta",
+        "label_x":"Electron $\\theta$",
+        "label_y":"Photon2 $\\theta$",
+        "filename":"Electron_Theta_Photon2_Theta"       
+    }],
+
+    "EthetaGtheta": [{
+        "type":"2D",
+        "data_x":"Etheta",
+        "data_y":"Gtheta",
+        "type_x":"nothadron_theta",
+        "type_y":"nothadron_theta",
+        "label_x":"Electron $\\theta$",
+        "label_y":"Photon $\\theta$",
+        "filename":"Electron_Theta_Photon_Theta"       
+    }],
+
+    "EphiGphi2": [{
+        "type":"2D",
+        "data_x":"Ephi",
+        "data_y":"Gphi2",
+        "type_x":"phi",
+        "type_y":"phi",
+        "label_x":"Electron $\\phi$",
+        "label_y":"Photon2 $\\phi$",
+        "filename":"Electron_phi_Photon2_phi"       
+    }],
+
+    "EphiGphi": [{
+        "type":"2D",
+        "data_x":"Ephi",
+        "data_y":"Gphi",
+        "type_x":"phi",
+        "type_y":"phi",
+        "label_x":"Electron $\\phi$",
+        "label_y":"Photon $\\phi$",
+        "filename":"Electron_phi_Photon_phi"       
+    }],
+
+    "PithetaPiphi": [{
+        "type":"2D",
+        "data_x":"Piphi",
+        "data_y":"Pitheta",
+        "type_x":"phi",
+        "type_y":"theta",
+        "label_x":"Pion $\\phi$",
+        "label_y":"Pion $\\theta$",
+        "filename":"Pion_Theta_Pion_Phi"       
+    }],
+
+    "TrentoPtheta": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"Ptheta",
+        "type_x":"phitrento",
+        "type_y":"theta",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Proton $\\theta$",
+        "filename":"PhiTrento_PTheta"       
+    }],
+
+    "Q2Ptheta": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Ptheta",
+        "type_x":"Q2",
+        "type_y":"theta",
+        "label_x":"Q$^2$",
+        "label_y":"Proton $\\theta$",
+        "filename":"Q2PTheta"       
+    }],
+
+    "Q2Pphi": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Pphi",
+        "type_x":"Q2",
+        "type_y":"phi",
+        "label_x":"Q$^2$",
+        "label_y":"Proton $\\phi$",
+        "filename":"Q2Pphi"       
+    }],
+
+    "Q2Etheta": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Etheta",
+        "type_x":"Q2",
+        "type_y":"nothadron_theta",
+        "label_x":"Q$^2$",
+        "label_y":"Electron $\\theta$",
+        "filename":"Q2Etheta"       
+    }],
+
+    "Q2Ephi": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Ephi",
+        "type_x":"Q2",
+        "type_y":"phi",
+        "label_x":"Q$^2$",
+        "label_y":"Electron $\\phi$",
+        "filename":"Q2Ephi"       
+    }],
+
+    "Q2Gtheta": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Gtheta",
+        "type_x":"Q2",
+        "type_y":"nothadron_theta",
+        "label_x":"Q$^2$",
+        "label_y":"Photon $\\theta$",
+        "filename":"Q2GTheta"       
+    }],
+
+    "Q2Gphi": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Gphi",
+        "type_x":"Q2",
+        "type_y":"phi",
+        "label_x":"Q$^2$",
+        "label_y":"Photon $\\phi$",
+        "filename":"Q2Gphi"       
+    }],
+
+    "Q2Gtheta2": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Gtheta2",
+        "type_x":"Q2",
+        "type_y":"nothadron_theta",
+        "label_x":"Q$^2$",
+        "label_y":"Photon2 $\\theta$",
+        "filename":"Q2GTheta2"       
+    }],
+
+    "Q2Gphi2": [{
+        "type":"2D",
+        "data_x":"Q2",
+        "data_y":"Gphi2",
+        "type_x":"Q2",
+        "type_y":"phi",
+        "label_x":"Q$^2$",
+        "label_y":"Photon2 $\\phi$",
+        "filename":"Q2Gphi2"       
+    }],
+
+    "PpGp": [{
+        "type":"2D",
+        "data_x":"Pp",
+        "data_y":"Gp",
+        "type_x":"pmom",
+        "type_y":"gmom",
+        "label_x":"Proton Momentum",
+        "label_y":"Photon 1 Momentum",
+        "filename":"Proton_Mom_Gamma1_Mom"       
+    }],
+
+    "PpGp2": [{
+        "type":"2D",
+        "data_x":"Pp",
+        "data_y":"Gp2",
+        "type_x":"pmom",
+        "type_y":"gmom",
+        "label_x":"Proton Momentum",
+        "label_y":"Photon 2 Momentum",
+        "filename":"Proton_Mom_Gamma2_Mom"       
+    }],
+    
+    "TrentoPp": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"Pp",
+        "type_x":"phitrento",
+        "type_y":"pmom",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Proton Momentum",
+        "filename":"PhiTrento_Proton_Mom"       
+    }],
+
+    "TrentoGp": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"Gp",
+        "type_x":"phitrento",
+        "type_y":"gmom",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Photon 1 Momentum",
+        "filename":"PhiTrento_Photon1_Mom"       
+    }],
+
+    "TrentoGp2": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"Gp2",
+        "type_x":"phitrento",
+        "type_y":"gmom",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Photon 2 Momentum",
+        "filename":"PhiTrento_Proton2_Mom"       
+    }],
+
+    "TrentoQ2": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"Q2",
+        "type_x":"phitrento",
+        "type_y":"Q2",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Q$^2$",
+        "filename":"PhiTrento_Q2"       
+    }],
+
+    "TrentoxB": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"xB",
+        "type_x":"phitrento",
+        "type_y":"xB",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"$x_B$",
+        "filename":"PhiTrento_BjorkenX"       
+    }],
+
+    "Trentot": [{
+        "type":"2D",
+        "data_x":"phi1",
+        "data_y":"t",
+        "type_x":"phitrento",
+        "type_y":"t",
+        "label_x":"Lepton-Hadron Angle $\\phi$",
+        "label_y":"Momentum Transfer t",
+        "filename":"PhiTrento_t"       
+    }],
+
+
+    "WQ2": [{
+        "type":"2D",
+        "data_x":"W",
+        "data_y":"Q2",
+        "type_x":"W",
+        "type_y":"Q2",
+        "label_x":"$W$",
+        "label_y":"Q$^2$",
+        "filename":"W_Q2"       
+    }],
+
+
+
+
+    "xbQ2": [{
+        "type":"2D",
+        "data_x":"xB",
+        "data_y":"Q2",
+        "type_x":"xB",
+        "type_y":"Q2",
+        "label_x":"$x_B$",
+        "label_y":"Q$^2$",
+        "filename":"BjorkenX_Q2"       
+    }],
+
+
+    "tW": [{
+        "type":"2D",
+        "data_x":"t",
+        "data_y":"W",
+        "type_x":"t",
+        "type_y":"W",
+        "label_x":"Momentum Transfer t",
+        "label_y":"W",
+        "filename":"W_t"       
+    }],
+
+
+    "EthetaEphi": [{
+        "type":"2D",
+        "data_x":"Ephi",
+        "data_y":"Etheta",
+        "type_x":"phi",
+        "type_y":"nothadron_theta",
+        "label_x":"Electron $\\phi$",
+        "label_y":"Electron $\\theta$",
+        "filename":"Electron_Theta_Electron_Phi"       
+    }]
+}
