@@ -12,7 +12,7 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
             saveplot=False,pics_dir="none",plot_title="none",logger=False,first_label="rad",
             filename="ExamplePlot",units=["",""],extra_data=None):
     
-    plt.rcParams["font.family"] = "Times New Roman"
+    #plt.rcParams["font.family"] = "Times New Roman"
     plt.rcParams["font.size"] = "30"
     # Initalize parameters
     x_name = var_names[0]
@@ -85,7 +85,7 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
 
     if x_data.dtype == "float64":
         plot_title = plot_title
-        plt.rcParams["font.family"] = "Times New Roman"
+        #plt.rcParams["font.family"] = "Times New Roman"
         plt.rcParams["font.size"] = "20"
 
         # Initalize parameters
@@ -121,18 +121,54 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
         #plt.plot(addvars[1], addvars[0])
 
         from scipy.stats import norm
+        from scipy.optimize import curve_fit
 
 
-        plt.hist(x_data, density=False)
-        #plt.xlim((min(arr), max(arr)))
+        yhist, xhist = np.histogram(x_data,bins =x_bins)
 
-        mu = np.mean(x_data)
-        variance = np.var(x_data)
-        sigma = np.sqrt(variance)
-        x = np.linspace(min(x_data), max(x_data), 100)
-        plt.plot(x,  norm.pdf(x, mu, sigma))
+        xh = np.where(yhist > -0)[0]
+        yh = yhist[xh]
+        x_bins0 = x_bins[xh]
+        # yh = yhist
+        # x_bins0 = x_bins
 
+        def gaussian(x, a, mean, sigma):
+            return a * np.exp(-((x - mean)**2 / (2 * sigma**2)))
+
+
+        popt, pcov = curve_fit(gaussian, x_bins0, yh, [10, 1, 1])
+
+        print(popt)
+
+        #plt.plot(xhist[:-1],yhist)
+
+        x_bins2 = np.linspace(xmin, xmax, num_xbins*100) 
+
+        plt.plot(x_bins2, gaussian(x_bins2, *popt), 'r', label='fit')
+        #plt.xlim(0, 300)
+
+        # plt.hist(x_data, density=False)
+        # #plt.xlim((min(arr), max(arr)))
+
+        # mu = np.mean(x_data)
+        # variance = np.var(x_data)
+        # sigma = np.sqrt(variance)
+        # x = np.linspace(min(x_data), max(x_data), 100)
+        # plt.plot(x,  norm.pdf(x, mu, sigma))#* np.sum(np.diff(x) * 100))
         
+        #                         from scipy.stats import norm
+
+        #                 x_data = df_sample[ex_vars[ex_cuts_names.index(x0_key)]]
+
+        #                 _, bins, _ = plt.hist(x_data, 100, density=0,alpha=0.5)
+
+        #                 output_dir = "./"
+        #                 ranges = ex_cuts_ranges[xind]
+
+        #                 mu, sigma = norm.fit(x_data)
+        #                 best_fit_line = norm.pdf(bins, mu, sigma)
+
+        #                 print(mu,sigma)
         #plt.tight_layout()  
 
         if logger:

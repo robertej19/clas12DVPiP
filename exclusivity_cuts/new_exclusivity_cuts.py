@@ -173,30 +173,19 @@ def makeDVpi0P(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",photo
                                 make_histos.plot_1dhist(x_data,[x_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,
                                                 saveplot=True,pics_dir=output_dir+"hists_1D/all_cuts_but_{}/".format(x0_key),plot_title=x_key+", "+data_type+" All Cuts Except "+x0_key)
                 if 1 == 1:
-
-
-
                         
-
                         
-
-                        from scipy.stats import norm
-
                         x_data = df_sample[ex_vars[ex_cuts_names.index(x0_key)]]
 
-                        _, bins, _ = plt.hist(x_data, 100, density=0,alpha=0.5)
+
 
                         output_dir = "./"
                         ranges = ex_cuts_ranges[xind]
 
-                        mu, sigma = norm.fit(x_data)
-                        best_fit_line = norm.pdf(bins, mu, sigma)
-
-                        print(mu,sigma)
 
 
                         make_histos.plot_1dhist(x_data,[x0_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,
-                                        saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=x0_key+", "+data_type+" All Cuts Except "+x0_key,addvars = [best_fit_line,bins])
+                                        saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=x0_key+", "+data_type+" All Cuts Except "+x0_key)
                 
   
 
