@@ -6,7 +6,7 @@ import itertools
 import os, sys
 from icecream import ic
 import matplotlib
-matplotlib.use('Agg') 
+#matplotlib.use('Agg') 
 
 
 import matplotlib.pyplot as plt
@@ -77,9 +77,6 @@ import json
 
 from convert_root_to_pickle import convert_GEN_NORAD_root_to_pkl
 from convert_root_to_pickle import convert_GEN_RAD_root_to_pkl
-#from convert_root_to_pickle import convert_REC_RAD_root_to_pkl
-#from convert_root_to_pickle import convert_REC_NORAD_root_to_pkl
-#from convert_root_to_pickle import convert_real_to_pkl
 from convert_root_to_pickle import new_convert_real_to_pkl
 from convert_root_to_pickle import new_convert_rec_to_pkl
 
@@ -98,7 +95,9 @@ import json
 
 # For analysis flow
 #from make_dvpip_cuts import makeDVpi0
-from new_dvpip_cuts import makeDVpi0P
+#from exclusivity_cuts.sangbaek_exclusivity_cuts import makeDVpi0P
+from exclusivity_cuts.new_exclusivity_cuts import makeDVpi0P
+
 
 from bin_events import bin_df
 
@@ -433,7 +432,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         first_label='exp',hists_overlap=False,saveplots=True,output_dir = title_dir)
 
             print("There are {} exp epgg events".format(df_exp_epgg.shape[0]))
-            df_dvpip_exp = makeDVpi0P(df_exp_epgg,proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
+            df_dvpip_exp = makeDVpi0P(df_exp_epgg,data_type="exp",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
             #df_dvpip_exp = pd.read_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
             df_dvpip_exp.to_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
             print("There are {} exp dvpip events".format(df_dvpip_exp.shape[0]))
@@ -465,7 +464,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         first_label='rec',hists_overlap=False,saveplots=True,output_dir = title_dir)
 
             print("There are {} rec epgg events".format(df_rec_epgg.shape[0]))
-            df_dvpip_rec = makeDVpi0P(df_rec_epgg,proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
+            df_dvpip_rec = makeDVpi0P(df_rec_epgg,data_type="rec",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
             #df_dvpip_rec = pd.read_pickle("{}/{}_dvpip_rec.pkl".format(datafile_base_dir+dvpip_data_dir,rec_file_base))
             df_dvpip_rec.to_pickle("{}/{}_dvpip_rec.pkl".format(datafile_base_dir+dvpip_data_dir,rec_file_base))
 
@@ -1292,7 +1291,7 @@ run_name = "rad_f18_in_and_out_advanced_no_ang_cuts"
 
 
 if 1==1:
-    mag_configs = ["inbending","outbending"]
+    mag_configs = ["inbending"]#,"outbending"]
     generator_type = "rad"
     proton_locs = ["All",]
     photon1_locs = ["All",]
@@ -1308,19 +1307,21 @@ if 1==1:
                                 make_exclusive_cuts = 1,
                                 plot_initial_distros = 0,
                                 plot_final_distros = 0,
-                                bin_all_events = 1,
-                                bin_gen = 1,
+                                bin_all_events = 0,
+                                bin_gen = 0,
                                 calc_xsection = 0,
                                 plot_reduced_xsec_and_fit = 0,
-                                calc_xsection_c12_only = 1,
-                                plot_reduced_xsec_and_fit_c12_only = 1,
+                                calc_xsection_c12_only = 0,
+                                plot_reduced_xsec_and_fit_c12_only = 0,
                                 plot_1_D_hists = 0,
                                 simple_exclusivity_cuts=False,
                                 emergency_stop = 0,
                                 comp_2_config=False)
 
 
-if 1==1:
+
+
+if 0==1:
     mag_configs = ["inbending"]
     generator_type = "rad"
     proton_locs = ["All",]

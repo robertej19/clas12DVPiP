@@ -74,7 +74,7 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
         plt.show()
 
 def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger=False,first_label="rad",second_label="norad",
-            saveplot=False,pics_dir="none",plot_title="none",first_color="blue",sci_on=False,plot_title_identifiyer=""):
+            saveplot=False,pics_dir="none",plot_title="none",first_color="blue",sci_on=False,plot_title_identifiyer="",addvars=None):
     
     if second_x:
         if len(x_data)<len(second_x_data):
@@ -118,6 +118,21 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
             plt.legend()
 
 
+        #plt.plot(addvars[1], addvars[0])
+
+        from scipy.stats import norm
+
+
+        plt.hist(x_data, density=False)
+        #plt.xlim((min(arr), max(arr)))
+
+        mu = np.mean(x_data)
+        variance = np.var(x_data)
+        sigma = np.sqrt(variance)
+        x = np.linspace(min(x_data), max(x_data), 100)
+        plt.plot(x,  norm.pdf(x, mu, sigma))
+
+        
         #plt.tight_layout()  
 
         if logger:
