@@ -97,6 +97,7 @@ import json
 #from make_dvpip_cuts import makeDVpi0
 #from exclusivity_cuts.sangbaek_exclusivity_cuts import makeDVpi0P
 from exclusivity_cuts.new_exclusivity_cuts import makeDVpi0P
+from exclusivity_cuts.new_exclusivity_cuts import calc_ex_cut_mu_sigma
 
 
 from bin_events import bin_df
@@ -248,10 +249,12 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                 qxt_cuts = [[0,100],[0,1],[0,100]],
                 simple_exclusivity_cuts=False,
                 plot_reduced_xsec_and_fit_c12_only=0,
-                comp_2_config=False,):
+                comp_2_config=False,
+                gen_ex_cut_table=False,
+                sigma_multiplier=3):
 
 
-    run_identifiyer = mag_config+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
+    run_identifiyer = mag_config+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer+"excut_sigma_{}".format(sigma_multiplier)
     inb_run_id = "inbending"+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
     outb_run_id = "outbending"+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
 
@@ -432,7 +435,13 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         first_label='exp',hists_overlap=False,saveplots=True,output_dir = title_dir)
 
             print("There are {} exp epgg events".format(df_exp_epgg.shape[0]))
-            df_dvpip_exp = makeDVpi0P(df_exp_epgg,data_type="exp",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
+
+            if gen_ex_cut_table:
+                calc_ex_cut_mu_sigma(df_exp_epgg,datafilename=datafile_base_dir+raw_data_dir+exp_file_base+"_table_of_ex_cut"+".pkl")
+            df_ex_cut_ranges = pd.read_pickle(datafile_base_dir+raw_data_dir+exp_file_base+"_table_of_ex_cut"+".pkl")
+            
+            df_dvpip_exp = makeDVpi0P(df_exp_epgg,df_ex_cut_ranges, sigma_multiplier):
+            
             #df_dvpip_exp = pd.read_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
             df_dvpip_exp.to_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
             print("There are {} exp dvpip events".format(df_dvpip_exp.shape[0]))
@@ -464,7 +473,10 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         first_label='rec',hists_overlap=False,saveplots=True,output_dir = title_dir)
 
             print("There are {} rec epgg events".format(df_rec_epgg.shape[0]))
-            df_dvpip_rec = makeDVpi0P(df_rec_epgg,data_type="rec",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
+
+            df_dvpip_rec = makeDVpi0P(df_rec_epgg,df_ex_cut_ranges, sigma_multiplier):
+
+            #df_dvpip_rec = makeDVpi0P(df_rec_epgg,data_type="rec",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
             #df_dvpip_rec = pd.read_pickle("{}/{}_dvpip_rec.pkl".format(datafile_base_dir+dvpip_data_dir,rec_file_base))
             df_dvpip_rec.to_pickle("{}/{}_dvpip_rec.pkl".format(datafile_base_dir+dvpip_data_dir,rec_file_base))
 
@@ -1286,37 +1298,41 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 #mag_configs = ["outbending",]#"outbending"]
 
 #run_name = "new_f18_in_processing_simple_cuts"
-run_name = "rad_f18_in_and_out_advanced_no_ang_cuts"
+run_name = "rad_f18_new_simple_excuts_with_range"
 
 
 
 if 1==1:
-    mag_configs = ["inbending"]#,"outbending"]
+    mag_configs = ["inbending","outbending"]
     generator_type = "rad"
     proton_locs = ["All",]
     photon1_locs = ["All",]
     photon2_locs = ["All",]
+    sigma_multis = [3,2,4]
 
-    for mc in mag_configs:
-        for pl in proton_locs:
-            for p1l in photon1_locs:
-                for p2l in photon2_locs:
-                    run_analysis(mc,generator_type,unique_identifyer=run_name,#"for_aps_gen_plots_norad_bigplots",
-                                det_proton_loc=pl,det_photon1_loc=p1l,det_photon2_loc=p2l,
-                                convert_roots = 0,
-                                make_exclusive_cuts = 1,
-                                plot_initial_distros = 0,
-                                plot_final_distros = 0,
-                                bin_all_events = 0,
-                                bin_gen = 0,
-                                calc_xsection = 0,
-                                plot_reduced_xsec_and_fit = 0,
-                                calc_xsection_c12_only = 0,
-                                plot_reduced_xsec_and_fit_c12_only = 0,
-                                plot_1_D_hists = 0,
-                                simple_exclusivity_cuts=False,
-                                emergency_stop = 0,
-                                comp_2_config=False)
+    for sigma_multiplier in sigma_multis:
+        for mc in mag_configs:
+            for pl in proton_locs:
+                for p1l in photon1_locs:
+                    for p2l in photon2_locs:
+                        run_analysis(mc,generator_type,unique_identifyer=run_name,#"for_aps_gen_plots_norad_bigplots",
+                                    det_proton_loc=pl,det_photon1_loc=p1l,det_photon2_loc=p2l,
+                                    convert_roots = 0,
+                                    make_exclusive_cuts = 1,
+                                    plot_initial_distros = 0,
+                                    plot_final_distros = 0,
+                                    bin_all_events = 1,
+                                    bin_gen = 1,
+                                    calc_xsection = 0,
+                                    plot_reduced_xsec_and_fit = 0,
+                                    calc_xsection_c12_only = 1,
+                                    plot_reduced_xsec_and_fit_c12_only = 1,
+                                    plot_1_D_hists = 0,
+                                    simple_exclusivity_cuts=False,
+                                    emergency_stop = 0,
+                                    comp_2_config=False,
+                                    gen_ex_cut_table=True,
+                                    sigma_multiplier=sigma_multiplier)
 
 
 
