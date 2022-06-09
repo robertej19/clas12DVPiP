@@ -146,21 +146,23 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
         if fitdata:
             yhist, xhist = np.histogram(x_data,bins =x_bins)
 
-            xh = np.where(yhist > -0)[0]
-            yh = yhist[xh]
-            x_bins0 = x_bins[xh]
+            #xh = np.where(yhist > -0)[0]
+            #yh = yhist[xh]
+            #x_bins0 = x_bins[xh]
+            yh=yhist
+            x_bins0=bin_centers
             # yh = yhist
             # x_bins0 = x_bins
 
-            def gaussian(x, a, mean, sigma):
-                return a * np.exp(-((x - mean)**2 / (2 * sigma**2)))
+            def gaussian(x, a, mean, sigma_squared):
+                return a * np.exp(-((x - mean)**2 / (2 * sigma_squared)))
 
 
             popt, pcov = curve_fit(gaussian, x_bins0, yh, [10, 1, 1])
 
-            print(popt)
+            #print(popt)
 
-            fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],popt[2])
+            fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],np.sqrt(popt[2]))
             #print(fit_params)
             #plt.text(0.7,0.8,fit_params,transform=ax.transAxes)
 
@@ -229,6 +231,10 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
             plt.close()
         else:
             plt.show()
+
+    if fitdata:
+        return popt, pcov
+        
     #except OSError as error: 
     #    print(error)  
 

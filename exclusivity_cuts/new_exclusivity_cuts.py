@@ -149,10 +149,14 @@ def makeDVpi0P(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",photo
 
         ex_cuts2 = [cut_Mpi0]
 
+        var_names = []
+        mu_values = []
+        sigmasquared_values = []
+
         for xind,x0_key in enumerate(ex_cuts_names):
                 df_sample = df_epgg
                 #print(xind)
-                print(x0_key)
+                #print(x0_key)
                 cut_key_list = [x for x in ex_cuts_names if ex_cuts_names.index(x) != xind]
                 #print(cut_key_list)
                 for key in cut_key_list:
@@ -184,14 +188,40 @@ def makeDVpi0P(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",photo
 
 
 
-                        make_histos.plot_1dhist(x_data,[x0_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,
-                                        saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=x0_key+", "+data_type+" All Cuts Except "+x0_key,fitdata=True)
-                
-  
+                        popt, pcov = make_histos.plot_1dhist(x_data,[x0_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,
+                                        saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=ex_vars[ex_cuts_names.index(x0_key)]+", "+data_type+" All Cuts Except "+ex_vars[ex_cuts_names.index(x0_key)],fitdata=True)
+
+                        # print(ex_vars[ex_cuts_names.index(x0_key)],
+                        #                 "A = {}, Mu = {}, SigmaSquared = {}".format(*popt),
+                        #                 "CovMatrix = {}".format(pcov))
+
+                        var_names.append(ex_vars[ex_cuts_names.index(x0_key)])
+                        mu_values.append(popt[1])
+                        sigmasquared_values.append(popt[2])
 
                                
 #                df_sample = df_epgg.loc[cut_xBupper & cut_xBlower & cut_Q2 & cut_W]
 
+        print(type(mu_values[0]))
+        q = np.column_stack([var_names,mu_values,np.sqrt(sigmasquared_values)])
+        #print(q)
+        df = pd.DataFrame (q, columns = ['var_name', 'mu', 'sigma'])
+        #print (type(df.mu.values(0)))
+        df['mu'] = df['mu'].astype(float)
+        df['sigma'] = df['sigma'].astype(float)
+
+
+        df.loc[:,"mu+3sigma"] = df.loc[:,"mu"] + 3*df.loc[:,"sigma"]
+        df.loc[:,"mu-3sigma"] = df.loc[:,"mu"] - 3*df.loc[:,"sigma"]
+
+        df.loc[:,"mu+2sigma"] = df.loc[:,"mu"] + 2*df.loc[:,"sigma"]
+        df.loc[:,"mu-2sigma"] = df.loc[:,"mu"] - 2*df.loc[:,"sigma"]
+
+        df.loc[:,"mu+4sigma"] = df.loc[:,"mu"] + 4*df.loc[:,"sigma"]
+        df.loc[:,"mu-4sigma"] = df.loc[:,"mu"] - 4*df.loc[:,"sigma"]
+
+        print(df)
+        df.to_pickle("temporary_exclusivity_variances.pkl")
 
         sys.exit()
                 
