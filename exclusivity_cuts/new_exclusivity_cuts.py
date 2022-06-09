@@ -155,6 +155,9 @@ def makeDVpi0P(df_epgg, df_ex_cut_ranges, sigma_multiplier):
 def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,datafilename="temporary_exclusivity_variances.pkl"):
 
         #Variables listing:
+        print(len(df_epgg))
+        df_out = df_epgg.head(1000000)
+        df_out.to_pickle("temp_df_file_outbend.pkl")
 
         ex_vars = ["Mpi0",
                 "reconPi",
@@ -276,6 +279,7 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
                 # for cut in cut_list:
                 #         df_sample = df_sample.loc[cut]
                 if 0 == 1:
+
                         for x_index,x_key in enumerate(ex_vars):
                                 x_data = df_sample[x_key]
                                 output_dir = "./"
@@ -285,7 +289,7 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
                                                 saveplot=True,pics_dir=output_dir+"hists_1D/all_cuts_but_{}/".format(x0_key),plot_title=x_key+", "+data_type+" All Cuts Except "+x0_key)
                 if 1 == 1:
                         
-                        
+                        print("on xkey:",x0_key)
                         x_data = df_sample[ex_vars[ex_cuts_names.index(x0_key)]]
 
 
@@ -295,7 +299,7 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
 
 
 
-                        popt, pcov = make_histos.plot_1dhist(x_data,[x0_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,
+                        popt, pcov = make_histos.plot_1dhist(x_data,[x0_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,x0_key=x0_key,
                                         saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=ex_vars[ex_cuts_names.index(x0_key)]+", "+data_type+" All Cuts Except "+ex_vars[ex_cuts_names.index(x0_key)],fitdata=True)
 
                         # print(ex_vars[ex_cuts_names.index(x0_key)],
@@ -330,12 +334,14 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
         return df
 
 if __name__ == "__main__":
-    test_df = pd.read_pickle("test_df_epgg.pkl")
-    test_ranges = pd.read_pickle("temporary_exclusivity_variances.pkl")
+    #test_df = pd.read_pickle("test_df_epgg.pkl")
+    test_df = pd.read_pickle("temp_df_file_outbend.pkl")
     #print(test_df)
-    #df_dvpi0p_exp = calc_ex_cut_mu_sigma(test_df)
+    df_dvpi0p_exp = calc_ex_cut_mu_sigma(test_df)
 
-    makeDVpi0P(test_df,test_ranges,4)
+#    test_ranges = pd.read_pickle("temporary_exclusivity_variances.pkl")
+
+ #   makeDVpi0P(test_df,test_ranges,4)
 
     #df_exp = pd.read_pickle("new_exp_convert_outbend.pkl",pol="outbending")
     #df_rec = pd.read_pickle("new_rec_convert_outbend_rad.pkl",pol="outbending")

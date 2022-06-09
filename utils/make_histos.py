@@ -83,7 +83,7 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
             range=[[xmin,xmax],[ymin,ymax]], cmap = plt.cm.nipy_spectral) #norm=mpl.colors.LogNorm())#
         plt.show()
 
-def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger=False,first_label="rad",second_label="norad",
+def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger=False,first_label="rad",second_label="norad",x0_key="None",
             saveplot=False,pics_dir="none",plot_title="none",first_color="blue",sci_on=False,plot_title_identifiyer="",fitdata=False):
     
     if second_x:
@@ -142,27 +142,41 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
         #plt.plot(addvars[1], addvars[0])
 
 
+        print(len(x_data))
 
         if fitdata:
             yhist, xhist = np.histogram(x_data,bins =x_bins)
 
-            #xh = np.where(yhist > -0)[0]
-            #yh = yhist[xh]
-            #x_bins0 = x_bins[xh]
-            yh=yhist
-            x_bins0=bin_centers
+            xh = np.where(yhist > -0)[0]
+            yh = yhist[xh]
+            x_bins0 = x_bins[xh]
+            #yh=yhist
+            #x_bins0=bin_centers
             # yh = yhist
             # x_bins0 = x_bins
 
             def gaussian(x, a, mean, sigma_squared):
                 return a * np.exp(-((x - mean)**2 / (2 * sigma_squared)))
 
+            ic(xmin,xmax)
+            initial_guesses = [len(x_data)/10, (xmax+xmin)/2, (xmax-xmin)/10]
+            ic(initial_guesses)
+            
+            if x0_key =="cut_mmepgg":
+                xh = np.where(xhist**2 < 0.0016 )[0]
+                yh = yhist[xh]
+                x_bins0 = x_bins[xh]
+                popt = [0.9*yhist.max(),np.mean(x_data),np.std(x_data)/300]
+                pcov = [[0,0,0],[0,0,0],[0,0,0]]
+                #popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=10000)
 
-            popt, pcov = curve_fit(gaussian, x_bins0, yh, [10, 1, 1])
+            else:
+                popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=10000)
+            ic(popt)
 
             #print(popt)
 
-            fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],np.sqrt(popt[2]))
+            fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],np.sqrt(np.abs(popt[2])))
             #print(fit_params)
             #plt.text(0.7,0.8,fit_params,transform=ax.transAxes)
 

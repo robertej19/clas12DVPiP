@@ -437,10 +437,13 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
             print("There are {} exp epgg events".format(df_exp_epgg.shape[0]))
 
             if gen_ex_cut_table:
+                print("CALCULATING EXCLUSIVE CUT TABLE for {}".format(datafile_base_dir+raw_data_dir+exp_file_base))
                 calc_ex_cut_mu_sigma(df_exp_epgg,datafilename=datafile_base_dir+raw_data_dir+exp_file_base+"_table_of_ex_cut"+".pkl")
             df_ex_cut_ranges = pd.read_pickle(datafile_base_dir+raw_data_dir+exp_file_base+"_table_of_ex_cut"+".pkl")
             
-            df_dvpip_exp = makeDVpi0P(df_exp_epgg,df_ex_cut_ranges, sigma_multiplier):
+            print("CALCULATING EXCLUSIVE CUTS exp for {} with sigma {}".format(datafile_base_dir+raw_data_dir+exp_file_base,sigma_multiplier))
+
+            df_dvpip_exp = makeDVpi0P(df_exp_epgg,df_ex_cut_ranges, sigma_multiplier)
             
             #df_dvpip_exp = pd.read_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
             df_dvpip_exp.to_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
@@ -474,7 +477,9 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
             print("There are {} rec epgg events".format(df_rec_epgg.shape[0]))
 
-            df_dvpip_rec = makeDVpi0P(df_rec_epgg,df_ex_cut_ranges, sigma_multiplier):
+            print("CALCULATING EXCLUSIVE CUTS rec for {} with sigma {}".format(datafile_base_dir+raw_data_dir+exp_file_base,sigma_multiplier))
+
+            df_dvpip_rec = makeDVpi0P(df_rec_epgg,df_ex_cut_ranges, sigma_multiplier)
 
             #df_dvpip_rec = makeDVpi0P(df_rec_epgg,data_type="rec",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
             #df_dvpip_rec = pd.read_pickle("{}/{}_dvpip_rec.pkl".format(datafile_base_dir+dvpip_data_dir,rec_file_base))
@@ -1303,7 +1308,7 @@ run_name = "rad_f18_new_simple_excuts_with_range"
 
 
 if 1==1:
-    mag_configs = ["inbending","outbending"]
+    mag_configs = ["outbending","inbending"]#,"outbending"]
     generator_type = "rad"
     proton_locs = ["All",]
     photon1_locs = ["All",]
@@ -1315,6 +1320,7 @@ if 1==1:
             for pl in proton_locs:
                 for p1l in photon1_locs:
                     for p2l in photon2_locs:
+                        print("ON SIGMA, MAG CONFIG: {},{}".format(sigma_multiplier,mc))
                         run_analysis(mc,generator_type,unique_identifyer=run_name,#"for_aps_gen_plots_norad_bigplots",
                                     det_proton_loc=pl,det_photon1_loc=p1l,det_photon2_loc=p2l,
                                     convert_roots = 0,
