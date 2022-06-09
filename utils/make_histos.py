@@ -6,7 +6,17 @@ import os, subprocess
 import math
 import shutil
 from icecream import ic
-
+from scipy.stats import norm
+from scipy.optimize import curve_fit
+from matplotlib.patches import Rectangle
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+from scipy import stats
+import argparse
+import sys 
+import pandas as pd
+from matplotlib.patches import Rectangle
 
 def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
             saveplot=False,pics_dir="none",plot_title="none",logger=False,first_label="rad",
@@ -74,7 +84,7 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
         plt.show()
 
 def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger=False,first_label="rad",second_label="norad",
-            saveplot=False,pics_dir="none",plot_title="none",first_color="blue",sci_on=False,plot_title_identifiyer="",addvars=None):
+            saveplot=False,pics_dir="none",plot_title="none",first_color="blue",sci_on=False,plot_title_identifiyer="",fitdata=False):
     
     if second_x:
         if len(x_data)<len(second_x_data):
@@ -104,6 +114,9 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
 
         # Creating plot
         fig, ax = plt.subplots(figsize =(18, 10)) 
+        #fig = plt.figure()
+        #ax = fig.add_subplot(111)
+        
             
         ax.set_xlabel(x_name)  
         ax.set_ylabel('counts')  
@@ -112,7 +125,15 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
         a2 = second_label
         b = "rad"
         b2="norad"
-        plt.hist(x_data, bins =x_bins, range=[xmin,xmax], color='blue', alpha=0.5, label=a)# cmap = plt.cm.nipy_spectral) 
+ #       hist0 = ax.hist(x_data, bins =x_bins, range=[xmin,xmax], color='blue', alpha=0.5, label=a)# cmap = plt.cm.nipy_spectral) 
+        bin_values, bin_edges = np.histogram(x_data, bins =x_bins, range=[xmin,xmax])#, color='blue', alpha=0.5, label=a)# cmap = plt.cm.nipy_spectral) 
+
+        bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])
+
+        hist1 = ax.bar(bin_centers, bin_values, width=bin_edges[1] - bin_edges[0], color='navy', label='Histogram entries')
+
+
+#        print(hist1)
         if second_x:
             plt.hist(second_x_data, bins =x_bins, range=[xmin,xmax],color='red', alpha=0.5, label=a2)# cmap = plt.cm.nipy_spectral) 
             plt.legend()
@@ -120,31 +141,40 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
 
         #plt.plot(addvars[1], addvars[0])
 
-        from scipy.stats import norm
-        from scipy.optimize import curve_fit
 
 
-        yhist, xhist = np.histogram(x_data,bins =x_bins)
+        if fitdata:
+            yhist, xhist = np.histogram(x_data,bins =x_bins)
 
-        xh = np.where(yhist > -0)[0]
-        yh = yhist[xh]
-        x_bins0 = x_bins[xh]
-        # yh = yhist
-        # x_bins0 = x_bins
+            xh = np.where(yhist > -0)[0]
+            yh = yhist[xh]
+            x_bins0 = x_bins[xh]
+            # yh = yhist
+            # x_bins0 = x_bins
 
-        def gaussian(x, a, mean, sigma):
-            return a * np.exp(-((x - mean)**2 / (2 * sigma**2)))
+            def gaussian(x, a, mean, sigma):
+                return a * np.exp(-((x - mean)**2 / (2 * sigma**2)))
 
 
-        popt, pcov = curve_fit(gaussian, x_bins0, yh, [10, 1, 1])
+            popt, pcov = curve_fit(gaussian, x_bins0, yh, [10, 1, 1])
 
-        print(popt)
+            print(popt)
 
-        #plt.plot(xhist[:-1],yhist)
+            fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],popt[2])
+            #print(fit_params)
+            #plt.text(0.7,0.8,fit_params,transform=ax.transAxes)
 
-        x_bins2 = np.linspace(xmin, xmax, num_xbins*100) 
+            #plt.plot(xhist[:-1],yhist)
 
-        plt.plot(x_bins2, gaussian(x_bins2, *popt), 'r', label='fit')
+            x_bins2 = np.linspace(xmin, xmax, num_xbins*100) 
+
+            fit1, = ax.plot(x_bins2, gaussian(x_bins2, *popt), 'r', label='fit')
+
+            extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+            ax.legend([hist1, fit1, extra], ("Data","Fit",fit_params))
+            #ax.legend([hist1, fit1], ("Data","A+Bcos(2Phi)+Ccos(Phi)"))
+            #ax.legend(handles=[hist1, fit1])
+
         #plt.xlim(0, 300)
 
         # plt.hist(x_data, density=False)

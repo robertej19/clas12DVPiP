@@ -185,7 +185,7 @@ def makeDVpi0P(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",photo
 
 
                         make_histos.plot_1dhist(x_data,[x0_key,],ranges=ranges,second_x=False,first_label=data_type,logger=False,
-                                        saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=x0_key+", "+data_type+" All Cuts Except "+x0_key)
+                                        saveplot=True,pics_dir=output_dir+"hists_1D/",plot_title=x0_key+", "+data_type+" All Cuts Except "+x0_key,fitdata=True)
                 
   
 
