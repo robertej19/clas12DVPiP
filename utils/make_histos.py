@@ -110,6 +110,16 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
             xmax =  ranges[1]
             num_xbins = ranges[2]
 
+        ic(x_data)
+
+        #for col in x_data.columns:
+        #    print(col)
+
+        xnew = [x for x in x_data if x>=xmin and x<=xmax]
+        #x_data.drop(df[df['Fee'] >= 24000].index, inplace = True)
+        ic(len(xnew))
+        x_data = xnew
+       
         x_bins = np.linspace(xmin, xmax, num_xbins) 
 
         # Creating plot
@@ -162,25 +172,42 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
             initial_guesses = [len(x_data)/10, (xmax+xmin)/2, (xmax-xmin)/10]
             ic(initial_guesses)
             
-            if x0_key =="cut_mmepgg":
-                xh = np.where(xhist**2 < 0.0016 )[0]
-                yh = yhist[xh]
-                x_bins0 = x_bins[xh]
-                popt = [0.9*yhist.max(),np.mean(x_data),np.std(x_data)/300]
-                pcov = [[0,0,0],[0,0,0],[0,0,0]]
-                #popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=10000)
+            # if x0_key =="cut_mmepgg":
+            #     xh = np.where(xhist**2 < 0.0016 )[0]
+            #     yh = yhist[xh]
+            #     x_bins0 = x_bins[xh]
+            #     popt = [0.9*yhist.max(),np.mean(x_data),np.std(x_data)/300]
+            #     pcov = [[0,0,0],[0,0,0],[0,0,0]]
+            #     #popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=10000)
 
-            else:
-                popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=10000)
-            ic(popt)
+            # if x0_key =="cut_Mpi0":
+            #     xh = np.where(xhist**2 < 0.0016 )[0]
+            #     yh = yhist[xh]
+            #     x_bins0 = x_bins[xh]
+            #     popt = [0.9*yhist.max(),np.mean(x_data),np.std(x_data)/300]
+            #     pcov = [[0,0,0],[0,0,0],[0,0,0]]
+            #     #popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=10000)
 
-            #print(popt)
+            # else:
+            try:
+                popt, pcov = curve_fit(gaussian, x_bins0, yh, initial_guesses,maxfev=200)
+                ic(popt)
+                ic(pcov)
+
+                # popt = [0.9*yhist.max(),np.mean(x_data),np.square(np.std(x_data)/3)]
+                # pcov = [0,0,0]
+                
+            except Exception as e:
+                print("FITTING FAILED, ERROR MESSAGE:")
+                print(e)
+                popt = [0.9*yhist.max(),np.mean(x_data),np.square(np.std(x_data)/2)]
+                pcov = [0,0,0]
 
             fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],np.sqrt(np.abs(popt[2])))
-            #print(fit_params)
-            #plt.text(0.7,0.8,fit_params,transform=ax.transAxes)
+                #print(fit_params)
+                #plt.text(0.7,0.8,fit_params,transform=ax.transAxes)
 
-            #plt.plot(xhist[:-1],yhist)
+                #plt.plot(xhist[:-1],yhist)
 
             x_bins2 = np.linspace(xmin, xmax, num_xbins*100) 
 
@@ -188,34 +215,29 @@ def plot_1dhist(x_data,vars,ranges="none",second_x=False,second_x_data=[],logger
 
             extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
             ax.legend([hist1, fit1, extra], ("Data","Fit",fit_params))
-            #ax.legend([hist1, fit1], ("Data","A+Bcos(2Phi)+Ccos(Phi)"))
-            #ax.legend(handles=[hist1, fit1])
+            # if np.square(popt[1]/np.mean(x_data)-1) > 0.01:
+            #     print("FITTING FAILED, ERROR MESSAGE:")
+            #     ic(x0_key)
+            #     print("FIT PARAMETERS:")
+            #     print(popt,np.mean(x_data))
+            #     popt = [0,np.mean(x_data),np.std(x_data)]
+            #     pcov = [0,0,0]
 
-        #plt.xlim(0, 300)
+            #     fit_params = "$\mu$: {:2.4f} \n $\sigma$:{:2.4f} ".format(popt[1],np.sqrt(np.abs(popt[2])))
+            #     #print(fit_params)
+            #     #plt.text(0.7,0.8,fit_params,transform=ax.transAxes)
 
-        # plt.hist(x_data, density=False)
-        # #plt.xlim((min(arr), max(arr)))
+            #     #plt.plot(xhist[:-1],yhist)
 
-        # mu = np.mean(x_data)
-        # variance = np.var(x_data)
-        # sigma = np.sqrt(variance)
-        # x = np.linspace(min(x_data), max(x_data), 100)
-        # plt.plot(x,  norm.pdf(x, mu, sigma))#* np.sum(np.diff(x) * 100))
-        
-        #                         from scipy.stats import norm
+            #     x_bins2 = np.linspace(xmin, xmax, num_xbins*100) 
 
-        #                 x_data = df_sample[ex_vars[ex_cuts_names.index(x0_key)]]
+            #     fit1, = ax.plot(x_bins2, gaussian(x_bins2, *popt), 'r', label='fit')
 
-        #                 _, bins, _ = plt.hist(x_data, 100, density=0,alpha=0.5)
+            #     extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+            #     ax.legend([hist1, fit1, extra], ("Data","Fit",fit_params))
 
-        #                 output_dir = "./"
-        #                 ranges = ex_cuts_ranges[xind]
 
-        #                 mu, sigma = norm.fit(x_data)
-        #                 best_fit_line = norm.pdf(bins, mu, sigma)
-
-        #                 print(mu,sigma)
-        #plt.tight_layout()  
+            #print(popt)
 
         if logger:
             plt.yscale('log')

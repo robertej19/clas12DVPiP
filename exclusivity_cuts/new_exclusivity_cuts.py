@@ -6,49 +6,54 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-def fit_function(x, A, beta, B, mu, sigma):
-        return (A * np.exp(-x/beta) + B * np.exp(-1.0 * (x - mu)**2 / (2 * sigma**2)))
+# def fit_function(x, A, beta, B, mu, sigma):
+#         return (A * np.exp(-x/beta) + B * np.exp(-1.0 * (x - mu)**2 / (2 * sigma**2)))
 
 
-def fit_distribution():
+# def fit_distribution():
 
         
-        # 3.) Generate exponential and gaussian data and histograms.
-        data = np.random.exponential(scale=2.0, size=100000)
-        data2 = np.random.normal(loc=3.0, scale=0.3, size=15000)
-        bins = np.linspace(0, 6, 61)
-        data_entries_1, bins_1 = np.histogram(data, bins=bins)
-        data_entries_2, bins_2 = np.histogram(data2, bins=bins)
+#         # 3.) Generate exponential and gaussian data and histograms.
+#         data = np.random.exponential(scale=2.0, size=100000)
+#         data2 = np.random.normal(loc=3.0, scale=0.3, size=15000)
+#         bins = np.linspace(0, 6, 61)
+#         data_entries_1, bins_1 = np.histogram(data, bins=bins)
+#         data_entries_2, bins_2 = np.histogram(data2, bins=bins)
 
-        # 4.) Add histograms of exponential and gaussian data.
-        data_entries = data_entries_1 + data_entries_2
-        binscenters = np.array([0.5 * (bins[i] + bins[i+1]) for i in range(len(bins)-1)])
+#         # 4.) Add histograms of exponential and gaussian data.
+#         data_entries = data_entries_1 + data_entries_2
+#         binscenters = np.array([0.5 * (bins[i] + bins[i+1]) for i in range(len(bins)-1)])
 
-        # 5.) Fit the function to the histogram data.
-        popt, pcov = curve_fit(fit_function, xdata=binscenters, ydata=data_entries, p0=[20000, 2.0, 2000, 3.0, 0.3])
-        print(popt)
+#         # 5.) Fit the function to the histogram data.
+#         popt, pcov = curve_fit(fit_function, xdata=binscenters, ydata=data_entries, p0=[20000, 2.0, 2000, 3.0, 0.3])
+#         print(popt)
 
-        # 6.)
-        # Generate enough x values to make the curves look smooth.
-        xspace = np.linspace(0, 6, 100000)
+#         # 6.)
+#         # Generate enough x values to make the curves look smooth.
+#         xspace = np.linspace(0, 6, 100000)
 
-        # Plot the histogram and the fitted function.
-        plt.bar(binscenters, data_entries, width=bins[1] - bins[0], color='navy', label=r'Histogram entries')
-        plt.plot(xspace, fit_function(xspace, *popt), color='darkorange', linewidth=2.5, label=r'Fitted function')
+#         # Plot the histogram and the fitted function.
+#         plt.bar(binscenters, data_entries, width=bins[1] - bins[0], color='navy', label=r'Histogram entries')
+#         plt.plot(xspace, fit_function(xspace, *popt), color='darkorange', linewidth=2.5, label=r'Fitted function')
 
-        # Make the plot nicer.
-        plt.xlim(0,6)
-        plt.xlabel(r'x axis')
-        plt.ylabel(r'Number of entries')
-        plt.title(r'Exponential decay with gaussian peak')
-        plt.legend(loc='best')
-        plt.show()
-        plt.clf()
+#         # Make the plot nicer.
+#         plt.xlim(0,6)
+#         plt.xlabel(r'x axis')
+#         plt.ylabel(r'Number of entries')
+#         plt.title(r'Exponential decay with gaussian peak')
+#         plt.legend(loc='best')
+#         plt.show()
+#         plt.clf()
 
 
-def makeDVpi0P(df_epgg, df_ex_cut_ranges, sigma_multiplier):
+def makeDVpi0P(df_epgg, sigma_multiplier, unique_identifyer="", datafilename="temporary_exclusivity_variances_"):
 
         #Variables listing:
+
+        df_ex_cut_ranges = pd.read_pickle(datafilename+unique_identifyer+".pkl")
+
+        print(" THE EXCLUSIVITY CUT RANGES ARE: ", df_ex_cut_ranges)
+        print(" SIGMA MULTIPLIER IS: ", sigma_multiplier)
 
         ex_vars = ["Mpi0",
                 "reconPi",
@@ -152,8 +157,12 @@ def makeDVpi0P(df_epgg, df_ex_cut_ranges, sigma_multiplier):
         print(len(df_dvpi0))
         return df_dvpi0
 
-def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,datafilename="temporary_exclusivity_variances.pkl"):
+def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="All",
+                        photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,
+                        datafilename="temporary_exclusivity_variances_",
+                        unique_identifyer=""):
 
+        print(" UNIQUE IDENTIFYER IS: ", unique_identifyer)
         #Variables listing:
         print(len(df_epgg))
         df_out = df_epgg.head(1000000)
@@ -257,6 +266,14 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
                  [-0.2,2.0,100],
                  [-1,1,100]]
 
+        # ex_cuts_ranges = ["none",
+        #         "none",
+        #         "none",
+        #         "none",
+        #         "none",
+        #         "none",
+        #         "none"]
+
         ex_cuts2 = [cut_Mpi0]
 
         var_names = []
@@ -329,7 +346,7 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
         df.loc[:,"mu-4sigma"] = df.loc[:,"mu"] - 4*df.loc[:,"sigma"]
 
         print(df)
-        df.to_pickle(datafilename)
+        df.to_pickle(datafilename+unique_identifyer+".pkl")
 
         return df
 

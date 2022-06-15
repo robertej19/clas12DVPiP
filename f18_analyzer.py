@@ -35,12 +35,105 @@ mp = 0.938 #Mass proton
 prefix = alpha/(8*np.pi)
 E = 10.6
 
-print("Hi mom")
 
 a = 8
 b = 338
 
-print(a+b)
+
+
+
+# df2 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_2.pkl")
+# df3 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_3.pkl")
+# df4 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_4.pkl")
+
+
+df2 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_2.pkl")
+df3 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_3.pkl")
+df4 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_4.pkl")
+
+
+qmin = 2.0
+xmin = 0.2
+tmin = 0.4
+
+df = df2.query("qmin=={} and xmin=={} and tmin=={}".format(qmin,xmin,tmin))
+df33 = df3.query("qmin=={} and xmin=={} and tmin=={}".format(qmin,xmin,tmin))
+df44 = df4.query("qmin=={} and xmin=={} and tmin=={}".format(qmin,xmin,tmin))
+
+
+#for col in df.columns:
+#    print(col)
+#sys.exit()
+
+plt.rcParams["font.size"] = "20"
+
+binscenters = df["pave_exp"]
+data_entries = df["xsec_corr_red_nb"]
+sigma = df["uncert_xsec_corr_red_nb"]
+
+fig, ax = plt.subplots(figsize =(14, 10)) 
+
+#plt.errorbar(binscenters, data_entries, yerr=sigma, color="red",fmt="o",label='CLAS6 Data')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_sf_binned_small['q'].values[0],df_sf_binned_small['x'].values[0],df_sf_binned_small['t'].values[0]))
+
+plt.errorbar(binscenters, data_entries, yerr=sigma, color="blue",fmt="x",label='tight cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+plt.errorbar(binscenters, df33["xsec_corr_red_nb"], yerr=df33["uncert_xsec_corr_red_nb"], color="red",fmt="x",label='nominal cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+plt.errorbar(binscenters, df44["xsec_corr_red_nb"], yerr=df44["uncert_xsec_corr_red_nb"], color="green",fmt="x",label='loose cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+
+plt.title("Cross Section, Outbending, Q2 = 2.25, xB = 0.34, t = 0.34")
+plt.xlabel("Phi")
+plt.ylabel("Cross Section (nb)")
+
+
+plt.legend()
+plt.ylim([0,40])
+
+
+df2 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_2.pkl")
+df3 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_3.pkl")
+df4 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_4.pkl")
+
+
+
+
+
+
+df = df2.query("qmin=={} and xmin=={} and tmin=={}".format(qmin,xmin,tmin))
+df33 = df3.query("qmin=={} and xmin=={} and tmin=={}".format(qmin,xmin,tmin))
+df44 = df4.query("qmin=={} and xmin=={} and tmin=={}".format(qmin,xmin,tmin))
+
+
+#for col in df.columns:
+#    print(col)
+#sys.exit()
+
+plt.rcParams["font.size"] = "20"
+
+binscenters = df["pave_exp"]
+data_entries = df["xsec_corr_red_nb"]
+sigma = df["uncert_xsec_corr_red_nb"]
+
+
+#plt.errorbar(binscenters, data_entries, yerr=sigma, color="red",fmt="o",label='CLAS6 Data')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_sf_binned_small['q'].values[0],df_sf_binned_small['x'].values[0],df_sf_binned_small['t'].values[0]))
+
+plt.errorbar(binscenters, data_entries, yerr=sigma, color="black",fmt="x",label='tight cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+plt.errorbar(binscenters, df33["xsec_corr_red_nb"], yerr=df33["uncert_xsec_corr_red_nb"], color="yellow",fmt="x",label='nominal cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+plt.errorbar(binscenters, df44["xsec_corr_red_nb"], yerr=df44["uncert_xsec_corr_red_nb"], color="purple",fmt="x",label='loose cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+
+plt.title("Cross Section, Outbending, Q2 = {}, xB = {}, t = {}".format(qmin,xmin,tmin))
+plt.xlabel("Phi")
+plt.ylabel("Cross Section (nb)")
+
+
+plt.legend()
+
+
+
+#plt.plot(df["phi"],df[""])
+
+plt.show()
+print(df)
+
+
 
 sys.exit()
 
