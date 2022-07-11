@@ -94,54 +94,6 @@ def bin_df(df_in,df_type="real"):
     return df_minibin
 
 
-def bin_df_fast(df,df_type="real"):
-    prefix = "Gen" if df_type=="Gen" else ""
-
-
-    df_np = df[["{}Q2".format(prefix),"{}xB".format(prefix),"{}t1".format(prefix),"{}phi1".format(prefix)]].copy().to_numpy()
-
-    num_cols = df_np.shape[1]
-    blank_bin_edges = [-1000,1000]
-    initalized_bin_edges = [blank_bin_edges]*num_cols
-
-
-    q2_bin_edges,xb_bin_edges, t1_bin_edges, phi1_bin_edges = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
-
-
-
-    initalized_bin_edges[0] = q2_bin_edges
-    initalized_bin_edges[1] = xb_bin_edges
-    initalized_bin_edges[2] = t1_bin_edges
-    initalized_bin_edges[3] = phi1_bin_edges
-
-
-
-
-    if prefix=="Gen":                               
-        total_num = df.query('GenQ2>{} and GenQ2<{} and GenxB>{} and GenxB<{} and Gent1>{} and Gent1<{}'.format(*qrange, *xBrange, *trange)).shape[0]
-    else:
-        total_num = df.query('Q2>{} and Q2<{} and xB>{} and xB<{} and t1>{} and t1<{}'.format(*qrange, *xBrange, *trange)).shape[0]
-
-                    
-
-    bin_values, edges = np.histogramdd(df_np, bins=initalized_bin_edges)#,weights=[0.9,0.1,0.1])
-
-
-
-    
-
-
-                    num_counts.append([qmin,xmin,tmin,pmin,qmax,xmax,tmax,pmax,mean_q2,mean_y,mean_xb,mean_t1,mean_phi,len(df_qxtp.index)])
-
-
-
-    df_minibin = pd.DataFrame(num_counts, columns = ['qmin','xmin','tmin','pmin','qmax','xmax','tmax','pmax','qave','yave','xave','tave','pave',prefix+'counts'])
-    print("Total number of binned events: {}".format(df_minibin[prefix+'counts'].sum()))
-    print("Total number of original events: {}".format(total_num))
-    return df_minibin
-
-    
-
 if __name__ == "__main__":
     df = pd.read_pickle("pickled_dvpip/f18_bkmrg_in_dvpp_rec_noseccut.pkl")
     df_binned = bin_df(df,df_type="real")

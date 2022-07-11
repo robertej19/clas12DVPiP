@@ -53,32 +53,55 @@ fig, ax = plt.subplots(figsize =(14, 10))
 
 df = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/pickled_dvpip/raw_data_f2018_inbending_20220113_dvpip_exp.pkl")
 
-df2 = df[["Q2","xB","Epy","Epx"]].copy()#.head(10)
+df2 = df[["Q2","xB","t1","phi1"]].copy().head(6)
 
 dfnp = df2.to_numpy()
+
+print(dfnp[:,1])
 
 
 print(dfnp.size)
 
 #Get number of columns
 num_cols = dfnp.shape[1]
-blank_bin_edges = [-1000,1000]
+blank_bin_edges = [-100,1000]
 q2_bin_edges = [1,2,3,40]
 xb_bin_edges = [0.1,0.3,0.6,0.9]
+t1_bin_edges = [0.1,0.3,0.6,9]
+phi1_bin_edges = [0,90,180,270,360]
 
 initalized = [blank_bin_edges]*num_cols
 
 initalized[0] = q2_bin_edges
 initalized[1] = xb_bin_edges
+initalized[2] = t1_bin_edges
+initalized[3] = phi1_bin_edges
 
-QQQ_bin_values, edges = np.histogramdd(dfnp, bins=initalized)
 
-print(df2)
-ic(QQQ_bin_values)
+number_of_counts_bin_values, edges = np.histogramdd(dfnp, bins=initalized)
+
+weighted_q2_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,0])
+weighted_xB_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,1])
+weighted_t1_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,2])
+weighted_phi1_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,3])
+
+
+q2_bin_averages = np.divide(weighted_q2_values,number_of_counts_bin_values)
+xb_bin_averages = np.divide(weighted_xB_values,number_of_counts_bin_values)
+t1_bin_averages = np.divide(weighted_t1_values,number_of_counts_bin_values)
+phi1_bin_averages = np.divide(weighted_phi1_values,number_of_counts_bin_values)
+
+
+
+ic(phi1_bin_averages)
 ic(edges)
 
-for q2_index,(q2_bin_min,q2_bin_max) in enumerate(zip(q2_bin_edges[0:-1],q2_bin_edges[1:])):
-    print("Q2 bin range of {} to {}".format(q2_bin_min,q2_bin_max))
-    for xb_index,(xb_bin_min,xb_bin_max) in enumerate(zip(xb_bin_edges[0:-1],xb_bin_edges[1:])):
-        print("XB bin range of {} to {}".format(xb_bin_min,xb_bin_max))
-        print(QQQ_bin_values[q2_index][xb_index])
+
+#    df_minibin = pd.DataFrame(num_counts, columns = ['qmin','xmin','tmin','pmin','qmax','xmax','tmax','pmax','qave','yave','xave','tave','pave',prefix+'counts'])
+
+
+# for q2_index,(q2_bin_min,q2_bin_max) in enumerate(zip(q2_bin_edges[0:-1],q2_bin_edges[1:])):
+#     print("Q2 bin range of {} to {}".format(q2_bin_min,q2_bin_max))
+#     for xb_index,(xb_bin_min,xb_bin_max) in enumerate(zip(xb_bin_edges[0:-1],xb_bin_edges[1:])):
+#         print("XB bin range of {} to {}".format(xb_bin_min,xb_bin_max))
+#         print(QQQ_bin_values[q2_index][xb_index])
