@@ -41,9 +41,9 @@ a = 8
 b = 338
 
 
-qmin = 2.0
-xmin = 0.2
-tmin = 0.4
+qmin = 4.0
+xmin = 0.3
+tmin = 0.6
 
 plt.rcParams["font.size"] = "20"
 
@@ -130,7 +130,7 @@ plt.errorbar(binscenters, data_entries, yerr=stat_sigma, color=incolor,fmt=".",l
 
 
 # plt.legend()
-plt.ylim([0,50])
+plt.ylim([0,10])
 
 
 df2 = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_new_simple_excuts_with_rangeexcut_sigma_2.pkl")
@@ -172,9 +172,9 @@ plt.errorbar(binscenters, data_entries, yerr=stat_sigma, color=outcolor,fmt="^",
 # plt.errorbar(binscenters, df44["xsec_corr_red_nb"], yerr=df44["uncert_xsec_corr_red_nb"], color="purple",fmt="x",label='loose cuts')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
 
 
-qmina = 2.25
-xmina = 0.23
-tmina = 0.5
+qmina = 4.25
+xmina = 0.34
+tmina = 0.8
 
 plt.title("Cross Section, In&Outbending, Q2 = {}, xB = {}, t = {}".format(qmina,xmina,tmina))
 plt.xlabel("Phi")
