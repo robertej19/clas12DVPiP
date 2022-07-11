@@ -53,19 +53,19 @@ fig, ax = plt.subplots(figsize =(14, 10))
 
 df = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/pickled_dvpip/raw_data_f2018_inbending_20220113_dvpip_exp.pkl")
 
-df2 = df[["Q2","xB","t1","phi1"]].copy().head(6)
+#df2 = df[["Q2","xB","t1","phi1"]].copy().head(6)
+df2 = df[["Q2","xB"]].copy().head(6)
 
 dfnp = df2.to_numpy()
 
-print(dfnp[:,1])
 
 
-print(dfnp.size)
+print(dfnp)
 
 #Get number of columns
 num_cols = dfnp.shape[1]
 blank_bin_edges = [-100,1000]
-q2_bin_edges = [1,2,3,40]
+q2_bin_edges = [2,3,4,50]
 xb_bin_edges = [0.1,0.3,0.6,0.9]
 t1_bin_edges = [0.1,0.3,0.6,9]
 phi1_bin_edges = [0,90,180,270,360]
@@ -74,29 +74,51 @@ initalized = [blank_bin_edges]*num_cols
 
 initalized[0] = q2_bin_edges
 initalized[1] = xb_bin_edges
-initalized[2] = t1_bin_edges
-initalized[3] = phi1_bin_edges
+#initalized[2] = t1_bin_edges
+#initalized[3] = phi1_bin_edges
 
 
 number_of_counts_bin_values, edges = np.histogramdd(dfnp, bins=initalized)
 
 weighted_q2_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,0])
 weighted_xB_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,1])
-weighted_t1_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,2])
-weighted_phi1_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,3])
+#weighted_t1_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,2])
+#weighted_phi1_values, edges = np.histogramdd(dfnp, bins=initalized,weights=dfnp[:,3])
 
 
 q2_bin_averages = np.divide(weighted_q2_values,number_of_counts_bin_values)
 xb_bin_averages = np.divide(weighted_xB_values,number_of_counts_bin_values)
-t1_bin_averages = np.divide(weighted_t1_values,number_of_counts_bin_values)
-phi1_bin_averages = np.divide(weighted_phi1_values,number_of_counts_bin_values)
+#t1_bin_averages = np.divide(weighted_t1_values,number_of_counts_bin_values)
+#phi1_bin_averages = np.divide(weighted_phi1_values,number_of_counts_bin_values)
 
 
 
-ic(phi1_bin_averages)
+ic(q2_bin_averages)
+ic(xb_bin_averages)
+
+ic(number_of_counts_bin_values)
 ic(edges)
 
+q2_arr = q2_bin_averages.reshape(q2_bin_averages.shape[0]*q2_bin_averages.shape[1],1)
+xb_arr = xb_bin_averages.reshape(xb_bin_averages.shape[0]*xb_bin_averages.shape[1],1)
 
+print(q2_arr)
+print(xb_arr)
+
+
+q2_min = edges[0][:-1]
+q2_max = edges[0][1:]
+xb_min = edges[1][:-1]
+xb_max = edges[1][1:]
+
+print(q2_min)
+print(q2_max)
+print(xb_min)
+print(xb_max)
+#print(edges)
+
+all = np.meshgrid(q2_min,q2_max)#,xb_min,xb_max)
+print(all)
 #    df_minibin = pd.DataFrame(num_counts, columns = ['qmin','xmin','tmin','pmin','qmax','xmax','tmax','pmax','qave','yave','xave','tave','pave',prefix+'counts'])
 
 
