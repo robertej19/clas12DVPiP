@@ -50,7 +50,9 @@ def makeDVpi0P(df_epgg, sigma_multiplier, unique_identifyer="", datafilename="te
 
         #Variables listing:
 
-        df_ex_cut_ranges = pd.read_pickle(datafilename+unique_identifyer+".pkl")
+        #df_ex_cut_ranges = pd.read_pickle(datafilename+unique_identifyer+".pkl")
+        df_ex_cut_ranges = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/pickled_data/20220511_f18_in_combined_157_table_of_ex_cut_testing_new_binning_mechanism_old_scheme.pkl")
+
 
         print(" THE EXCLUSIVITY CUT RANGES ARE: ", df_ex_cut_ranges)
         print(" SIGMA MULTIPLIER IS: ", sigma_multiplier)

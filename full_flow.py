@@ -6,7 +6,7 @@ import itertools
 import os, sys
 from icecream import ic
 import matplotlib
-#matplotlib.use('Agg') 
+matplotlib.use('Agg') 
 
 
 import matplotlib.pyplot as plt
@@ -546,6 +546,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
         if bin_gen:
             df_dvpip_gen = pd.read_pickle("{}/{}_dvpip_gen.pkl".format(datafile_base_dir+dvpip_data_dir,gen_file_base))
 
+            print("BINNING GENERATED EVENTS")
             df_gen_binned = bin_df(df_dvpip_gen, "Gen")
             df_gen_binned.to_pickle(datafile_base_dir+binned_data_dir + gen_file_base+"_binned"+".pkl")
             df_gen = df_gen_binned
@@ -987,8 +988,12 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
                     query = "qmin == {} and xmin == {} and tmin == {}".format(qmin,xmin,tmin)
 
+                    ic(query)
+
                     df_small = df.query(query)
 
+                    ic(df_small)
+                    
                     df_check = df_small[df_small["xsec_corr_nb_gamma"].notnull()]
 
                     if  df_check.empty or df_small[df_small["xsec_corr_nb_gamma"].notnull()].shape[0]<3:
@@ -1309,7 +1314,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
 if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
-    run_name = "rad_f18_new_simple_excuts_with_range"
+    run_name = "testing_new_binning_mechanism_small_bins_old_scheme"
 
 
 
@@ -1343,7 +1348,7 @@ if __name__ == "__main__":
                                         simple_exclusivity_cuts=False,
                                         emergency_stop = 0,
                                         comp_2_config=False,
-                                        gen_ex_cut_table=True,
+                                        gen_ex_cut_table=False,
                                         sigma_multiplier=sigma_multiplier)
 
 
