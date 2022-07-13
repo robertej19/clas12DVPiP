@@ -988,11 +988,11 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
                     query = "qmin == {} and xmin == {} and tmin == {}".format(qmin,xmin,tmin)
 
-                    ic(query)
+                    #ic(query)
 
                     df_small = df.query(query)
 
-                    ic(df_small)
+                    #ic(df_small)
                     
                     df_check = df_small[df_small["xsec_corr_nb_gamma"].notnull()]
 
@@ -1314,7 +1314,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
 if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
-    run_name = "testing_new_binning_mechanism_small_bins_old_scheme"
+    run_name = "testing_new_binning_mechanism_small_bins"
 
 
 

@@ -30,12 +30,13 @@ def bin_df_fast(df,df_type="real"):
 
 
     df2 = df[["Q2","xB","t1","phi1","y"]].copy().head(6)
+    print(df2)
+
 
     dfnp = df2.to_numpy()
 
 
 
-    print(dfnp)
 
     #Get number of columns
     num_cols = dfnp.shape[1]
@@ -87,25 +88,17 @@ def bin_df_fast(df,df_type="real"):
     num_of_binning_vars = 4
 
 
-    all_min = np.array(np.meshgrid(q2_min,xb_min,t1_min,phi1_min)).T.reshape(-1,num_of_binning_vars)
-    all_max = np.array(np.meshgrid(q2_max,xb_max,t1_max,phi1_max)).T.reshape(-1,num_of_binning_vars)
-
-
-    print("PRINTING ALL")
-
+    #The ordering is important and non - obvious
+    all_min = np.array(np.meshgrid(t1_min,phi1_min,xb_min,q2_min)).T.reshape(-1,num_of_binning_vars)
+    all_max = np.array(np.meshgrid(t1_max,phi1_max,xb_max,q2_max)).T.reshape(-1,num_of_binning_vars)
     all_together_now = np.concatenate((all_min, all_max), axis=1)
 
-    print(all_together_now.shape)
-    print(xb_bin_averages.shape)
 
-    all_together_now1 = np.concatenate((all_together_now, q2_bin_averages, y_bin_averages,xb_bin_averages, t1_bin_averages, phi1_bin_averages,number_of_counts_bin_values_reshaped), axis=1)
+    all_together_now1 = np.concatenate((all_together_now,   t1_bin_averages, phi1_bin_averages,xb_bin_averages, q2_bin_averages, y_bin_averages,number_of_counts_bin_values_reshaped), axis=1)
 
-    print(all_together_now1)
-    print(all_together_now1.shape)
 
-    print(number_of_counts_bin_values_reshaped)
-
-    df_minibin = pd.DataFrame(all_together_now1, columns = ['qmin','xmin','tmin','pmin','qmax','xmax','tmax','pmax','qave','yave','xave','tave','pave',str(prefix)+'counts'])
+    # df_minibin = pd.DataFrame(all_together_now1, columns = ['qmin','xmin','tmin','pmin','qmax','xmax','tmax','pmax','qave','yave','xave','tave','pave',str(prefix)+'counts'])
+    df_minibin = pd.DataFrame(all_together_now1, columns = ['tmin','pmin','xmin','qmin','tmax','pmax','xmax','qmax','tave','pave','xave','qave','yave',str(prefix)+'counts'])
 
     print(df_minibin)
 
@@ -125,5 +118,4 @@ def bin_df_fast(df,df_type="real"):
 
 
 df = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/pickled_dvpip/raw_data_f2018_inbending_20220113_dvpip_exp.pkl")
-
 bin_df_fast(df)
