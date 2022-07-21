@@ -250,17 +250,20 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                 simple_exclusivity_cuts=False,
                 plot_reduced_xsec_and_fit_c12_only=0,
                 comp_2_config=False,
+                comp_2_config_combine_t=False,
                 gen_ex_cut_table=False,
                 sigma_multiplier=3):
 
 
-    run_identifiyer = mag_config+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer+"excut_sigma_{}".format(sigma_multiplier)
+    run_identifiyer = mag_config+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer+"_excut_sigma_{}".format(sigma_multiplier)
     inb_run_id = "inbending"+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
     outb_run_id = "outbending"+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
 
     datafile_base_dir = "/mnt/d/GLOBUS/CLAS12/APS2022/"
     roots_dir = "raw_roots/"
     raw_data_dir = "pickled_data/"
+
+    exclusivity_cut_tables_dir = "exclusivity_cut_limits/"
 
     dvpip_data_dir = "pickled_dvpip/"
     binned_data_dir = "binned_dvpip/"
@@ -287,8 +290,8 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
     exp_common_name = "fall 2018 {} exp {}".format(mag_config,unique_identifyer)
     rec_common_name = "sim rec {} {} {}".format(mag_config,generator_type,unique_identifyer)
 
-    df_final_config_1 = datafile_base_dir+final_xsec_dir + "full_xsection_"+outb_run_id+".pkl"
-    df_final_config_2  = datafile_base_dir+final_xsec_dir + "full_xsection_"+inb_run_id+".pkl"
+    df_final_config_1 = datafile_base_dir+final_xsec_dir + "full_xsection_"+outb_run_id+"_excut_sigma_{}".format(sigma_multiplier)+".pkl"
+    df_final_config_2  = datafile_base_dir+final_xsec_dir + "full_xsection_"+inb_run_id+"_excut_sigma_{}".format(sigma_multiplier)+".pkl"
 
     if not convert_roots:
         convert_root_exp = False
@@ -443,7 +446,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
         #WORK HERE!!!
             if gen_ex_cut_table:
                 print("CALCULATING EXCLUSIVE CUT TABLE for {}".format(datafile_base_dir+raw_data_dir+exp_file_base))
-                calc_ex_cut_mu_sigma(df_exp_epgg,datafilename=datafile_base_dir+raw_data_dir+exp_file_base+"_table_of_ex_cut_",unique_identifyer=unique_identifyer)
+                calc_ex_cut_mu_sigma(df_exp_epgg,datafilename=datafile_base_dir+exclusivity_cut_tables_dir+exp_file_base+"_table_of_ex_cut_",unique_identifyer=unique_identifyer)
             #df_ex_cut_ranges = pd.read_pickle(datafile_base_dir+raw_data_dir+exp_file_base+"_table_of_ex_cut"+".pkl",unique_identifyer=unique_identifyer)
             
             print("CALCULATING EXCLUSIVE CUTS exp for {} with sigma {}".format(datafile_base_dir+raw_data_dir+exp_file_base,sigma_multiplier))
@@ -1088,6 +1091,209 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         plt.close()
 
 
+
+    if comp_2_config_combine_t:
+
+        def resid(pars):
+            return ((y-fit_function(x,pars))**2).sum()
+
+        def resid_weighted(pars):
+            return (((y-fit_function(x,pars))**2)/sigma).sum()
+
+        def fit_function(phi,A,B,C):
+            #A + B*np.cos(2*phi) +C*np.cos(phi)
+            rads = phi*np.pi/180
+            #return (A * np.exp(-x/beta) + B * np.exp(-1.0 * (x - mu)**2 / (2 * sigma**2)))
+            #A = T+L, B=TT, C=LT
+            #A = black, B=blue, C=red
+            return A + B*np.cos(2*rads) + C*np.cos(rads)
+
+        xmax = 360
+        xspace = np.linspace(0, xmax, 1000)
+
+
+
+        df = pd.read_pickle(df_final_config_1)
+        df2 = pd.read_pickle(df_final_config_2)
+
+                                            
+
+
+        df.loc[:,"xsec_corr_nb_gamma"] = df["xsec_corr"]*1E33/df["gamma_exp"]
+        df.loc[:,"uncert_xsec_corr_nb_gamma"] = np.sqrt(  np.square(df["uncert_xsec"]/df["xsec"]) + np.square(df["uncert_acc_corr"]/df["acc_corr"]))*df["xsec_corr_nb_gamma"]
+        df.loc[:,"c_12_uncert_ratio"] = df['uncert_xsec_corr_nb_gamma']/df['xsec_corr_nb_gamma']
+        df.loc[(df.acc_corr < 0.01),'xsec_corr_nb_gamma']=np.nan
+        df.loc[(df.xsec_corr_nb_gamma > 1E9),'xsec_corr_nb_gamma']=np.nan
+
+
+
+        df2.loc[:,"xsec_corr_nb_gamma"] = df2["xsec_corr"]*1E33/df2["gamma_exp"]
+        df2.loc[:,"uncert_xsec_corr_nb_gamma"] = np.sqrt(  np.square(df2["uncert_xsec"]/df2["xsec"]) + np.square(df2["uncert_acc_corr"]/df2["acc_corr"]))*df2["xsec_corr_nb_gamma"]
+        df2.loc[:,"c_12_uncert_ratio"] = df2['uncert_xsec_corr_nb_gamma']/df2['xsec_corr_nb_gamma']
+        df2.loc[(df2.acc_corr < 0.01),'xsec_corr_nb_gamma']=np.nan
+        df2.loc[(df2.xsec_corr_nb_gamma > 1E9),'xsec_corr_nb_gamma']=np.nan
+
+
+
+
+        q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
+
+        qrange = [q2bins[0], q2bins[-1]]
+        xBrange = [xBbins[0], xBbins[-1]]
+        trange = [tbins[0], tbins[-1]]
+
+        t_colors = ["red","salmon","orange","green","dodgerblue","blue","purple","black","grey"]
+
+
+        sf_data_vals = []
+
+        reduced_plot_dir = datafile_base_dir+reduced_xsection_plots_dir+run_identifiyer+"comparison/"
+        print("SAVING PLOTS TO {}".format(reduced_plot_dir))
+        if not os.path.exists(reduced_plot_dir):
+            os.makedirs(reduced_plot_dir)
+
+        for qindex, (qmin,qmax) in enumerate(zip(q2bins[0:-1],q2bins[1:])):
+            print(" \n Q2 bin: {} to {}".format(qmin,qmax))
+            #print(" Q INDEX: {}".format(qindex))
+            for xindex, (xmin,xmax) in enumerate(zip(xBbins[0:-1],xBbins[1:])):
+                qindex_str = str(qindex) if qindex > 9 else "0" + str(qindex)
+                xindex_str = str(xindex) if xindex > 9 else "0" + str(xindex)
+
+                query0 = "qmin == {} and xmin == {}".format(qmin,xmin)
+
+                check_fail = 0
+
+                plt.rcParams["font.size"] = "20"
+
+                fig, ax = plt.subplots(figsize =(14, 10)) 
+
+                for df_X in [df,df2]:
+                    df_small_X = df_X.query(query0)
+    
+                    df_check0_X = df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()]
+
+                    if  df_check0_X.empty or df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()].shape[0]<3:
+                        check_fail += 1
+
+                    else:
+                    
+                        
+
+                        for tindex, (tmin,tmax) in enumerate(zip(tbins[0:-1],tbins[1:])):
+    
+                            tindex_str = str(tindex) if tindex > 9 else "0" + str(tindex)
+
+                            query = "qmin == {} and xmin == {} and tmin == {}".format(qmin,xmin,tmin)
+
+                            df_small =df_X.query(query)
+
+                            df_check = df_small[df_small["xsec_corr_nb_gamma"].notnull()]
+
+                            if  df_check.empty or df_small[df_small["xsec_corr_nb_gamma"].notnull()].shape[0]<3:
+                                pass
+                            else:
+
+                                epsi_mean_c12 = df_small["epsi_exp"].mean()
+                                mean_xsec_uncer_ratio_c12 = df_small['c_12_uncert_ratio'].mean()
+                                
+                                binscenters_c12 = df_small["pave_exp"]
+                                data_entries_c12 = df_small["xsec_corr_nb_gamma"]
+                                sigma_c12 = df_small["uncert_xsec_corr_nb_gamma"]
+
+                                def resid_weighted_c12(pars):
+                                    return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
+
+                                def resid_weighted_c12_2(pars):
+                                    return (((y-fit_function(x,pars))**2)/sigma_c12_2).sum()
+
+                                def constr0(pars):
+                                    return fit_function(0,pars)
+                                
+                                def constr180(pars):
+                                    return fit_function(180,pars)
+
+                                con1 = {'type': 'ineq', 'fun': constr0}
+                                con2 = {'type': 'ineq', 'fun': constr180}
+                                # con3 = {'type': 'ineq', 'fun': constr270}
+                                cons = [con1,con2]
+
+                                x = binscenters_c12
+                                y = data_entries_c12
+                                valid = ~(np.isnan(x) | np.isnan(y))
+
+                                popt_0, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[100,-60,-11],
+                                    sigma=sigma_c12[valid], absolute_sigma=True)
+
+                                popt, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[popt_0[0],popt_0[1],popt_0[2]],
+                                            sigma=sigma_c12[valid], absolute_sigma=True)
+
+                                a,b,c = popt[0],popt[1],popt[2]
+                                
+                                a_err = np.sqrt(pcov[0][0])#*qmod
+                                b_err = np.sqrt(pcov[1][1])#*qmod
+                                c_err = np.sqrt(pcov[2][2])#*qmod
+
+                                ###A +    Bcos(2x) + Ccos(x)
+                                ###TEL +   ep*TT   + sqr*LT
+
+                                a_c12,b_c12,c_c12 = a,b,c 
+
+                                tel_c12 = a_c12*6.28
+                                tt_c12 = b_c12/epsi_mean_c12*6.28
+                                lt_c12 = c_c12/np.sqrt(2*epsi_mean_c12*(1+epsi_mean_c12))*6.28
+
+                                tel_c12_err = tel_c12*a_err/a
+                                tt_c12_err = tt_c12*b_err/b
+                                lt_c12_err = lt_c12*c_err/c
+
+                                fit_y_data_weighted_new_c12 = fit_function(xspace, a_c12,b_c12,c_c12)
+
+                                q_mean_c12 = df_small['qave_exp'].mean()
+                                x_mean_c12 = df_small['xave_exp'].mean()
+                                t_mean_c12 = df_small['tave_exp'].mean()
+
+                                print("plotting tindex = ",tindex)
+                                plt.errorbar(binscenters_c12, data_entries_c12, yerr=sigma_c12, color=t_colors[tindex],fmt="x",label='Outb. {}'.format(tindex))#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+
+                                plt.rcParams["font.size"] = "20"
+
+                                fit4, = plt.plot(xspace, fit_y_data_weighted_new_c12, t_colors[tindex], linewidth=2.5)#, label='CLAS12 Fit')     
+                                #plt.show()
+                                plt.ylim([0.5,100])
+                                plt.yscale('log')
+
+                                ax.set_xlabel("Phi")  
+                                ax.set_ylabel('Reduced Cross Section (nb/GeV$^2$)')  
+                                title = "Reduced Cross Section Fit Over Phi"
+                                plt.title(title)
+                        #plt.show()
+
+                    if check_fail > 1:
+                        fig, ax = plt.subplots(figsize =(14, 10)) 
+                        ana_title = "q{}_x{}".format(qindex_str,xindex_str)
+                        ana_dir = "/t_combined_with_fit/"
+                        if not os.path.exists(reduced_plot_dir+ana_dir):
+                            os.makedirs(reduced_plot_dir+ana_dir)
+                        title = "empty"
+
+                        plt.savefig(reduced_plot_dir+ana_dir+ana_title+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png")
+                        #print("fig saved to: {}".format(reduced_plot_dir+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png"))
+                        plt.close()
+
+                    else:
+
+                        ana_title = "q{}_x{}".format(qindex_str,xindex_str)
+                        ana_dir = "/t_combined_with_fit/"
+                        if not os.path.exists(reduced_plot_dir+ana_dir):
+                            os.makedirs(reduced_plot_dir+ana_dir)
+
+
+                        plt.savefig(reduced_plot_dir+ana_dir+ana_title+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png")
+                        #print("fig saved to: {}".format(reduced_plot_dir+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png"))
+                        plt.close()
+
+
+
     if comp_2_config:
 
         def resid(pars):
@@ -1142,13 +1348,19 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
         sf_data_vals = []
 
         reduced_plot_dir = datafile_base_dir+reduced_xsection_plots_dir+run_identifiyer+"comparison/"
+        print("SAVING PLOTS TO {}".format(reduced_plot_dir))
         if not os.path.exists(reduced_plot_dir):
             os.makedirs(reduced_plot_dir)
 
-        for qmin,qmax in zip(q2bins[0:-1],q2bins[1:]):
+        for qindex, (qmin,qmax) in enumerate(zip(q2bins[0:-1],q2bins[1:])):
             print(" \n Q2 bin: {} to {}".format(qmin,qmax))
-            for xmin,xmax in zip(xBbins[0:-1],xBbins[1:]):
-                for tmin,tmax in zip(tbins[0:-1],tbins[1:]):
+            #print(" Q INDEX: {}".format(qindex))
+            for xindex, (xmin,xmax) in enumerate(zip(xBbins[0:-1],xBbins[1:])):
+                for tindex, (tmin,tmax) in enumerate(zip(tbins[0:-1],tbins[1:])):
+
+                    qindex_str = str(qindex) if qindex > 9 else "0" + str(qindex)
+                    xindex_str = str(xindex) if xindex > 9 else "0" + str(xindex)
+                    tindex_str = str(tindex) if tindex > 9 else "0" + str(tindex)
 
                     query = "qmin == {} and xmin == {} and tmin == {}".format(qmin,xmin,tmin)
 
@@ -1161,7 +1373,17 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
 
                     if  df_check.empty or df2_check.empty or df_small[df_small["xsec_corr_nb_gamma"].notnull()].shape[0]<3 or df2_small[df2_small["xsec_corr_nb_gamma"].notnull()].shape[0]<3:
-                        pass
+                        fig, ax = plt.subplots(figsize =(14, 10)) 
+                        ana_title = "q{}_x{}".format(qindex_str,xindex_str)
+                        ana_dir = "/t_{}/".format(tindex_str)
+                        if not os.path.exists(reduced_plot_dir+ana_dir):
+                            os.makedirs(reduced_plot_dir+ana_dir)
+                        title = "empty"
+
+
+                        plt.savefig(reduced_plot_dir+ana_dir+ana_title+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png")
+                        #print("fig saved to: {}".format(reduced_plot_dir+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png"))
+                        plt.close()
                     else:
 
                         epsi_mean_c12 = df_small["epsi_exp"].mean()
@@ -1205,10 +1427,10 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         y_2 = data_entries_c12_2
                         valid_2 = ~(np.isnan(x_2) | np.isnan(y_2))
 
-                        print(x[valid])
-                        print(y[valid])
-                        print(x_2[valid_2])
-                        print(y_2[valid_2])
+                        #print(x[valid])
+                        #print(y[valid])
+                        #print(x_2[valid_2])
+                        #print(y_2[valid_2])
 
                         popt_0, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[100,-60,-11],
                             sigma=sigma_c12[valid], absolute_sigma=True)
@@ -1280,15 +1502,26 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         #fit4, = ax.plot(xspace, fit_y_data_weighted_new_c12, color='blue', linewidth=2.5, label='CLAS12 Fit: t+l:{:.0f} tt:{:.0f} lt:{:.0f}'.format(tel_c12,tt_c12,lt_c12))
                         fit4, = ax.plot(xspace, fit_y_data_weighted_new_c12, color='blue', linewidth=2.5)#, label='CLAS12 Fit')     
                         fit5, = ax.plot(xspace, fit_y_data_weighted_new_c12_2, color='red', linewidth=2.5)#, label='CLAS12 Fit')     
-                        
+                    
+                        plt.ylim([0.1,100])
+                        plt.yscale('log')
+
                         ax.legend(loc="best")
                         ax.set_xlabel("Phi")  
                         ax.set_ylabel('Reduced Cross Section (nb/GeV$^2$)')  
                         title = "Reduced Cross Section Fit Over Phi, Q$^2$ = {:.2f} ({:.2f}), x$_B$ = {:.2f} ({:.2f}), t = {:.1f} ({:.2f})".format(q_mean_c12,q_mean_c12_2,x_mean_c12,x_mean_c12_2,t_mean_c12,t_mean_c12_2)
                         plt.title(title)
 
-                        plt.savefig(reduced_plot_dir+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png")
 
+
+                        ana_title = "q{}_x{}".format(qindex_str,xindex_str)
+                        ana_dir = "/t_{}/".format(tindex_str)
+                        if not os.path.exists(reduced_plot_dir+ana_dir):
+                            os.makedirs(reduced_plot_dir+ana_dir)
+
+
+                        plt.savefig(reduced_plot_dir+ana_dir+ana_title+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png")
+                        #print("fig saved to: {}".format(reduced_plot_dir+title.replace("$","").replace(".","").replace("^","").replace(" ","").replace("=","").replace(",","_")+".png"))
                         plt.close()
 
 
@@ -1314,12 +1547,12 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
 if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
-    run_name = "testing_new_binning_mechanism_small_bins"
+    run_name = "varied_t_phi_bins_small_phi_bins"
 
 
 
-    if 1==1:
-        mag_configs = ["inbending"]#,"outbending"]
+    if 0==1:
+        mag_configs = ["outbending"]#,"outbending"]
         generator_type = "rad"
         proton_locs = ["All",]
         photon1_locs = ["All",]
@@ -1348,13 +1581,13 @@ if __name__ == "__main__":
                                         simple_exclusivity_cuts=False,
                                         emergency_stop = 0,
                                         comp_2_config=False,
-                                        gen_ex_cut_table=False,
+                                        gen_ex_cut_table=True,
                                         sigma_multiplier=sigma_multiplier)
 
 
 
 
-    if 0==1:
+    if 1==1:
         mag_configs = ["outbending"]
         generator_type = "rad"
         proton_locs = ["All",]
@@ -1380,7 +1613,8 @@ if __name__ == "__main__":
                                     simple_exclusivity_cuts=False,
                                     emergency_stop = 0,
                                     plot_reduced_xsec_and_fit_c12_only = 0,
-                                    comp_2_config=True)
+                                    comp_2_config=False,
+                                    comp_2_config_combine_t=True)
 
 
 

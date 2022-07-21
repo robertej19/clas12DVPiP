@@ -46,12 +46,16 @@ from scipy.optimize import curve_fit
 #         plt.clf()
 
 
-def makeDVpi0P(df_epgg, sigma_multiplier, unique_identifyer="", datafilename="temporary_exclusivity_variances_"):
+def makeDVpi0P(df_epgg, sigma_multiplier, unique_identifyer="", datafilename="temporary_exclusivity_variances_",use_generic_cuts=True):
 
         #Variables listing:
 
-        #df_ex_cut_ranges = pd.read_pickle(datafilename+unique_identifyer+".pkl")
-        df_ex_cut_ranges = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/pickled_data/20220511_f18_in_combined_157_table_of_ex_cut_testing_new_binning_mechanism_old_scheme.pkl")
+        if use_generic_cuts:
+                df_ex_cut_ranges = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/APS2022/pickled_data/20220511_f18_in_combined_157_table_of_ex_cut_testing_new_binning_mechanism_old_scheme.pkl")
+        else:
+                df_ex_cut_ranges = pd.read_pickle(datafilename+unique_identifyer+".csv")
+
+
 
 
         print(" THE EXCLUSIVITY CUT RANGES ARE: ", df_ex_cut_ranges)
@@ -348,16 +352,18 @@ def calc_ex_cut_mu_sigma(df_epgg, pol = "inbending",data_type="exp",proton_loc="
         df.loc[:,"mu-4sigma"] = df.loc[:,"mu"] - 4*df.loc[:,"sigma"]
 
         print(df)
-        df.to_pickle(datafilename+unique_identifyer+".pkl")
+        df.to_csv(datafilename+unique_identifyer+".csv")
+        #exclusivity_cut_limits
 
         return df
 
 if __name__ == "__main__":
     #test_df = pd.read_pickle("test_df_epgg.pkl")
-    test_df = pd.read_pickle("temp_df_file_outbend.pkl")
+    test_df = pd.read_pickle("test_files/temp_df_file_outbend.pkl")
     #print(test_df)
     df_dvpi0p_exp = calc_ex_cut_mu_sigma(test_df)
 
+        
 #    test_ranges = pd.read_pickle("temporary_exclusivity_variances.pkl")
 
  #   makeDVpi0P(test_df,test_ranges,4)
