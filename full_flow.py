@@ -1095,10 +1095,10 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
     if comp_2_config_combine_t:
 
         def resid(pars):
-            return ((y-fit_function(x,pars))**2).sum()
+            return ((y-fit_function(x,*pars))**2).sum()
 
         def resid_weighted(pars):
-            return (((y-fit_function(x,pars))**2)/sigma).sum()
+            return (((y-fit_function(x,*pars))**2)/sigma).sum()
 
         def fit_function(phi,A,B,C):
             #A + B*np.cos(2*phi) +C*np.cos(phi)
@@ -1161,6 +1161,11 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
                 query0 = "qmin == {} and xmin == {}".format(qmin,xmin)
 
+                query2 = "pmin < {}".format(70)
+                query3 = "pmin > {} and pmin < {}".format(140,220)
+
+
+
                 check_fail = 0
 
                 plt.rcParams["font.size"] = "20"
@@ -1172,7 +1177,12 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
     
                     df_check0_X = df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()]
 
-                    if  df_check0_X.empty or df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()].shape[0]<3:
+                    df_small_X1 = df_small_X.query(query2)
+                    df_small_X2 = df_small_X.query(query3)
+                    df_check1_X = df_small_X1[df_small_X1["xsec_corr_nb_gamma"].notnull()]
+                    df_check2_X = df_small_X2[df_small_X2["xsec_corr_nb_gamma"].notnull()]
+
+                    if  df_check0_X.empty or df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()].shape[0]<5 or df_check1_X.empty or df_check2_X.empty:
                         check_fail += 1
 
                     else:
@@ -1201,37 +1211,69 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                                 sigma_c12 = df_small["uncert_xsec_corr_nb_gamma"]
 
                                 def resid_weighted_c12(pars):
-                                    return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
+                                    return (((y-fit_function(x,*pars))**2)/sigma_c12).sum()
 
                                 def resid_weighted_c12_2(pars):
-                                    return (((y-fit_function(x,pars))**2)/sigma_c12_2).sum()
+                                    return (((y-fit_function(x,*pars))**2)/sigma_c12_2).sum()
 
                                 def constr0(pars):
-                                    return fit_function(0,pars)
+                                    return fit_function(0,*pars)
                                 
                                 def constr180(pars):
-                                    return fit_function(180,pars)
+                                    return fit_function(180,*pars)
+
+                                def constr45(pars):
+                                    return fit_function(45,*pars)
+
+                                def constr90(pars):
+                                    return fit_function(90,*pars)
+                                
+                                def constr360(pars):
+                                    return fit_function(360,*pars)
+                            
+
+#                                def constr_all(pars):
+#
+#                                    datapoints = 
+#                                    return datapoints
+                                    #return fit_function(180,pars)
+
+ #                               d = constr_all
+                #res_weighted_clas6 = minimize(resid_weighted, [100,-60,-11], method='cobyla', options={'maxiter':10000}, constraints=cons)
 
                                 con1 = {'type': 'ineq', 'fun': constr0}
                                 con2 = {'type': 'ineq', 'fun': constr180}
+                                con3 = {'type': 'ineq', 'fun': constr45}
+                                con4 = {'type': 'ineq', 'fun': constr90}
+                                con5 = {'type': 'ineq', 'fun': constr360}
+
                                 # con3 = {'type': 'ineq', 'fun': constr270}
-                                cons = [con1,con2]
+                                cons = [con1,con2,con3,con4,con5]
 
                                 x = binscenters_c12
                                 y = data_entries_c12
                                 valid = ~(np.isnan(x) | np.isnan(y))
 
+
                                 popt_0, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[100,-60,-11],
                                     sigma=sigma_c12[valid], absolute_sigma=True)
 
+                                
                                 popt, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[popt_0[0],popt_0[1],popt_0[2]],
                                             sigma=sigma_c12[valid], absolute_sigma=True)
+                                ic(popt)
 
                                 a,b,c = popt[0],popt[1],popt[2]
                                 
                                 a_err = np.sqrt(pcov[0][0])#*qmod
                                 b_err = np.sqrt(pcov[1][1])#*qmod
                                 c_err = np.sqrt(pcov[2][2])#*qmod
+
+                                res_weighted_clas6 = minimize(resid_weighted_c12, [a,b,c], method='cobyla', options={'maxiter':10000}, constraints=cons)
+                                ic(res_weighted_clas6.x)
+
+                                a,b,c = res_weighted_clas6.x[0],res_weighted_clas6.x[1],res_weighted_clas6.x[2]
+
 
                                 ###A +    Bcos(2x) + Ccos(x)
                                 ###TEL +   ep*TT   + sqr*LT
@@ -1259,13 +1301,15 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
                                 fit4, = plt.plot(xspace, fit_y_data_weighted_new_c12, t_colors[tindex], linewidth=2.5)#, label='CLAS12 Fit')     
                                 #plt.show()
-                                plt.ylim([0.5,100])
+                                plt.ylim([0.01,100])
                                 plt.yscale('log')
 
                                 ax.set_xlabel("Phi")  
                                 ax.set_ylabel('Reduced Cross Section (nb/GeV$^2$)')  
                                 title = "Reduced Cross Section Fit Over Phi"
                                 plt.title(title)
+                                #plt.show()
+                                #sys.exit()
                         #plt.show()
 
                     if check_fail > 1:
@@ -1547,12 +1591,13 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
 if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
-    run_name = "varied_t_phi_bins_small_phi_bins"
-
+    #run_name = "varied_t_phi_bins_small_phi_bins"
+    run_name = "varied_t_phi_bins_inbending_only"
+    
 
 
     if 0==1:
-        mag_configs = ["outbending"]#,"outbending"]
+        mag_configs = ["inbending","outbending"]
         generator_type = "rad"
         proton_locs = ["All",]
         photon1_locs = ["All",]
