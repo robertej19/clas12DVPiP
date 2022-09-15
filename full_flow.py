@@ -1152,6 +1152,8 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
         if not os.path.exists(reduced_plot_dir):
             os.makedirs(reduced_plot_dir)
 
+        autopass = True
+
         for qindex, (qmin,qmax) in enumerate(zip(q2bins[0:-1],q2bins[1:])):
             print(" \n Q2 bin: {} to {}".format(qmin,qmax))
             #print(" Q INDEX: {}".format(qindex))
@@ -1172,23 +1174,22 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
                 fig, ax = plt.subplots(figsize =(14, 10)) 
 
-                for df_X in [df,df2]:
+                for df_X in [df2]:
                     df_small_X = df_X.query(query0)
     
                     df_check0_X = df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()]
 
-                    df_small_X1 = df_small_X.query(query2)
-                    df_small_X2 = df_small_X.query(query3)
-                    df_check1_X = df_small_X1[df_small_X1["xsec_corr_nb_gamma"].notnull()]
-                    df_check2_X = df_small_X2[df_small_X2["xsec_corr_nb_gamma"].notnull()]
+                    ic("at start")
+                    
 
-                    if  df_check0_X.empty or df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()].shape[0]<5 or df_check1_X.empty or df_check2_X.empty:
+
+                    if  df_check0_X.empty or df_small_X[df_small_X["xsec_corr_nb_gamma"].notnull()].shape[0]<5:
                         check_fail += 1
 
                     else:
                     
+                        autopass = True
                         
-
                         for tindex, (tmin,tmax) in enumerate(zip(tbins[0:-1],tbins[1:])):
     
                             tindex_str = str(tindex) if tindex > 9 else "0" + str(tindex)
@@ -1197,11 +1198,25 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
                             df_small =df_X.query(query)
 
+                            df_small_X1 = df_small.query(query2)
+                            df_small_X2 = df_small.query(query3)
+
+                            #ic(df_small)
+                            #ic(df_small_X1)
+                            #ic(df_small_X2)
+                                    
+
                             df_check = df_small[df_small["xsec_corr_nb_gamma"].notnull()]
 
-                            if  df_check.empty or df_small[df_small["xsec_corr_nb_gamma"].notnull()].shape[0]<3:
-                                pass
+                            df_check1_X = df_small_X1[df_small_X1["xsec_corr_nb_gamma"].notnull()]
+                            df_check2_X = df_small_X2[df_small_X2["xsec_corr_nb_gamma"].notnull()]
+
+
+                            if  df_check.empty or df_small[df_small["xsec_corr_nb_gamma"].notnull()].shape[0]<3  or df_check1_X.empty or df_check2_X.empty:
+                                print("Conditions for plotting not met")
+                                
                             else:
+                                autopass = False
 
                                 epsi_mean_c12 = df_small["epsi_exp"].mean()
                                 mean_xsec_uncer_ratio_c12 = df_small['c_12_uncert_ratio'].mean()
@@ -1312,10 +1327,13 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                                 #sys.exit()
                         #plt.show()
 
-                    if check_fail > 1:
-                        fig, ax = plt.subplots(figsize =(14, 10)) 
+                    if check_fail > 1 or autopass:
+                        #fig, ax = plt.subplots(figsize =(14, 10)) 
+                        ic(check_fail)
+                        ic(autopass)
                         ana_title = "q{}_x{}".format(qindex_str,xindex_str)
                         ana_dir = "/t_combined_with_fit/"
+                        ic(ana_title)
                         if not os.path.exists(reduced_plot_dir+ana_dir):
                             os.makedirs(reduced_plot_dir+ana_dir)
                         title = "empty"
@@ -1325,8 +1343,11 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         plt.close()
 
                     else:
+                        ic("IN OTHER ZONE")
 
                         ana_title = "q{}_x{}".format(qindex_str,xindex_str)
+                        ic(ana_title)
+
                         ana_dir = "/t_combined_with_fit/"
                         if not os.path.exists(reduced_plot_dir+ana_dir):
                             os.makedirs(reduced_plot_dir+ana_dir)

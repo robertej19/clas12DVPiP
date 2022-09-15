@@ -220,8 +220,8 @@ fs = filestruct.fs()
 #base_plot_dir = "tdepfigs/"
 for t_count in range(0,1):
     #base_plot_dir = "/mnt/d/GLOBUS/CLAS12/APS2022/reduced_xsection_plots/outbending_rad_All_All_All_varied_t_phi_bins_small_phi_bins_excut_sigma_3comparison/t_0{}/".format(t_count)
-    base_plot_dir = "/mnt/d/GLOBUS/CLAS12/APS2022/reduced_xsection_plots/outbending_rad_All_All_All_varied_t_phi_bins_small_phi_bins_excut_sigma_3comparison/t_combined_with_fit/"
-
+    #base_plot_dir = "/mnt/d/GLOBUS/CLAS12/APS2022/reduced_xsection_plots/outbending_rad_All_All_All_varied_t_phi_bins_small_phi_bins_excut_sigma_3comparison/t_combined_with_fit/"
+    base_plot_dir = "/mnt/d/GLOBUS/CLAS12/APS2022/reduced_xsection_plots/outbending_rad_All_All_All_varied_t_phi_bins_inbending_only_excut_sigma_3comparison/t_combined_with_fit/"
 
     #q2bins,xBbins, tbins, phibins = fs.q2bins[0:7], fs.xBbins[0:11], np.array(fs.tbins[0:9]), fs.phibins
     q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
@@ -282,7 +282,7 @@ for t_count in range(0,1):
     #     #ssreversed(horimg)   
     print("Joining images horizontally")
     final = append_images(horimg, 0,  direction='vertical')
-    final_name = "joined_pictures_t_{}_{}.jpg".format(t_count,xb_counter)
+    final_name = "joined_pictures_t_new_{}_{}.jpg".format(t_count,xb_counter)
     final.save(final_name,optimize=True, quality=100)
     print("saved {}".format(final_name))
 
