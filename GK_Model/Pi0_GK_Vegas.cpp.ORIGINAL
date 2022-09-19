@@ -24,32 +24,20 @@
 
 using namespace std;
 
-double PROTON_MASS = 0.938;
+// W value
+double W = 6.0;
+
 // Q^2 value
 double m_Q2 = 5.0;
 
+double PROTON_MASS = 0.938;
+
+// Bjorken x
+double m_xbj = m_Q2 / (pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0));
 double leptonEnergy = 5.498;
-
-// invariant momentum transfer t
-double m_t = -0.02;
-
-// // W value
-// double W = 6.0;
-// // Bjorken x
-// double m_xbj = m_Q2 / (pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0));
-
-
-double m_xbj =0.1246256;
-double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
-
-
-
 
 
 // END OF INPUTS
-
-
-
 
 // Skewness parameter
 double m_xi = m_xbj / (2.0 - m_xbj);
@@ -60,6 +48,14 @@ double epsilon = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 -
 
 
 
+
+
+
+
+// invariant momentum transfer t
+double m_t;
+
+//double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
 
 // double m_xbj = 2. * m_xi / (1. + m_xi);
 
@@ -948,8 +944,6 @@ double CrossSectionPi0LTprime(void) {
 
 // Computation of the \sigma_{TT}
 double CrossSectionPi0TT(void) {
-    
-
 
     double CSTT = -1.0 * real(conj(Amplitude0mppPi0()) * Amplitude0mmpPi0() + conj(Amplitude0pppPi0()) * Amplitude0pmpPi0()) * Conversion / 2.;
 
@@ -977,12 +971,6 @@ int main (int argc, char** argv){
 
     // print the minimum t value
     printf("t_min = %.7lf\n", m_tmin);
-    printf("x bjorken = %.7lf \n", m_xbj);
-    double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
-
-    printf("W = %.7lf \n", W);
-
-
 
     // below, let us calculate the partial cross section of transversely polarized photons at a particular t value
     m_t= -0.02;
