@@ -25,21 +25,21 @@
 using namespace std;
 
 double PROTON_MASS = 0.938;
-// Q^2 value
-double m_Q2 = 5.0;
+double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
 
-double leptonEnergy = 5.498;
 
-// invariant momentum transfer t
-double m_t = -0.02;
+double m_Q2 = 2; // Q^2 value
+double m_t = -0.2; // invariant momentum transfer t
+double m_xbj =0.12;// Bjorken x
 
 // // W value
 // double W = 6.0;
 // // Bjorken x
 // double m_xbj = m_Q2 / (pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0));
 
+// Specify an xbjorken value, then calculate W from it (not clear we even need to calculate W, but oh well)
 
-double m_xbj =0.1246256;
+
 double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
 
 
@@ -986,16 +986,38 @@ int main (int argc, char** argv){
 
     // below, let us calculate the partial cross section of transversely polarized photons at a particular t value
     m_t= -0.02;
-    printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0T(), m_t);
-    printf("Cross section L = %.7lf at t = %.5lf\n", CrossSectionPi0L(), m_t);
-    printf("Cross section LT = %.7lf at t = %.5lf\n", CrossSectionPi0LT(), m_t);
-    printf("Cross section TT = %.7lf at t = %.5lf\n", CrossSectionPi0TT(), m_t);
+    printf("t = %.7lf \n", m_t);
+    // printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0T(), m_t);
+    // printf("Cross section L = %.7lf at t = %.5lf\n", CrossSectionPi0L(), m_t);
+    // printf("Cross section LT = %.7lf at t = %.5lf\n", CrossSectionPi0LT(), m_t);
+    // printf("Cross section TT = %.7lf at t = %.5lf\n", CrossSectionPi0TT(), m_t);
 
-    m_t= -0.05;
-    printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0LT(), m_t);
+    // write cross section T L LT and TT to a file
+    FILE *f = fopen("cross_section_pi0.txt", "w");
+    fprintf(f, "# Q2 \t xB \t mt \t sigma_T \t sigma_L \t sigma_LT \t sigma_TT \n");
 
-    m_t= -0.1;
-    printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0T(), m_t);
+    for (m_xbj = 0.225; m_xbj < 0.35; m_xbj += 0.5) {
+        for (m_Q2 = 1.75; m_xbj < 2.3; m_xbj += 0.5) {
+            for (m_t = -0.05; m_t > -0.15; m_t -= 0.05) {
+                
+            //m_Q2 = 2.25; // Q^2 value
+            //m_xbj =0.225;// Bjorken x
+
+            printf("t = %.7lf Q2=%.7lf xB=%.7lf \n", m_t,m_Q2, m_xbj);
+
+            fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT());
+
+            }
+        }
+    }
+    
+
+
+    // m_t= -0.05;
+    // printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0LT(), m_t);
+
+    // m_t= -0.1;
+    // printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0T(), m_t);
 
 
     return 1;
