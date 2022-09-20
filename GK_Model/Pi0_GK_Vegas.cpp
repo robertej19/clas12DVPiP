@@ -28,9 +28,12 @@ double PROTON_MASS = 0.938;
 double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
 
 
-double m_Q2 = 2; // Q^2 value
-double m_t = -0.2; // invariant momentum transfer t
-double m_xbj =0.12;// Bjorken x
+double m_Q2;
+// = 2; // Q^2 value
+double m_t;
+ //= -0.2; // invariant momentum transfer t
+double m_xbj;
+// =0.12;// Bjorken x
 
 // // W value
 // double W = 6.0;
@@ -40,30 +43,8 @@ double m_xbj =0.12;// Bjorken x
 // Specify an xbjorken value, then calculate W from it (not clear we even need to calculate W, but oh well)
 
 
-double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
+//double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
 
-
-
-
-
-// END OF INPUTS
-
-
-
-
-// Skewness parameter
-double m_xi = m_xbj / (2.0 - m_xbj);
-
-double gammaa = 2.0 * m_xbj * PROTON_MASS / sqrt(m_Q2);
-double y = ( pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0) ) / ( 2.0 * PROTON_MASS * leptonEnergy );
-double epsilon = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 - y + 1.0 / 2.0 * pow(y, 2.0) + 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0));
-
-
-
-
-// double m_xbj = 2. * m_xi / (1. + m_xi);
-
-//double accuracy = 0.000001;
 
 double EulerGamma = 0.577216;
 double PositronCharge = 0.3028;
@@ -77,13 +58,40 @@ double Cf = 4. / 3.;
 double transverseSize3 = 1.8;
 double muPi = 2.0;
 
-// minimum t value; asymptotic formula
-double m_tmin = -4. * pow(PROTON_MASS, 2.) * pow(m_xi, 2.) / (1. - pow(m_xi, 2.));
+
+
+
+// END OF INPUTS
+
+
+
+
+// Skewness parameter
+double m_xi; 
+//= m_xbj / (2.0 - m_xbj);
+
+double gammaa; 
+//= 2.0 * m_xbj * PROTON_MASS / sqrt(m_Q2);
+double y; 
+//= ( pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0) ) / ( 2.0 * PROTON_MASS * leptonEnergy );
+double epsilon; 
+// = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 - y + 1.0 / 2.0 * pow(y, 2.0) + 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0));
+
+
+
+
+// double m_xbj = 2. * m_xi / (1. + m_xi);
+
+//double accuracy = 0.000001;
+
+
+double W;
+double m_tmin;
+
 
 // Conversion of units to nb to be used in cross section calculations 
-double Conversion = 0.3894 * pow(10.0, 6.0) / (16.0 * M_PI * (pow(W, 2.0) - pow(PROTON_MASS, 2.0)) * 
-                    sqrt(pow(W, 4.0) + pow(m_Q2, 2.0) + pow(PROTON_MASS, 4.0) + 2.0 * pow(W, 2.0) * m_Q2 
-                         - 2.0 * pow(W, 2.0) * pow(PROTON_MASS, 2.0) + 2.0 * m_Q2 * pow(PROTON_MASS, 2.0)));
+double Conversion;
+
 
 // Valence quark expansions to be used in the computation of GPDs.
 double ValenceExpansion(double x, double i, double k) {
@@ -976,17 +984,17 @@ double A_LU(void) {
 int main (int argc, char** argv){
 
     // print the minimum t value
-    printf("t_min = %.7lf\n", m_tmin);
-    printf("x bjorken = %.7lf \n", m_xbj);
-    double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
+    //printf("t_min = %.7lf\n", m_tmin);
+    //printf("x bjorken = %.7lf \n", m_xbj);
+    //double W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
 
-    printf("W = %.7lf \n", W);
+    //printf("W = %.7lf \n", W);
 
 
 
     // below, let us calculate the partial cross section of transversely polarized photons at a particular t value
-    m_t= -0.02;
-    printf("t = %.7lf \n", m_t);
+    //m_t= -0.02;
+    //printf("t is = %.7lf \n", m_t);
     // printf("Cross section T = %.7lf at t = %.5lf\n", CrossSectionPi0T(), m_t);
     // printf("Cross section L = %.7lf at t = %.5lf\n", CrossSectionPi0L(), m_t);
     // printf("Cross section LT = %.7lf at t = %.5lf\n", CrossSectionPi0LT(), m_t);
@@ -996,14 +1004,30 @@ int main (int argc, char** argv){
     FILE *f = fopen("cross_section_pi0.txt", "w");
     fprintf(f, "# Q2 \t xB \t mt \t sigma_T \t sigma_L \t sigma_LT \t sigma_TT \n");
 
-    for (m_xbj = 0.225; m_xbj < 0.35; m_xbj += 0.5) {
-        for (m_Q2 = 1.75; m_xbj < 2.3; m_xbj += 0.5) {
-            for (m_t = -0.05; m_t > -0.15; m_t -= 0.05) {
+    for (m_xbj = 0.225; m_xbj < 0.35; m_xbj += 0.05) {
+        for (m_Q2 = 1.75; m_Q2 < 2.3; m_Q2 += 0.5) {
+            for (m_t = -0.05; m_t > -0.15; m_t -= 0.96) {
                 
             //m_Q2 = 2.25; // Q^2 value
             //m_xbj =0.225;// Bjorken x
 
-            printf("t = %.7lf Q2=%.7lf xB=%.7lf \n", m_t,m_Q2, m_xbj);
+
+            m_xi = m_xbj / (2.0 - m_xbj);
+
+             gammaa = 2.0 * m_xbj * PROTON_MASS / sqrt(m_Q2);
+             y = ( pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0) ) / ( 2.0 * PROTON_MASS * leptonEnergy );
+             epsilon = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 - y + 1.0 / 2.0 * pow(y, 2.0) + 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0));
+            W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
+
+            // minimum t value; asymptotic formula
+            m_tmin = -4. * pow(PROTON_MASS, 2.) * pow(m_xi, 2.) / (1. - pow(m_xi, 2.));
+
+            Conversion = 0.3894 * pow(10.0, 6.0) / (16.0 * M_PI * (pow(W, 2.0) - pow(PROTON_MASS, 2.0)) * 
+                                sqrt(pow(W, 4.0) + pow(m_Q2, 2.0) + pow(PROTON_MASS, 4.0) + 2.0 * pow(W, 2.0) * m_Q2 
+                                    - 2.0 * pow(W, 2.0) * pow(PROTON_MASS, 2.0) + 2.0 * m_Q2 * pow(PROTON_MASS, 2.0)));
+
+            //FILE *f = fopen("cross_section_pi0.txt", "a");
+            printf("t = %.7lf Q2=%.7lf xB=%.7lf m_xi=%.7lf W=%.7lf \n", m_t,m_Q2, m_xbj,m_xi,W);
 
             fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT());
 
