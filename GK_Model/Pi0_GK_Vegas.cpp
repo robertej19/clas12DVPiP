@@ -25,7 +25,7 @@
 using namespace std;
 
 double PROTON_MASS = 0.938;
-double leptonEnergy = 5.75; //FIX THIS TO BE THE EXACT CORRECT VALUE
+double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
 //double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
 
 
@@ -1004,7 +1004,7 @@ int main (int argc, char** argv){
 
     // write cross section T L LT and TT to a file
     // FILE *f = fopen("cross_section_pi0_10600.txt", "w");
-    FILE *f = fopen("cross_section_pi0_575.txt", "w");
+    FILE *f = fopen("cross_section_pi0_10600.txt", "w");
 
     fprintf(f, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
 
@@ -1033,8 +1033,8 @@ int main (int argc, char** argv){
             //FILE *f = fopen("cross_section_pi0.txt", "a");
             printf("t = %.7lf Q2=%.7lf xB=%.7lf m_xi=%.7lf W=%.7lf leptonEnergy=%.7lf \n", m_t,m_Q2, m_xbj,m_xi,W,leptonEnergy);
 
-            fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT(),W,y,epsilon,gammaa,tmin);
-            }
+            fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT(),W,y,epsilon,gammaa,m_tmin);
+            
 
             }
         }
