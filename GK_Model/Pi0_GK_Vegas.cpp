@@ -25,7 +25,9 @@
 using namespace std;
 
 double PROTON_MASS = 0.938;
-double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
+double leptonEnergy = 5.75; //FIX THIS TO BE THE EXACT CORRECT VALUE
+//double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
+
 
 
 double m_Q2;
@@ -1001,12 +1003,14 @@ int main (int argc, char** argv){
     // printf("Cross section TT = %.7lf at t = %.5lf\n", CrossSectionPi0TT(), m_t);
 
     // write cross section T L LT and TT to a file
-    FILE *f = fopen("cross_section_pi0.txt", "w");
-    fprintf(f, "# Q2 \t xB \t mt \t sigma_T \t sigma_L \t sigma_LT \t sigma_TT \n");
+    // FILE *f = fopen("cross_section_pi0_10600.txt", "w");
+    FILE *f = fopen("cross_section_pi0_575.txt", "w");
+
+    fprintf(f, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
 
     for (m_xbj = 0.225; m_xbj < 0.35; m_xbj += 0.05) {
         for (m_Q2 = 1.75; m_Q2 < 2.3; m_Q2 += 0.5) {
-            for (m_t = -0.05; m_t > -0.15; m_t -= 0.96) {
+            for (m_t = -0.02; m_t > -1.06; m_t -= 0.05) {
                 
             //m_Q2 = 2.25; // Q^2 value
             //m_xbj =0.225;// Bjorken x
@@ -1014,9 +1018,9 @@ int main (int argc, char** argv){
 
             m_xi = m_xbj / (2.0 - m_xbj);
 
-             gammaa = 2.0 * m_xbj * PROTON_MASS / sqrt(m_Q2);
-             y = ( pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0) ) / ( 2.0 * PROTON_MASS * leptonEnergy );
-             epsilon = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 - y + 1.0 / 2.0 * pow(y, 2.0) + 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0));
+            gammaa = 2.0 * m_xbj * PROTON_MASS / sqrt(m_Q2);
+            y = ( pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0) ) / ( 2.0 * PROTON_MASS * leptonEnergy );
+            epsilon = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 - y + 1.0 / 2.0 * pow(y, 2.0) + 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0));
             W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
 
             // minimum t value; asymptotic formula
@@ -1027,9 +1031,10 @@ int main (int argc, char** argv){
                                     - 2.0 * pow(W, 2.0) * pow(PROTON_MASS, 2.0) + 2.0 * m_Q2 * pow(PROTON_MASS, 2.0)));
 
             //FILE *f = fopen("cross_section_pi0.txt", "a");
-            printf("t = %.7lf Q2=%.7lf xB=%.7lf m_xi=%.7lf W=%.7lf \n", m_t,m_Q2, m_xbj,m_xi,W);
+            printf("t = %.7lf Q2=%.7lf xB=%.7lf m_xi=%.7lf W=%.7lf leptonEnergy=%.7lf \n", m_t,m_Q2, m_xbj,m_xi,W,leptonEnergy);
 
-            fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT());
+            fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT(),W,y,epsilon,gammaa,tmin);
+            }
 
             }
         }
