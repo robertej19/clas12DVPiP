@@ -1015,6 +1015,7 @@ int main (int argc, char** argv){
             //m_Q2 = 2.25; // Q^2 value
             //m_xbj =0.225;// Bjorken x
 
+            // printf("Q2=%.7lf",M_PI);
 
             m_xi = m_xbj / (2.0 - m_xbj);
 
