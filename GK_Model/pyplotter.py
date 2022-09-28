@@ -4,6 +4,16 @@ import numpy as np
 import sys
 from matplotlib.patches import Rectangle
 
+# 1.) Necessary imports.    
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+from scipy import stats
+import argparse
+import sys 
+import pandas as pd
+from matplotlib.patches import Rectangle
+
 # # # simcounts = 1000000
 
 # # # mu, sigma = 1, 1.5 # mean and standard deviation
@@ -138,13 +148,13 @@ if i==1:
     # df_2['epsilon'] = df_small2['epsilon'].values[0]
     phi = np.linspace(0, 360, 100)
 
-    # pub_tel =  389.766081871345
-    # pub_lt = -13.45029239766086
-    # pub_tt = -46.19883040935679
+    pub_tel =  389.766081871345
+    pub_lt = -13.45029239766086
+    pub_tt = -46.19883040935679
 
-    pub_tel =  df_small2['sigma_L'].values[0]*df_small2['epsilon'].values[0]+df_small2['sigma_T'].values[0]
-    pub_lt = df_small2['sigma_LT'].values[0]
-    pub_tt = df_small2['sigma_TT'].values[0]
+    # pub_tel =  df_small2['sigma_L'].values[0]*df_small2['epsilon'].values[0]+df_small2['sigma_T'].values[0]
+    # pub_lt = df_small2['sigma_LT'].values[0]
+    # pub_tt = df_small2['sigma_TT'].values[0]
 
 
 
@@ -160,6 +170,7 @@ if i==1:
     rev_b = pub_tt/6.28*epsi_mean_c6
     rev_c = pub_lt/6.28*np.sqrt(2*epsi_mean_c6*(1+epsi_mean_c6))
 
+
     fit_y_data_weighted = fit_function(phi,rev_a,rev_b,rev_c)
 
     #total_xsection = 
@@ -173,14 +184,92 @@ if i==1:
 
     
 
+    df_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
+    print(df_clas12.columns)
+    df_clas12 = df_clas12.dropna()
+    
+    df_clas122 = df_clas12.query("qmin>1.9 and qmax<2.6 and xmin>0.29 and xmax<0.39 and tmin>0.19 and tmax<0.31")
+    print(df_clas122)
+
+    df_clas12out = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
+    #df_clas12out = df_clas12out.dropna()
+    
+    #df_clas122out = df_clas12out.query("qmin>1.9 and qmax<2.6 and xmin>0.29 and xmax<0.39 and tmin>0.19 and tmax<0.31")
+
+    #print(df_clas122['xsec_corr_red_nb'])
+    ##df_clas122out['xsec_corr_red_nb'].fillinf(df_clas122['xsec_corr_red_nb'], inplace=True)
+    #print(df_clas122out['xsec_corr_red_nb'])
+
+    #df_clas122['xsec_corr_red_nb'] = (df_clas122['xsec_corr_red_nb']+df_clas122out['xsec_corr_red_nb'])/2
+    #print(df_clas122['xsec_corr_red_nb'])
+    #sys.exit()
+
+    plt.plot(df_clas122['pave_exp'], df_clas122['xsec_corr_red_nb'],'g+')
 
 
+    binscenters_c12 = df_clas122["pave_exp"]
+    data_entries_c12 = df_clas122["xsec_corr_red_nb"]
+    sigma_c12 = df_clas122["uncert_xsec_corr_red_nb"]
+
+
+    def resid_weighted_c12(pars):
+        return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
+
+    def constr0(pars):
+        return fit_function(0,pars)
+    
+    def constr180(pars):
+        return fit_function(180,pars)
+
+    con1 = {'type': 'ineq', 'fun': constr0}
+    con2 = {'type': 'ineq', 'fun': constr180}
+    # con3 = {'type': 'ineq', 'fun': constr270}
+    cons = [con1,con2]
+
+    x = binscenters_c12
+    y = data_entries_c12
+    valid = ~(np.isnan(x) | np.isnan(y))
+
+    popt_0, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[100,-60,-11],
+        sigma=sigma_c12[valid], absolute_sigma=True)
+
+    popt, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[popt_0[0],popt_0[1],popt_0[2]],
+                sigma=sigma_c12[valid], absolute_sigma=True)
+
+    a,b,c = popt[0],popt[1],popt[2]
+                        
+    a_err = np.sqrt(pcov[0][0])#*qmod
+    b_err = np.sqrt(pcov[1][1])#*qmod
+    c_err = np.sqrt(pcov[2][2])#*qmod
+
+    ###A +    Bcos(2x) + Ccos(x)
+    ###TEL +   ep*TT   + sqr*LT
+    
+    epsi_mean_c12 = 0.9
+
+    a_c12,b_c12,c_c12 = a,b,c 
+
+    tel_c12 = a_c12*6.28
+    tt_c12 = b_c12/epsi_mean_c12*6.28
+    lt_c12 = c_c12/np.sqrt(2*epsi_mean_c12*(1+epsi_mean_c12))*6.28
+
+    tel_c12_err = tel_c12*a_err/a
+    tt_c12_err = tt_c12*b_err/b
+    lt_c12_err = lt_c12*c_err/c
+
+    xmax = 360
+    xspace = np.linspace(0, xmax, 1000)
+
+    fit_y_data_weighted_new_c12 = fit_function(xspace, a_c12,b_c12,c_c12)
+
+    plt.plot(xspace, fit_y_data_weighted_new_c12,'g')
 
     plot_title = "CLAS6 2014 Published Result vs. 2022 Implementation"
     ax.set_xlabel('$\phi$ ')  
     ax.set_ylabel('d$\sigma^4$/dQ$^2$dx$_B$dtd$\phi$ (nb/GeV$^4$)')
     plt.title(plot_title)
 
+    plt.ylim([20,120])
     plt.show()
     print(pub_tel)
     print(pub_lt)
