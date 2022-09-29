@@ -136,10 +136,15 @@ if i==1:
     plt.rcParams["font.size"] = "20"
 
 
-    fig, ax = plt.subplots(figsize =(18, 10)) 
+    fig, ax = plt.subplots(figsize =(14, 10)) 
 
 
-    plt.plot(df_2['p'], df_2['dsdtdp'],'o')
+    sigma_c6 = np.sqrt(np.square(df_2['stat'])+np.square(df_2['sys']))
+
+    plt.errorbar(df_2['p'], df_2['dsdtdp'],yerr=sigma_c6,color="black",fmt="o", markersize=10,label='CLAS6 Data')
+
+    #plt.errorbar(df_clas122['pave_exp'], df_clas122['xsec_corr_red_nb'],yerr=sigma_c12,color="green",fmt="D", markersize=10,label='CLAS12 Data')
+
     #plt.plot(df_2['p'], df_2['total_xsection'],'r+')
     # df_2['sigma_T'] = df_small2['sigma_T'].values[0]
     # df_2['sigma_L'] = df_small2['sigma_L'].values[0]
@@ -179,8 +184,7 @@ if i==1:
 
     print(df_small2['prefactor'].values[0])
     print(Gamma)
-    plt.plot(phi, fit_y_data_weighted,'r')
-    plt.plot(phi, total_xsection,'b')
+    plt.plot(phi, fit_y_data_weighted,'k',label='CLAS 6 Data Fit')
 
     
 
@@ -204,12 +208,16 @@ if i==1:
     #print(df_clas122['xsec_corr_red_nb'])
     #sys.exit()
 
-    plt.plot(df_clas122['pave_exp'], df_clas122['xsec_corr_red_nb'],'g+')
-
-
     binscenters_c12 = df_clas122["pave_exp"]
     data_entries_c12 = df_clas122["xsec_corr_red_nb"]
     sigma_c12 = df_clas122["uncert_xsec_corr_red_nb"]
+
+    #plt.errorbar(df_clas122['pave_exp'], df_clas122['xsec_corr_red_nb'],yerr=sigma_c12,color="red",fmt="D", markersize=10,label='CLAS12 Data')
+
+    #plt.errorbar(binscenters_c12, data_entries_c12, yerr=sigma_c12, color="blue",fmt="x",label='CLAS12 Data')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+
+
+
 
 
     def resid_weighted_c12(pars):
@@ -262,15 +270,24 @@ if i==1:
 
     fit_y_data_weighted_new_c12 = fit_function(xspace, a_c12,b_c12,c_c12)
 
-    plt.plot(xspace, fit_y_data_weighted_new_c12,'g')
+    #plt.plot(xspace, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
 
-    plot_title = "CLAS6 2014 Published Result vs. 2022 Implementation"
+    plt.plot(phi, total_xsection,'b',label='GK Model Curve')
+
+
+    
+    plot_title = "Reduced Cross Section at 2<Q$^2$<2.5, 0.3<x$_B$<0.38, 0.2<t<0.3"
     ax.set_xlabel('$\phi$ ')  
-    ax.set_ylabel('d$\sigma^4$/dQ$^2$dx$_B$dtd$\phi$ (nb/GeV$^4$)')
+    ax.set_ylabel(r'$\frac{d\sigma^4}{dQ^2dx_Bdtd\phi}$'+ '  (nb/GeV$^4$)')
+    ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
+
+
     plt.title(plot_title)
+    
 
     plt.ylim([20,120])
-    plt.show()
+    #plt.show()
+    plt.savefig("pic3.png")
     print(pub_tel)
     print(pub_lt)
     print(pub_tt)
