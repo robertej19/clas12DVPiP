@@ -166,12 +166,13 @@ if i==1:
     rev_b = pub_tt/6.28*epsi_mean_c6
     rev_c = pub_lt/6.28*np.sqrt(2*epsi_mean_c6*(1+epsi_mean_c6))
 
-    phi = np.linspace(0, 360, 100)
+    phi_vector = np.linspace(0, 360, 100)
+    
 
     #Plot CLAS6 fit
-    fit_y_data_weighted = fit_function(phi,rev_a,rev_b,rev_c)
+    fit_y_data_weighted = fit_function(phi_vector,rev_a,rev_b,rev_c)
 
-    total_xsection =  1/6.28*(df_GK_reduced['sigma_T'].mean()+df_GK_reduced['epsilon'].mean()*df_GK_reduced['sigma_L'].mean()+df_GK_reduced['epsilon'].mean()*np.cos(2*phi*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*df_GK_reduced['epsilon'].mean()*(1+df_GK_reduced['epsilon'].mean()))*np.cos(phi*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
+    total_xsection =  1/6.28*(df_GK_reduced['sigma_T'].mean()+df_GK_reduced['epsilon'].mean()*df_GK_reduced['sigma_L'].mean()+df_GK_reduced['epsilon'].mean()*np.cos(2*phi_vector*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*df_GK_reduced['epsilon'].mean()*(1+df_GK_reduced['epsilon'].mean()))*np.cos(phi_vector*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
 
 
     df_inbend_clas12 = df_inbend_clas12.dropna()
@@ -217,10 +218,9 @@ if i==1:
     tt_c12_err = tt_c12*b_err/b
     lt_c12_err = lt_c12*c_err/c
 
-    phi_max = 360
-    xspace = np.linspace(0, phi_max, 1000)
 
-    fit_y_data_weighted_new_c12 = fit_function(xspace, a_c12,b_c12,c_c12)
+
+    fit_y_data_weighted_new_c12 = fit_function(phi_vector, a_c12,b_c12,c_c12)
 
     # Plotting the data
 
@@ -241,13 +241,13 @@ if i==1:
     plt.errorbar(df_inbend_clas12_reduced['pave_exp'], df_inbend_clas12_reduced['xsec_corr_red_nb'],yerr=sigma_c12,color="red",fmt="D", markersize=10,label='CLAS12 Data')
 
     #Plot CLAS6 Data Fit
-    #plt.plot(xspace, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
+    #plt.plot(phi_vector, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
 
     #Plot CLAS12 Data Fit
-    plt.plot(xspace, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
+    plt.plot(phi_vector, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
 
     #Plot GK Model
-    plt.plot(phi, total_xsection,'b',label='GK Model Curve')
+    plt.plot(phi_vector, total_xsection,'b',label='GK Model Curve')
 
     ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
 
