@@ -14,26 +14,6 @@ import sys
 import pandas as pd
 from matplotlib.patches import Rectangle
 
-# # # simcounts = 1000000
-
-# # # mu, sigma = 1, 1.5 # mean and standard deviation
-# # # s = np.random.normal(mu, sigma, simcounts)
-
-# # # q=s
-# # # #q = np.sqrt(np.square(s))
-# # # #q = s*s-2*s-1
-
-# # # ocunter = 0
-# # # for ii in q:
-# # #     if ii>(1+np.sqrt(2)):
-# # #         ocunter += 1
-# # #     else:
-# # #         ocunter += 0
-
-
-# # # print(ocunter/simcounts)
-
-# # # sys.exit()
 M = 0.938272081 # target mass
 me = 0.5109989461 * 0.001 # electron mass
 ebeam = 10.604 # beam energy
@@ -63,171 +43,143 @@ def get_gamma(x,q2,BeamE):
     return [gamma, epsi]
 
 
+def fit_function(phi,A,B,C):
+        #A + B*np.cos(2*phi) +C*np.cos(phi)
+        rads = phi*np.pi/180
+        #return (A * np.exp(-x/beta) + B * np.exp(-1.0 * (x - mu)**2 / (2 * sigma**2)))
+        #A = T+L, B=TT, C=LT
+        #A = black, B=blue, C=red
+        return A + B*np.cos(2*rads) + C*np.cos(rads)
+
+
+def resid_weighted_c12(pars):
+    return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
+
+def constr0(pars):
+    return fit_function(0,pars)
+
+def constr180(pars):
+    return fit_function(180,pars)
+
+
+
+def fit_over_phi(x_data,y_data,y_errors):
+    return 0
+
+
+
+
 i=1 
 
 if i==1:
-    df_small = pd.read_csv('cross_section_pi0_575.txt', sep='\t', header=0)
-    #df = pd.read_csv('cross_section_pi0_10600.txt', sep='\t', header=0)
+    df_GK_calc = pd.read_csv('cross_section_pi0_575.txt', sep='\t', header=0)
+    # Data Structure:
+    #     Q2	xB	mt	sigma_T	sigma_L	sigma_LT	sigma_TT	W	y	epsilon	gammaa	tmin
+    #  1.75 	 0.225 	 -0.020 	 nan 	 nan 	 -nan 	 nan 	 2.6282355 	 0.0806671 	 0.9961151 	 0.3190776 	 -0.0574737 
 
 
-    #print(df.columns)
+    df_clas6 = pd.read_csv('xs_clas6.csv', header=0)
+    # Data Structure:
+    # q	x	t	p	dsdtdp	stat	sys
+    # 1.15	0.132	0.12	63	59.4	15.3	13
 
-    df_small['sigma_T'] = pd.to_numeric(df_small["sigma_T"], errors='coerce')
-    df_small['sigma_L'] = pd.to_numeric(df_small["sigma_L"], errors='coerce')
-    df_small['sigma_LT'] = pd.to_numeric(df_small["sigma_LT"], errors='coerce')
-    df_small['sigma_TT'] = pd.to_numeric(df_small["sigma_TT"], errors='coerce')
+    df_inbend_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
+    df_outbend_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
+    # Data Structure:
+    #['qmin', 'xmin', 'tmin', 'pmin', 'qmax_x', 'xmax_x', 'tmax_x', 'pmax_x',
+    #    'qave_exp', 'yave_x', 'xave_exp', 'tave_exp', 'pave_exp', 'counts_exp',
+    #    'qmax_y', 'xmax_y', 'tmax_y', 'pmax_y', 'qave_rec', 'yave_y',
+    #    'xave_rec', 'tave_rec', 'pave_rec', 'counts_rec', 'qmax', 'xmax',
+    #    'tmax', 'pmax', 'qave_gen', 'yave', 'xave_gen', 'tave_gen', 'pave_gen',
+    #    'counts_gen', 'gamma_exp', 'epsi_exp', 'binvol', 'acc_corr', 'xsec',
+    #    'xsec_corr', 'xsec_corr_red', 'xsec_corr_red_nb', 'uncert_counts_exp',
+    #    'uncert_counts_rec', 'uncert_counts_gen', 'uncert_xsec',
+    #    'uncert_acc_corr', 'uncert_xsec_corr_red_nb']
 
 
+
+    #Convert rows to be of type numeric
+    df_GK_calc['sigma_T'] = pd.to_numeric(df_GK_calc["sigma_T"], errors='coerce')
+    df_GK_calc['sigma_L'] = pd.to_numeric(df_GK_calc["sigma_L"], errors='coerce')
+    df_GK_calc['sigma_LT'] = pd.to_numeric(df_GK_calc["sigma_LT"], errors='coerce')
+    df_GK_calc['sigma_TT'] = pd.to_numeric(df_GK_calc["sigma_TT"], errors='coerce')
 
 
     num_pre = 0.00004627006 # Include prefactor of alpha/16pi^2
-    E_lepton = 5.75
-    #E_lepton = 10.6
-    m = 0.938
-    Q2 = 2.25
-    s = E_lepton*2*m #E_lepton**2 + 2*E_lepton*m + m**2 ### Make sure this is correct
-    W = 2.3564636
-    df_small['prefactor'] = num_pre*(W**2-m**2)/(E_lepton**2*m**2*df_small['Q2']*(-1*df_small['epsilon']+1))
+    E_lepton = 5.75 #Beam energy in GeV
+    W = 2.3564636 #calculated from some stuff, need to fix
+    df_GK_calc['prefactor'] = num_pre*(W**2-M**2)/(E_lepton**2*M**2*df_GK_calc['Q2']*(-1*df_GK_calc['epsilon']+1))
 
-    xb = 0.34
     epsilon = 0.587074 # For 5.75 GeV beam
     epsi_mean_c6 = epsilon
     #epsilon= 0.901577 #for 10.6 GeV beam
 
-    xbstuff = (1-xb)/(xb**3)
-    epsilon_stuff = 1/(1-epsilon)
+    
+    qmin = 1.5
+    qmax = 2
 
-    Gamma = 1/137/8/3.14159/m**2/E_lepton**2*Q2*xbstuff*epsilon_stuff
-    print(Gamma)
-    print(df_small['prefactor']/Gamma)
+    xmin = 0.2
+    xmax = 0.25
 
-    g, e = get_gamma(xb,Q2,E_lepton)
-    print(g,e)
-    print(g/Gamma)
-    #sys.exit()
+    tmin = 0.2
+    tmax = 0.3
 
 
-    base_query = "Q2==2.25 and xB==0.325 and mt<-0.24 and mt>-0.3"
-    df_small2 = df_small.query(base_query)
+    Q2 = (qmin+qmax)/2
+    xB = (xmin+xmax)/2
+    t = (tmin+tmax)/2
 
-    print(df_small2)
+    
 
-    #print(df_small2['prefactor'].values[0])
+    query_clas6 = "q>={} and q<={} and x>={} and x<={} and t>={} and t<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)
+    query_GK_Model = "Q2>={} and Q2<={} and xB>={} and xB<={} and mt<={} and mt>={} ".format(qmin,qmax,xmin,xmax,-1*tmin,-1*tmax)
+    query_clas12 = "qmin>={} and qmax<={} and xmin>={} and xmax<={} and tmin>={} and tmax<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)    
 
-    df_clas6 = pd.read_csv('xs_clas6.csv', header=0)
-
-    print(df_clas6.columns)
-
-    base_query = "q>2 and q<2.5 and x>0.3 and x<0.38 and t>0.2 and t<0.3"
-
-    df_2 = df_clas6.query(base_query)
-    print(df_2)
-
-    df_2['prefactor'] = df_small2['prefactor'].values[0]
-    df_2['sigma_T'] = df_small2['sigma_T'].values[0]
-    df_2['sigma_L'] = df_small2['sigma_L'].values[0]
-    df_2['sigma_LT'] = df_small2['sigma_LT'].values[0]
-    df_2['sigma_TT'] = df_small2['sigma_TT'].values[0]
-    df_2['epsilon'] = df_small2['epsilon'].values[0]
-    df_2['total_xsection'] =  df_2['prefactor']*(df_2['sigma_T']+df_2['epsilon']*df_2['sigma_L']+df_2['epsilon']*np.cos(2*df_2['p']*3.14159/180)*df_2['sigma_TT']+np.sqrt(2*df_2['epsilon']*(1+df_2['epsilon']))*np.cos(df_2['p']*3.14159/180)*df_2['sigma_LT'])
-    df_2['diff_xsection'] = df_2['dsdtdp']/df_2['total_xsection']
-    #df_2['p_prime0']
-
-    plt.rcParams["font.size"] = "20"
+    df_GK_reduced = df_GK_calc.query(query_GK_Model)
+    df_clas6_reduced = df_clas6.query(query_clas6)
+    df_inbend_clas12_reduced = df_inbend_clas12.query(query_clas12)
 
 
-    fig, ax = plt.subplots(figsize =(14, 10)) 
+
+    Gamma, e = get_gamma(xB,Q2,E_lepton)
 
 
-    sigma_c6 = np.sqrt(np.square(df_2['stat'])+np.square(df_2['sys']))
+    df_clas6_reduced['prefactor'] = df_GK_reduced['prefactor'].mean()
+    df_clas6_reduced['sigma_T'] = df_GK_reduced['sigma_T'].mean()
+    df_clas6_reduced['sigma_L'] = df_GK_reduced['sigma_L'].mean()
+    df_clas6_reduced['sigma_LT'] = df_GK_reduced['sigma_LT'].mean()
+    df_clas6_reduced['sigma_TT'] = df_GK_reduced['sigma_TT'].mean()
+    df_clas6_reduced['epsilon'] = df_GK_reduced['epsilon'].mean()
+    df_clas6_reduced['total_xsection'] =  df_clas6_reduced['prefactor']*(df_clas6_reduced['sigma_T']+df_clas6_reduced['epsilon']*df_clas6_reduced['sigma_L']+df_clas6_reduced['epsilon']*np.cos(2*df_clas6_reduced['p']*3.14159/180)*df_clas6_reduced['sigma_TT']+np.sqrt(2*df_clas6_reduced['epsilon']*(1+df_clas6_reduced['epsilon']))*np.cos(df_clas6_reduced['p']*3.14159/180)*df_clas6_reduced['sigma_LT'])
+    df_clas6_reduced['diff_xsection'] = df_clas6_reduced['dsdtdp']/df_clas6_reduced['total_xsection']
 
-    plt.errorbar(df_2['p'], df_2['dsdtdp'],yerr=sigma_c6,color="black",fmt="o", markersize=10,label='CLAS6 Data')
 
-    #plt.errorbar(df_clas122['pave_exp'], df_clas122['xsec_corr_red_nb'],yerr=sigma_c12,color="green",fmt="D", markersize=10,label='CLAS12 Data')
+    sigma_c6 = np.sqrt(np.square(df_clas6_reduced['stat'])+np.square(df_clas6_reduced['sys']))
 
-    #plt.plot(df_2['p'], df_2['total_xsection'],'r+')
-    # df_2['sigma_T'] = df_small2['sigma_T'].values[0]
-    # df_2['sigma_L'] = df_small2['sigma_L'].values[0]
-    # df_2['sigma_LT'] = df_small2['sigma_LT'].values[0]
-    # df_2['sigma_TT'] = df_small2['sigma_TT'].values[0]
-    # df_2['epsilon'] = df_small2['epsilon'].values[0]
-    phi = np.linspace(0, 360, 100)
 
+    #Published CLAS6 fit from ... somewhere, should replace with own fit / compare
     pub_tel =  389.766081871345
     pub_lt = -13.45029239766086
     pub_tt = -46.19883040935679
-
-    # pub_tel =  df_small2['sigma_L'].values[0]*df_small2['epsilon'].values[0]+df_small2['sigma_T'].values[0]
-    # pub_lt = df_small2['sigma_LT'].values[0]
-    # pub_tt = df_small2['sigma_TT'].values[0]
-
-
-
-    def fit_function(phi,A,B,C):
-            #A + B*np.cos(2*phi) +C*np.cos(phi)
-            rads = phi*np.pi/180
-            #return (A * np.exp(-x/beta) + B * np.exp(-1.0 * (x - mu)**2 / (2 * sigma**2)))
-            #A = T+L, B=TT, C=LT
-            #A = black, B=blue, C=red
-            return A + B*np.cos(2*rads) + C*np.cos(rads)
 
     rev_a =pub_tel/6.28
     rev_b = pub_tt/6.28*epsi_mean_c6
     rev_c = pub_lt/6.28*np.sqrt(2*epsi_mean_c6*(1+epsi_mean_c6))
 
+    phi = np.linspace(0, 360, 100)
 
+    #Plot CLAS6 fit
     fit_y_data_weighted = fit_function(phi,rev_a,rev_b,rev_c)
 
-    #total_xsection = 
-    #total_xsection =  3.14*6.28*1/Gamma*df_small2['prefactor'].values[0]*(df_small2['sigma_T'].values[0]+df_small2['epsilon'].values[0]*df_small2['sigma_L'].values[0]+df_small2['epsilon'].values[0]*np.cos(2*phi*3.14159/180)*df_small2['sigma_TT'].values[0]+np.sqrt(2*df_small2['epsilon'].values[0]*(1+df_small2['epsilon'].values[0]))*np.cos(phi*3.14159/180)*df_small2['sigma_LT'].values[0])
-    total_xsection =  1/6.28*(df_small2['sigma_T'].values[0]+df_small2['epsilon'].values[0]*df_small2['sigma_L'].values[0]+df_small2['epsilon'].values[0]*np.cos(2*phi*3.14159/180)*df_small2['sigma_TT'].values[0]+np.sqrt(2*df_small2['epsilon'].values[0]*(1+df_small2['epsilon'].values[0]))*np.cos(phi*3.14159/180)*df_small2['sigma_LT'].values[0])
-
-    print(df_small2['prefactor'].values[0])
-    print(Gamma)
-    plt.plot(phi, fit_y_data_weighted,'k',label='CLAS 6 Data Fit')
-
-    
-
-    df_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
-    print(df_clas12.columns)
-    df_clas12 = df_clas12.dropna()
-    
-    df_clas122 = df_clas12.query("qmin>1.9 and qmax<2.6 and xmin>0.29 and xmax<0.39 and tmin>0.19 and tmax<0.31")
-    print(df_clas122)
-
-    df_clas12out = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
-    #df_clas12out = df_clas12out.dropna()
-    
-    #df_clas122out = df_clas12out.query("qmin>1.9 and qmax<2.6 and xmin>0.29 and xmax<0.39 and tmin>0.19 and tmax<0.31")
-
-    #print(df_clas122['xsec_corr_red_nb'])
-    ##df_clas122out['xsec_corr_red_nb'].fillinf(df_clas122['xsec_corr_red_nb'], inplace=True)
-    #print(df_clas122out['xsec_corr_red_nb'])
-
-    #df_clas122['xsec_corr_red_nb'] = (df_clas122['xsec_corr_red_nb']+df_clas122out['xsec_corr_red_nb'])/2
-    #print(df_clas122['xsec_corr_red_nb'])
-    #sys.exit()
-
-    binscenters_c12 = df_clas122["pave_exp"]
-    data_entries_c12 = df_clas122["xsec_corr_red_nb"]
-    sigma_c12 = df_clas122["uncert_xsec_corr_red_nb"]
-
-    #plt.errorbar(df_clas122['pave_exp'], df_clas122['xsec_corr_red_nb'],yerr=sigma_c12,color="red",fmt="D", markersize=10,label='CLAS12 Data')
-
-    #plt.errorbar(binscenters_c12, data_entries_c12, yerr=sigma_c12, color="blue",fmt="x",label='CLAS12 Data')#. Bin Averages: Q2: {:.2f} xB: {:.2f} t: {:.2f}'.format(df_small["qave_exp"].mean(),df_small["xave_exp"].mean(),df_small["tave_exp"].mean()))
+    total_xsection =  1/6.28*(df_GK_reduced['sigma_T'].mean()+df_GK_reduced['epsilon'].mean()*df_GK_reduced['sigma_L'].mean()+df_GK_reduced['epsilon'].mean()*np.cos(2*phi*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*df_GK_reduced['epsilon'].mean()*(1+df_GK_reduced['epsilon'].mean()))*np.cos(phi*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
 
 
+    df_inbend_clas12 = df_inbend_clas12.dropna()
 
 
-
-    def resid_weighted_c12(pars):
-        return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
-
-    def constr0(pars):
-        return fit_function(0,pars)
-    
-    def constr180(pars):
-        return fit_function(180,pars)
+    binscenters_c12 = df_inbend_clas12_reduced["pave_exp"]
+    data_entries_c12 = df_inbend_clas12_reduced["xsec_corr_red_nb"]
+    sigma_c12 = df_inbend_clas12_reduced["uncert_xsec_corr_red_nb"]
 
     con1 = {'type': 'ineq', 'fun': constr0}
     con2 = {'type': 'ineq', 'fun': constr180}
@@ -265,39 +217,42 @@ if i==1:
     tt_c12_err = tt_c12*b_err/b
     lt_c12_err = lt_c12*c_err/c
 
-    xmax = 360
-    xspace = np.linspace(0, xmax, 1000)
+    phi_max = 360
+    xspace = np.linspace(0, phi_max, 1000)
 
     fit_y_data_weighted_new_c12 = fit_function(xspace, a_c12,b_c12,c_c12)
 
-    #plt.plot(xspace, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
+    # Plotting the data
 
-    plt.plot(phi, total_xsection,'b',label='GK Model Curve')
-
-
-    
-    plot_title = "Reduced Cross Section at 2<Q$^2$<2.5, 0.3<x$_B$<0.38, 0.2<t<0.3"
+    # Create figure
+    plt.rcParams["font.size"] = "20"
+    fig, ax = plt.subplots(figsize =(14, 10))
+    plot_title = "Reduced Cross Section at {}<Q$^2$<{}, {}<x$_B$<{}, {}<t<{}".format(qmin,qmax,xmin,xmax,tmin,tmax)
+    plt.title(plot_title)
+    plt.ylim([0,150])
     ax.set_xlabel('$\phi$ ')  
     ax.set_ylabel(r'$\frac{d\sigma^4}{dQ^2dx_Bdtd\phi}$'+ '  (nb/GeV$^4$)')
+   
+
+    #Plot CLAS6 datapoints
+    plt.errorbar(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],yerr=sigma_c6,color="black",fmt="o", markersize=10,label='CLAS6 Data')
+    
+    #Plot CLAS12 datapoints
+    plt.errorbar(df_inbend_clas12_reduced['pave_exp'], df_inbend_clas12_reduced['xsec_corr_red_nb'],yerr=sigma_c12,color="red",fmt="D", markersize=10,label='CLAS12 Data')
+
+    #Plot CLAS6 Data Fit
+    #plt.plot(xspace, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
+
+    #Plot CLAS12 Data Fit
+    plt.plot(xspace, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
+
+    #Plot GK Model
+    plt.plot(phi, total_xsection,'b',label='GK Model Curve')
+
     ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
 
-
-    plt.title(plot_title)
-    
-
-    plt.ylim([20,120])
-    #plt.show()
-    plt.savefig("pic3.png")
-    print(pub_tel)
-    print(pub_lt)
-    print(pub_tt)
-
-
-    #print(df_2)
-
-    # c6_dtedl = 0.2511627906976744, 389.766081871345
-    # c6_dlt = 0.2511627906976744, -13.45029239766086
-    # c6_dtt = 0.2511627906976744, -46.19883040935679
+    plt.show()
+    #plt.savefig("pic4.png")
 
 
 
@@ -310,18 +265,18 @@ if i==2:
 
 
     print(df.columns)
-    base_query = "Q2==2.25 and xB==0.325"
-    df_small = df.query(base_query)
+    query_GK_Model = "Q2==2.25 and xB==0.325"
+    df_GK_calc = df.query(query_GK_Model)
 
-    df_small['sigma_T'] = pd.to_numeric(df["sigma_T"], errors='coerce')
-    df_small['sigma_L'] = pd.to_numeric(df["sigma_L"], errors='coerce')
-    df_small['sigma_LT'] = pd.to_numeric(df["sigma_LT"], errors='coerce')
-    df_small['sigma_TT'] = pd.to_numeric(df["sigma_TT"], errors='coerce')
+    df_GK_calc['sigma_T'] = pd.to_numeric(df["sigma_T"], errors='coerce')
+    df_GK_calc['sigma_L'] = pd.to_numeric(df["sigma_L"], errors='coerce')
+    df_GK_calc['sigma_LT'] = pd.to_numeric(df["sigma_LT"], errors='coerce')
+    df_GK_calc['sigma_TT'] = pd.to_numeric(df["sigma_TT"], errors='coerce')
 
 
-    print(df_small)
-    df_small.dropna()
-    print(df_small)
+    print(df_GK_calc)
+    df_GK_calc.dropna()
+    print(df_GK_calc)
     plt.rcParams["font.size"] = "20"
 
 
@@ -329,10 +284,10 @@ if i==2:
 
 
 
-    dtedl_2022 = plt.plot(-1*df_small['mt'], df_small['sigma_T']+df_small['epsilon']*df_small['sigma_L'],'k--',label="2022 GK Model")
+    dtedl_2022 = plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_T']+df_GK_calc['epsilon']*df_GK_calc['sigma_L'],'k--',label="2022 GK Model")
 
-    plt.plot(-1*df_small['mt'], df_small['sigma_LT'],'r--')
-    plt.plot(-1*df_small['mt'], df_small['sigma_TT'],'b--')
+    plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_LT'],'r--')
+    plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_TT'],'b--')
 
 
     # df = pd.read_csv('cross_section_pi0_10600.txt', sep='\t', header=0)
@@ -340,28 +295,28 @@ if i==2:
 
     # print(df.columns)
 
-    # df_small = df.query(base_query)
+    # df_GK_calc = df.query(query_GK_Model)
 
-    # df_small['sigma_T'] = pd.to_numeric(df["sigma_T"], errors='coerce')
-    # df_small['sigma_L'] = pd.to_numeric(df["sigma_L"], errors='coerce')
-    # df_small['sigma_LT'] = pd.to_numeric(df["sigma_LT"], errors='coerce')
-    # df_small['sigma_TT'] = pd.to_numeric(df["sigma_TT"], errors='coerce')
+    # df_GK_calc['sigma_T'] = pd.to_numeric(df["sigma_T"], errors='coerce')
+    # df_GK_calc['sigma_L'] = pd.to_numeric(df["sigma_L"], errors='coerce')
+    # df_GK_calc['sigma_LT'] = pd.to_numeric(df["sigma_LT"], errors='coerce')
+    # df_GK_calc['sigma_TT'] = pd.to_numeric(df["sigma_TT"], errors='coerce')
 
 
-    # print(df_small)
-    # df_small.dropna()
-    # print(df_small)
+    # print(df_GK_calc)
+    # df_GK_calc.dropna()
+    # print(df_GK_calc)
 
     # #fig, ax = plt.subplots(figsize=(12, 6))
 
-    # plt.plot(-1*df_small['mt'], df_small['epsilon'],'k')
+    # plt.plot(-1*df_GK_calc['mt'], df_GK_calc['epsilon'],'k')
 
-    # #plt.plot(-1*df_small['mt'], df_small['sigma_T']+df_small['epsilon']*df_small['sigma_L'],'k')
-    # #plt.plot(-1*df_small['mt'], df_small['sigma_T'],'r')
+    # #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_T']+df_GK_calc['epsilon']*df_GK_calc['sigma_L'],'k')
+    # #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_T'],'r')
 
-    # #plt.plot(-1*df_small['mt'], df_small['sigma_L'],'yo')
-    # plt.plot(-1*df_small['mt'], df_small['sigma_LT'],'r')
-    # plt.plot(-1*df_small['mt'], df_small['sigma_TT'],'b')
+    # #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_L'],'yo')
+    # plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_LT'],'r')
+    # plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_TT'],'b')
 
 
 
@@ -372,14 +327,14 @@ if i==2:
 
     #plt.show()
 
-    print(df_small)
+    print(df_GK_calc)
 
 
 if i==2:
 
 # Grabbed data from https://apps.automeris.io/wpd/
 # From Fig 24 in Ivan 2014
-# 2 < Q2 < 2.5 0.3<xb < 0.38
+# 2 < Q2 < 2.5 0.3<xB <= 0.38
 
     dtedl = pd.read_csv('c6_gk_comp/dtedl.txt', sep=',', header=None)
     dtt = pd.read_csv('c6_gk_comp/dtt.txt', sep=',', header=None)
