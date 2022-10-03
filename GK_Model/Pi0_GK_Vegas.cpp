@@ -1004,13 +1004,13 @@ int main (int argc, char** argv){
 
     // write cross section T L LT and TT to a file
     // FILE *f = fopen("cross_section_pi0_10600.txt", "w");
-    FILE *f = fopen("cross_section_pi0_10600_big.txt", "w");
+    FILE *f = fopen("cross_section_pi0_575_new_big.txt", "w");
 
     fprintf(f, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
 
-    for (m_xbj = 0.225; m_xbj < 0.75; m_xbj += 0.05) {
-        for (m_Q2 = 1.25; m_Q2 < 11; m_Q2 += 0.5) {
-            for (m_t = -0.02; m_t > -1.06; m_t -= 0.1) {
+    for (m_xbj = 0.35; m_xbj < 0.635; m_xbj += 0.2) {
+        for (m_Q2 = 2; m_Q2 < 10; m_Q2 += 2) {
+            for (m_t = -0.2; m_t > -1; m_t -= 0.2) {
                 
             //m_Q2 = 2.25; // Q^2 value
             //m_xbj =0.225;// Bjorken x

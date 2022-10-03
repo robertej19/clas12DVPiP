@@ -121,8 +121,6 @@ def fit_over_phi(x_data,y_data,y_errors,weighted=True):
 
 
 
-i=1
-
 def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLAS6=False):
 
     # INPUT BINNING
@@ -296,26 +294,30 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
     plt.close()
 
 
+i = 2
 
-qmins = [1.5,2]
-qmaxs = [2,2.5]
-xmins = [0.2,0.25,0.3]
-xmaxs = [0.25,0.3,0.38]
-tmins = [0.15,0.2,0.3,0.4,0.5,0.6,0.8,1.0]
-tmaxs = [0.2,0.3,0.4,0.5,0.6,0.8,1.0,1.5]
+if i==1:
+    qmins = [1.5,2]
+    qmaxs = [2,2.5]
+    xmins = [0.2,0.25,0.3]
+    xmaxs = [0.25,0.3,0.38]
+    tmins = [0.15,0.2,0.3,0.4,0.5,0.6,0.8,1.0]
+    tmaxs = [0.2,0.3,0.4,0.5,0.6,0.8,1.0,1.5]
 
-for qmi,qma,in zip(qmins,qmaxs):
-    for xmi,xma in zip(xmins,xmaxs):
-        for tmi,tma in zip(tmins,tmaxs):
-            print("on {} {} {} {} {} {}".format(qmi,qma,xmi,xma,tmi,tma))
-            try:
-                comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
-            except Exception as e:
-                print(e)
-                pass
-#comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
-#comp_gk_c12_c6()
-    # in=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3
+    for qmi,qma,in zip(qmins,qmaxs):
+        for xmi,xma in zip(xmins,xmaxs):
+            for tmi,tma in zip(tmins,tmaxs):
+                print("on {} {} {} {} {} {}".format(qmi,qma,xmi,xma,tmi,tma))
+                try:
+                    comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
+                except Exception as e:
+                    print(e)
+                    pass
+    #comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
+    #comp_gk_c12_c6()
+        # in=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3
+
+
 
 
 # Basic plotting
@@ -417,10 +419,37 @@ if i==2:
     plt.plot(dlt[0], dlt[1],'r')
 
 
-    for d,c in zip(data,colors):
-        plt.plot(d[0], d[1],c+'+')
+    tedl_err = [89.36170213/2,
+        37.23404255/2,
+        24.46808511/2,
+        10.63829787/2,
+        11.70212766/2,
+        14.89361702/2,
+        12.76595745/2]
 
-    clas6_data = plt.plot(data[0][0], data[0][1],'k+',label="CLAS6 Data")
+    tt_err = [165.9574468/2,
+        75.53191489/2,
+        56.38297872/2,
+        39.36170213/2,
+        29.78723404/2,
+        19.14893617/2,
+        15.95744681/2]
+
+    lt_err= [117.0212766/2,
+        51.06382979/2,
+        31.91489362/2,
+        17.0212766/2,
+        20.21276596/2,
+        19.14893617/2,
+        20.21276596/2]
+
+    errs = [tedl_err, tt_err, lt_err]
+
+    for d,c,e in zip(data,colors,errs):
+        #plt.plot(d[0], d[1],c+'+')
+        plt.errorbar(d[0], d[1],yerr=e,color=c,fmt="o", markersize=10)
+
+    clas6_data = plt.plot(data[0][0], data[0][1],'ko',label="CLAS6 Data")
 
 
     extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
