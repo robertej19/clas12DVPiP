@@ -4,16 +4,17 @@ import numpy as np
 import sys
 from matplotlib.patches import Rectangle
 
-# 1.) Necessary imports.    
+# 1.) Necessary imports.
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy import stats
 import argparse
-import sys 
+import sys
 import pandas as pd
 from matplotlib.patches import Rectangle
 
+#UNCHANGING CONSTANTS
 M = 0.938272081 # target mass
 me = 0.5109989461 * 0.001 # electron mass
 ebeam = 10.604 # beam energy
@@ -21,7 +22,6 @@ pbeam = np.sqrt(ebeam * ebeam - me * me) # beam electron momentum
 beam = [0, 0, pbeam] # beam vector
 target = [0, 0, 0] # target vector
 alpha = 1/137 #Fund const
-mp = 0.938 #Mass proton
 prefix = alpha/(8*np.pi)
 E = 10.6
 Clas6_Sim_BeamTime = 11922445
@@ -33,7 +33,7 @@ def get_gamma(x,q2,BeamE):
     a8p = 1/137*(1/(8*3.14159))
     energies = [BeamE]
     for e in energies:
-        y = q2/(2*x*e*mp)
+        y = q2/(2*x*e*M)
         num = 1-y-q2/(4*e*e)
         denom = 1- y + y*y/2 + q2/(4*e*e)
         #print(y,q2,e,num,denom)
@@ -52,8 +52,8 @@ def fit_function(phi,A,B,C):
         return A + B*np.cos(2*rads) + C*np.cos(rads)
 
 
-def resid_weighted_c12(pars):
-    return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
+# def resid_weighted_c12(pars):
+#     return (((y-fit_function(x,pars))**2)/sigma_c12).sum()
 
 def constr0(pars):
     return fit_function(0,pars)
@@ -61,21 +61,82 @@ def constr0(pars):
 def constr180(pars):
     return fit_function(180,pars)
 
+def conv_struct_to_abc(tel,lt,tt,epsilon):
+
+    a =tel/6.28
+    b = tt/6.28*epsilon
+    c = lt/6.28*np.sqrt(2*epsilon*(1+epsilon))
+
+    return [a,b,c]
+
+def conv_abc_to_struct(a,b,c,epsilon):
+
+    tel = a*6.28
+    tt = b/epsilon*6.28
+    lt = c/np.sqrt(2*epsilon*(1+epsilon))*6.28
+
+    return [tel,tt,lt]
+
+def conv_abc_err_to_struct_err(tel,tt,lt,a,b,c,a_err,b_err,c_err):
+
+    tel_err = tel*a_err/a
+    tt_err = tt*b_err/b
+    lt_err = lt*c_err/c
+
+    return [tel_err,tt_err,lt_err]
 
 
-def fit_over_phi(x_data,y_data,y_errors):
-    return 0
+
+
+
+def fit_over_phi(x_data,y_data,y_errors,weighted=True):
+
+    valid = ~(np.isnan(x_data) | np.isnan(y_data))
+
+    if weighted:
+        popt_0, pcov = curve_fit(fit_function, xdata=x_data[valid], ydata=y_data[valid], p0=[100,-60,-11],
+                    sigma=y_errors[valid], absolute_sigma=True)
+
+        popt, pcov = curve_fit(fit_function, xdata=x_data[valid], ydata=y_data[valid], p0=[popt_0[0],popt_0[1],popt_0[2]],
+                    sigma=y_errors[valid], absolute_sigma=True)
+    else:
+        popt_0, pcov = curve_fit(fit_function, xdata=x_data[valid], ydata=y_data[valid], p0=[100,-60,-11])
+
+        popt, pcov = curve_fit(fit_function, xdata=x_data[valid], ydata=y_data[valid], p0=[popt_0[0],popt_0[1],popt_0[2]])
+
+    a,b,c = popt[0],popt[1],popt[2]
+
+    a_err = np.sqrt(pcov[0][0])#*qmod
+    b_err = np.sqrt(pcov[1][1])#*qmod
+    c_err = np.sqrt(pcov[2][2])#*qmod
+
+    #for constraint fitting, not used with scipy curve_fit
+    # con1 = {'type': 'ineq', 'fun': constr0}
+    # con2 = {'type': 'ineq', 'fun': constr180}
+    # # con3 = {'type': 'ineq', 'fun': constr270}
+    # cons = [con1,con2]
+
+    return [a,b,c,a_err,b_err,c_err]
 
 
 
 
-i=1 
+i=1
 
-if i==1:
+def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLAS6=False):
+
+    # INPUT BINNING
+    E_beam_6 = 5.75 #Beam energy in GeV
+    E_beam_12 = 10.6 #Beam energy in GeV
+
+    Q2 = (qmin+qmax)/2
+    xB = (xmin+xmax)/2
+    t = (tmin+tmax)/2
+
     df_GK_calc = pd.read_csv('cross_section_pi0_575.txt', sep='\t', header=0)
     # Data Structure:
     #     Q2	xB	mt	sigma_T	sigma_L	sigma_LT	sigma_TT	W	y	epsilon	gammaa	tmin
-    #  1.75 	 0.225 	 -0.020 	 nan 	 nan 	 -nan 	 nan 	 2.6282355 	 0.0806671 	 0.9961151 	 0.3190776 	 -0.0574737 
+    #  1.75 	 0.225 	 -0.020 	 nan 	 nan 	 -nan 	 nan 	 2.6282355 	 0.0806671 	 0.9961151 	 0.3190776 	 -0.0574737
 
 
     df_clas6 = pd.read_csv('xs_clas6.csv', header=0)
@@ -84,7 +145,7 @@ if i==1:
     # 1.15	0.132	0.12	63	59.4	15.3	13
 
     df_inbend_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_inbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
-    df_outbend_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
+    df_inbend_clas12 = pd.read_pickle('/mnt/d/GLOBUS/CLAS12/APS2022/final_data_files/full_xsection_outbending_rad_All_All_All_rad_f18_in_and_out_advanced_no_ang_cuts.pkl')
     # Data Structure:
     #['qmin', 'xmin', 'tmin', 'pmin', 'qmax_x', 'xmax_x', 'tmax_x', 'pmax_x',
     #    'qave_exp', 'yave_x', 'xave_exp', 'tave_exp', 'pave_exp', 'counts_exp',
@@ -105,74 +166,65 @@ if i==1:
     df_GK_calc['sigma_TT'] = pd.to_numeric(df_GK_calc["sigma_TT"], errors='coerce')
 
 
-    num_pre = 0.00004627006 # Include prefactor of alpha/16pi^2
-    E_lepton = 5.75 #Beam energy in GeV
-    W = 2.3564636 #calculated from some stuff, need to fix
-    df_GK_calc['prefactor'] = num_pre*(W**2-M**2)/(E_lepton**2*M**2*df_GK_calc['Q2']*(-1*df_GK_calc['epsilon']+1))
-
-    epsilon = 0.587074 # For 5.75 GeV beam
-    epsi_mean_c6 = epsilon
-    #epsilon= 0.901577 #for 10.6 GeV beam
-
-    
-    qmin = 1.5
-    qmax = 2
-
-    xmin = 0.2
-    xmax = 0.25
-
-    tmin = 0.2
-    tmax = 0.3
 
 
-    Q2 = (qmin+qmax)/2
-    xB = (xmin+xmax)/2
-    t = (tmin+tmax)/2
 
-    
+    # Note: This needs to calculated directly better. Discrepancy between funion above and that eMloyed in Pi0_GK code
+    Gamma, epsilon_6 = get_gamma(xB,Q2,E_beam_6)
+    Gamma_12, epsilon_12 = get_gamma(xB,Q2,E_beam_12)
+
+
+
+    #prefactor not needed for reduced cross section
+    #num_pre = 0.00004627006 # Include prefactor of alpha/16pi^2
+    #W = 2.3564636 #calculated from some stuff, need to fix !!!!!!!!!!!!!!!!!!!!!!!!!
+    #df_GK_calc['prefactor'] = num_pre*(W**2-M**2)/(E_beam_6**2*M**2*df_GK_calc['Q2']*(-1*df_GK_calc['epsilon']+1))
+
+
 
     query_clas6 = "q>={} and q<={} and x>={} and x<={} and t>={} and t<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)
     query_GK_Model = "Q2>={} and Q2<={} and xB>={} and xB<={} and mt<={} and mt>={} ".format(qmin,qmax,xmin,xmax,-1*tmin,-1*tmax)
-    query_clas12 = "qmin>={} and qmax<={} and xmin>={} and xmax<={} and tmin>={} and tmax<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)    
+    query_clas12 = "qmin>={} and qmax<={} and xmin>={} and xmax<={} and tmin>={} and tmax<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)
 
     df_GK_reduced = df_GK_calc.query(query_GK_Model)
     df_clas6_reduced = df_clas6.query(query_clas6)
     df_inbend_clas12_reduced = df_inbend_clas12.query(query_clas12)
 
 
+    print(df_GK_reduced)
+    print(df_GK_reduced['sigma_TT'].mean())
 
-    Gamma, e = get_gamma(xB,Q2,E_lepton)
-
-
-    df_clas6_reduced['prefactor'] = df_GK_reduced['prefactor'].mean()
+    #df_clas6_reduced['prefactor'] = df_GK_reduced['prefactor'].mean()
     df_clas6_reduced['sigma_T'] = df_GK_reduced['sigma_T'].mean()
     df_clas6_reduced['sigma_L'] = df_GK_reduced['sigma_L'].mean()
     df_clas6_reduced['sigma_LT'] = df_GK_reduced['sigma_LT'].mean()
     df_clas6_reduced['sigma_TT'] = df_GK_reduced['sigma_TT'].mean()
-    df_clas6_reduced['epsilon'] = df_GK_reduced['epsilon'].mean()
-    df_clas6_reduced['total_xsection'] =  df_clas6_reduced['prefactor']*(df_clas6_reduced['sigma_T']+df_clas6_reduced['epsilon']*df_clas6_reduced['sigma_L']+df_clas6_reduced['epsilon']*np.cos(2*df_clas6_reduced['p']*3.14159/180)*df_clas6_reduced['sigma_TT']+np.sqrt(2*df_clas6_reduced['epsilon']*(1+df_clas6_reduced['epsilon']))*np.cos(df_clas6_reduced['p']*3.14159/180)*df_clas6_reduced['sigma_LT'])
-    df_clas6_reduced['diff_xsection'] = df_clas6_reduced['dsdtdp']/df_clas6_reduced['total_xsection']
+    #df_clas6_reduced['epsilon'] = df_GK_reduced['epsilon'].mean()
+    #df_clas6_reduced['total_xsection'] =  df_clas6_reduced['prefactor']*(df_clas6_reduced['sigma_T']+df_clas6_reduced['epsilon']*df_clas6_reduced['sigma_L']+df_clas6_reduced['epsilon']*np.cos(2*df_clas6_reduced['p']*3.14159/180)*df_clas6_reduced['sigma_TT']+np.sqrt(2*df_clas6_reduced['epsilon']*(1+df_clas6_reduced['epsilon']))*np.cos(df_clas6_reduced['p']*3.14159/180)*df_clas6_reduced['sigma_LT'])
+    #df_clas6_reduced['diff_xsection'] = df_clas6_reduced['dsdtdp']/df_clas6_reduced['total_xsection']
 
 
     sigma_c6 = np.sqrt(np.square(df_clas6_reduced['stat'])+np.square(df_clas6_reduced['sys']))
 
 
-    #Published CLAS6 fit from ... somewhere, should replace with own fit / compare
-    pub_tel =  389.766081871345
-    pub_lt = -13.45029239766086
-    pub_tt = -46.19883040935679
+    #Published CLAS6 fit from ... somewhere, should replace with own fit / coMare
+    # pub_tel =  389.766081871345
+    # pub_lt = -13.45029239766086
+    # pub_tt = -46.19883040935679
 
-    rev_a =pub_tel/6.28
-    rev_b = pub_tt/6.28*epsi_mean_c6
-    rev_c = pub_lt/6.28*np.sqrt(2*epsi_mean_c6*(1+epsi_mean_c6))
+    # [rev_a,rev_b,rev_c] = conv_struct_to_abc(pub_tel,pub_lt,pub_tt,epsilon_6)
+    #fit_y_data_weighted = fit_function(phi_vector,rev_a,rev_b,rev_c)
+
 
     phi_vector = np.linspace(0, 360, 100)
-    
 
     #Plot CLAS6 fit
-    fit_y_data_weighted = fit_function(phi_vector,rev_a,rev_b,rev_c)
 
-    total_xsection =  1/6.28*(df_GK_reduced['sigma_T'].mean()+df_GK_reduced['epsilon'].mean()*df_GK_reduced['sigma_L'].mean()+df_GK_reduced['epsilon'].mean()*np.cos(2*phi_vector*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*df_GK_reduced['epsilon'].mean()*(1+df_GK_reduced['epsilon'].mean()))*np.cos(phi_vector*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
+    #GK_curve_c12 =  1/6.28*(df_GK_reduced['sigma_T'].mean()+epsilon_12*df_GK_reduced['sigma_L'].mean()+epsilon_12*np.cos(2*phi_vector*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*epsilon_12*(1+epsilon_12))*np.cos(phi_vector*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
+    #GK_curve_c6 =  1/6.28*(df_GK_reduced['sigma_T'].mean()+epsilon_6*df_GK_reduced['sigma_L'].mean()+epsilon_6*np.cos(2*phi_vector*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*epsilon_6*(1+epsilon_6))*np.cos(phi_vector*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
+
+    GK_curve_c12 = fit_function(phi_vector,*conv_struct_to_abc(df_GK_reduced['sigma_T'].mean()+epsilon_12*df_GK_reduced['sigma_L'].mean(),df_GK_reduced['sigma_LT'].mean(),df_GK_reduced['sigma_TT'].mean(),epsilon_12))
+    GK_curve_c6 = fit_function(phi_vector,*conv_struct_to_abc(df_GK_reduced['sigma_T'].mean()+epsilon_6*df_GK_reduced['sigma_L'].mean(),df_GK_reduced['sigma_LT'].mean(),df_GK_reduced['sigma_TT'].mean(),epsilon_6))
 
 
     df_inbend_clas12 = df_inbend_clas12.dropna()
@@ -182,79 +234,88 @@ if i==1:
     data_entries_c12 = df_inbend_clas12_reduced["xsec_corr_red_nb"]
     sigma_c12 = df_inbend_clas12_reduced["uncert_xsec_corr_red_nb"]
 
-    con1 = {'type': 'ineq', 'fun': constr0}
-    con2 = {'type': 'ineq', 'fun': constr180}
-    # con3 = {'type': 'ineq', 'fun': constr270}
-    cons = [con1,con2]
 
-    x = binscenters_c12
-    y = data_entries_c12
-    valid = ~(np.isnan(x) | np.isnan(y))
-
-    popt_0, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[100,-60,-11],
-        sigma=sigma_c12[valid], absolute_sigma=True)
-
-    popt, pcov = curve_fit(fit_function, xdata=x[valid], ydata=y[valid], p0=[popt_0[0],popt_0[1],popt_0[2]],
-                sigma=sigma_c12[valid], absolute_sigma=True)
-
-    a,b,c = popt[0],popt[1],popt[2]
-                        
-    a_err = np.sqrt(pcov[0][0])#*qmod
-    b_err = np.sqrt(pcov[1][1])#*qmod
-    c_err = np.sqrt(pcov[2][2])#*qmod
 
     ###A +    Bcos(2x) + Ccos(x)
     ###TEL +   ep*TT   + sqr*LT
-    
-    epsi_mean_c12 = 0.9
+    [a_weighted,b_weighted,c_weighted,a_err_weighted,b_err_weighted,c_err_weighted] = fit_over_phi(binscenters_c12,data_entries_c12,sigma_c12,weighted=True)
+    [a_unweighted,b_unweighted,c_unweighted,a_err_unweighted,b_err_unweighted,c_err_unweighted] = fit_over_phi(binscenters_c12,data_entries_c12,sigma_c12,weighted=False)
 
-    a_c12,b_c12,c_c12 = a,b,c 
-
-    tel_c12 = a_c12*6.28
-    tt_c12 = b_c12/epsi_mean_c12*6.28
-    lt_c12 = c_c12/np.sqrt(2*epsi_mean_c12*(1+epsi_mean_c12))*6.28
-
-    tel_c12_err = tel_c12*a_err/a
-    tt_c12_err = tt_c12*b_err/b
-    lt_c12_err = lt_c12*c_err/c
+    [a_weighted6,b_weighted6,c_weighted6,a_err_weighted6,b_err_weighted6,c_err_weighted6] = fit_over_phi(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],sigma_c6,weighted=True)
+    [a_unweighted6,b_unweighted6,c_unweighted6,a_err_unweighted6,b_err_unweighted6,c_err_unweighted6] = fit_over_phi(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],sigma_c6,weighted=False)
 
 
 
-    fit_y_data_weighted_new_c12 = fit_function(phi_vector, a_c12,b_c12,c_c12)
+    fit_c12_weighted = fit_function(phi_vector, a_weighted,b_weighted,c_weighted)
+    fit_c12_unweighted = fit_function(phi_vector, a_unweighted,b_unweighted,c_unweighted)
+
+    fit_c6_weighted = fit_function(phi_vector, a_weighted6,b_weighted6,c_weighted6)
+    fit_c6_unweighted = fit_function(phi_vector, a_unweighted6,b_unweighted6,c_unweighted6)
 
     # Plotting the data
+
 
     # Create figure
     plt.rcParams["font.size"] = "20"
     fig, ax = plt.subplots(figsize =(14, 10))
     plot_title = "Reduced Cross Section at {}<Q$^2$<{}, {}<x$_B$<{}, {}<t<{}".format(qmin,qmax,xmin,xmax,tmin,tmax)
     plt.title(plot_title)
-    plt.ylim([0,150])
-    ax.set_xlabel('$\phi$ ')  
-    ax.set_ylabel(r'$\frac{d\sigma^4}{dQ^2dx_Bdtd\phi}$'+ '  (nb/GeV$^4$)')
-   
+    plt.ylim([0,np.max([np.max(GK_curve_c12),np.max(fit_c12_weighted)])*1.3])
+    ax.set_xlabel('$\phi$ ')
+    ax.set_ylabel(r'$\frac{d\sigma^2}{dtd\phi}$'+ '  (nb/GeV$^2$)')
 
-    #Plot CLAS6 datapoints
-    plt.errorbar(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],yerr=sigma_c6,color="black",fmt="o", markersize=10,label='CLAS6 Data')
-    
+
+    if plot_CLAS6:
+        #CLAS 6:
+        #Plot CLAS6 datapoints
+        plt.errorbar(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],yerr=sigma_c6,color="black",fmt="o", markersize=10,label='CLAS6 Data')
+
+        #Plot CLAS6 Data Fit
+        plt.plot(phi_vector, fit_c6_weighted,'k',label="CLAS6 Data Fit Weighted")
+        #plt.plot(phi_vector, fit_c6_unweighted,'k.',label="CLAS6 Data Fit Unweighted")
+
+        #Plot CLAS6 GK Fit
+        plt.plot(phi_vector, GK_curve_c6,'k--',label='GK Model 5.75 GeV Beam')
+
+    #CLAS 12:
     #Plot CLAS12 datapoints
     plt.errorbar(df_inbend_clas12_reduced['pave_exp'], df_inbend_clas12_reduced['xsec_corr_red_nb'],yerr=sigma_c12,color="red",fmt="D", markersize=10,label='CLAS12 Data')
 
-    #Plot CLAS6 Data Fit
-    #plt.plot(phi_vector, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
-
     #Plot CLAS12 Data Fit
-    plt.plot(phi_vector, fit_y_data_weighted_new_c12,'r',label="CLAS12 Data Fit")
+    plt.plot(phi_vector, fit_c12_weighted,'r',label="CLAS12 Data Fit Weighted")
+    #plt.plot(phi_vector, fit_c12_unweighted,'r.',label="CLAS12 Data Fit Unweighted")
 
     #Plot GK Model
-    plt.plot(phi_vector, total_xsection,'b',label='GK Model Curve')
+    plt.plot(phi_vector, GK_curve_c12,'k--',label='GK Model 10.6 GeV Beam')
+
 
     ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
 
-    plt.show()
-    #plt.savefig("pic4.png")
+    #plt.show()
+    plt.savefig("gk_c12_c6_plots/reduced_xsec_{}_{}_{}_{}_{}_{}.png".format(qmin,qmax,xmin,xmax,tmin,tmax))
+    plt.close()
 
 
+
+qmins = [1.5,2]
+qmaxs = [2,2.5]
+xmins = [0.2,0.25,0.3]
+xmaxs = [0.25,0.3,0.38]
+tmins = [0.15,0.2,0.3,0.4,0.5,0.6,0.8,1.0]
+tmaxs = [0.2,0.3,0.4,0.5,0.6,0.8,1.0,1.5]
+
+for qmi,qma,in zip(qmins,qmaxs):
+    for xmi,xma in zip(xmins,xmaxs):
+        for tmi,tma in zip(tmins,tmaxs):
+            print("on {} {} {} {} {} {}".format(qmi,qma,xmi,xma,tmi,tma))
+            try:
+                comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
+            except Exception as e:
+                print(e)
+                pass
+#comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
+#comp_gk_c12_c6()
+    # in=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3
 
 
 # Basic plotting
@@ -280,7 +341,7 @@ if i==2:
     plt.rcParams["font.size"] = "20"
 
 
-    fig, ax = plt.subplots(figsize =(18, 10)) 
+    fig, ax = plt.subplots(figsize =(18, 10))
 
 
 
@@ -360,8 +421,8 @@ if i==2:
         plt.plot(d[0], d[1],c+'+')
 
     clas6_data = plt.plot(data[0][0], data[0][1],'k+',label="CLAS6 Data")
-    
-   
+
+
     extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
 
 
@@ -373,10 +434,10 @@ if i==2:
 
 
     plot_title = "CLAS6 2014 Published Result vs. 2022 Implementation"
-    ax.set_xlabel('-t (GeV$^2$)')  
+    ax.set_xlabel('-t (GeV$^2$)')
     ax.set_ylabel('d$\sigma$/dt (nb/GeV$^2$)')
     plt.title(plot_title)
-    
+
 
     plt.show()
 
