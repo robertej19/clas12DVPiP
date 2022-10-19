@@ -121,7 +121,9 @@ def fit_over_phi(x_data,y_data,y_errors,weighted=True):
 
 
 
-def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLAS6=False):
+#def comp_gk_c12_c6(qmin=2,qmax=2.5,xmin=0.25,xmax=0.3,tmin=0.3,tmax=0.4,plot_CLAS6=True):
+def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLAS6=True):
+
 
 
     # INPUT BINNING
@@ -132,14 +134,15 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
     xB = (xmin+xmax)/2
     t = (tmin+tmax)/2
 
-    #df_GK_calc = pd.read_csv('cross_section_pi0_575.txt', sep='\t', header=0)
-    df_GK_calc = pd.read_csv('cross_section_pi0_575_new_big_1.txt', sep='\t', header=0)
+    df_GK_calc = pd.read_csv('GK_Model/cross_section_pi0_575.txt', sep='\t', header=0)
+    #df_GK_calc = pd.read_csv('GK_Model/cross_section_pi0_10600_big.txt', sep='\t', header=0)
+    #df_GK_calc = pd.read_csv('cross_section_pi0_575_new_big_1.txt', sep='\t', header=0)
     # Data Structure:
     #     Q2	xB	mt	sigma_T	sigma_L	sigma_LT	sigma_TT	W	y	epsilon	gammaa	tmin
     #  1.75 	 0.225 	 -0.020 	 nan 	 nan 	 -nan 	 nan 	 2.6282355 	 0.0806671 	 0.9961151 	 0.3190776 	 -0.0574737
 
 
-    ##df_clas6 = pd.read_csv('xs_clas6.csv', header=0)
+    df_clas6 = pd.read_csv('xs_clas6.csv', header=0)
     # Data Structure:
     # q	x	t	p	dsdtdp	stat	sys
     # 1.15	0.132	0.12	63	59.4	15.3	13
@@ -170,7 +173,7 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
 
 
     # Note: This needs to calculated directly better. Discrepancy between funion above and that eMloyed in Pi0_GK code
-    #Gamma, epsilon_6 = get_gamma(xB,Q2,E_beam_6)
+    Gamma, epsilon_6 = get_gamma(xB,Q2,E_beam_6)
     Gamma_12, epsilon_12 = get_gamma(xB,Q2,E_beam_12)
 
 
@@ -182,18 +185,19 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
 
 
 
-    #query_clas6 = "q>={} and q<={} and x>={} and x<={} and t>={} and t<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)
+    query_clas6 = "q>={} and q<={} and x>={} and x<={} and t>={} and t<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)
     query_GK_Model = "Q2>={} and Q2<={} and xB>={} and xB<={} and mt<={} and mt>={} ".format(qmin,qmax,.5*xmin,2*xmax,-.2*tmin,-8*tmax)
-    query_clas12 = "qmin>={} and qmax<={} and xmin>={} and xmax<={} and tmin>={} and tmax<={}".format(qmin,qmax,xmin,xmax,tmin,tmax)
-    #query_clas12 = "qmin>={} and qmax<={} and xmin>={} and xmax<={} ".format(qmin,qmax,xmin,xmax)
+    query_clas12 = "qmin>={} and qmax<={} and xmin>={} and xmax<={} and tmin>={} and tmax<={} and acc_corr>0.005".format(qmin,qmax,xmin,xmax,tmin,tmax)
 
 
     df_GK_reduced = df_GK_calc.query(query_GK_Model).dropna()
-   # df_clas6_reduced = df_clas6.query(query_clas6)
+    df_clas6_reduced = df_clas6.query(query_clas6)
     df_inbend_clas12_reduced = df_inbend_clas12.query(query_clas12)
+    sigma_c6 = np.sqrt(np.square(df_clas6_reduced['stat'])+np.square(df_clas6_reduced['sys']))
 
     print(df_inbend_clas12_reduced)
-
+    #df_inbend_clas12_reduced.to_csv('test_cla12_inbend.csv')
+   # sys.exit()
     print(df_GK_reduced)
     print(df_GK_reduced['sigma_TT'].mean())
 
@@ -207,7 +211,6 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
     #df_clas6_reduced['diff_xsection'] = df_clas6_reduced['dsdtdp']/df_clas6_reduced['total_xsection']
 
 
-   # sigma_c6 = np.sqrt(np.square(df_clas6_reduced['stat'])+np.square(df_clas6_reduced['sys']))
 
 
     #Published CLAS6 fit from ... somewhere, should replace with own fit / coMare
@@ -227,7 +230,7 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
     #GK_curve_c6 =  1/6.28*(df_GK_reduced['sigma_T'].mean()+epsilon_6*df_GK_reduced['sigma_L'].mean()+epsilon_6*np.cos(2*phi_vector*3.14159/180)*df_GK_reduced['sigma_TT'].mean()+np.sqrt(2*epsilon_6*(1+epsilon_6))*np.cos(phi_vector*3.14159/180)*df_GK_reduced['sigma_LT'].mean())
 
     GK_curve_c12 = fit_function(phi_vector,*conv_struct_to_abc(df_GK_reduced['sigma_T'].mean()+epsilon_12*df_GK_reduced['sigma_L'].mean(),df_GK_reduced['sigma_LT'].mean(),df_GK_reduced['sigma_TT'].mean(),epsilon_12))
-  #  GK_curve_c6 = fit_function(phi_vector,*conv_struct_to_abc(df_GK_reduced['sigma_T'].mean()+epsilon_6*df_GK_reduced['sigma_L'].mean(),df_GK_reduced['sigma_LT'].mean(),df_GK_reduced['sigma_TT'].mean(),epsilon_6))
+    GK_curve_c6 = fit_function(phi_vector,*conv_struct_to_abc(df_GK_reduced['sigma_T'].mean()+epsilon_6*df_GK_reduced['sigma_L'].mean(),df_GK_reduced['sigma_LT'].mean(),df_GK_reduced['sigma_TT'].mean(),epsilon_6))
     pd.set_option('use_inf_as_na', True)
     #df_inbend_clas12 = df_inbend_clas12.replace([np.inf, -np.inf], np.nan, inplace=False)
     #print(df_inbend_clas12)
@@ -248,16 +251,16 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
     [a_weighted,b_weighted,c_weighted,a_err_weighted,b_err_weighted,c_err_weighted] = fit_over_phi(binscenters_c12,data_entries_c12,sigma_c12,weighted=True)
     [a_unweighted,b_unweighted,c_unweighted,a_err_unweighted,b_err_unweighted,c_err_unweighted] = fit_over_phi(binscenters_c12,data_entries_c12,sigma_c12,weighted=False)
 
-  #  [a_weighted6,b_weighted6,c_weighted6,a_err_weighted6,b_err_weighted6,c_err_weighted6] = fit_over_phi(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],sigma_c6,weighted=True)
-  #  [a_unweighted6,b_unweighted6,c_unweighted6,a_err_unweighted6,b_err_unweighted6,c_err_unweighted6] = fit_over_phi(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],sigma_c6,weighted=False)
+    [a_weighted6,b_weighted6,c_weighted6,a_err_weighted6,b_err_weighted6,c_err_weighted6] = fit_over_phi(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],sigma_c6,weighted=True)
+    [a_unweighted6,b_unweighted6,c_unweighted6,a_err_unweighted6,b_err_unweighted6,c_err_unweighted6] = fit_over_phi(df_clas6_reduced['p'], df_clas6_reduced['dsdtdp'],sigma_c6,weighted=False)
 
 
 
     fit_c12_weighted = fit_function(phi_vector, a_weighted,b_weighted,c_weighted)
     fit_c12_unweighted = fit_function(phi_vector, a_unweighted,b_unweighted,c_unweighted)
 
- #   fit_c6_weighted = fit_function(phi_vector, a_weighted6,b_weighted6,c_weighted6)
-   # fit_c6_unweighted = fit_function(phi_vector, a_unweighted6,b_unweighted6,c_unweighted6)
+    fit_c6_weighted = fit_function(phi_vector, a_weighted6,b_weighted6,c_weighted6)
+    fit_c6_unweighted = fit_function(phi_vector, a_unweighted6,b_unweighted6,c_unweighted6)
 
     # Plotting the data
 
@@ -293,35 +296,45 @@ def comp_gk_c12_c6(qmin=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3,plot_CLA
     #plt.plot(phi_vector, fit_c12_unweighted,'r.',label="CLAS12 Data Fit Unweighted")
 
     #Plot GK Model
-    plt.plot(phi_vector, GK_curve_c12,'k--',label='GK Model 10.6 GeV Beam')
+    plt.plot(phi_vector, GK_curve_c12,'r--',label='GK Model 10.6 GeV Beam')
 
 
     ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
 
-    #plt.show()
-    plt.savefig("gk_c12_plots/reduced_xsec_{}_{}_{}_{}_{}_{}.png".format(qmin,qmax,xmin,xmax,tmin,tmax))
+    plt.show()
+    #plt.savefig("GK_Model/gk_c12_plots/reduced_xsec_{}_{}_{}_{}_{}_{}.png".format(qmin,qmax,xmin,xmax,tmin,tmax))
+    plt.savefig("xsec_with6.png")
     plt.close()
 
 
 i = 1
 
 if i==1:
-    qmins = [5.5]
-    qmaxs = [6]
-    xmins = [.45]
-    xmaxs = [.5]
-    tmins = [.4]
-    tmaxs = [0.6]
+    #qmins = [5.5,6.5,7.5,8.5]
+    #qmaxs = [6,9.5]
+    #xmins = [.45]
+    #xmaxs = [.5]
+    #tmins = [.4]
+    #tmaxs = [0.6]
+    from utils import filestruct
+    fs = filestruct.fs()
+    #fs.xBbins = [0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.7,0.85,1]
+    #self.q2bins =  [1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,7.0,9.0,14.0]
+    ###self.tbins =  [0.09,0.15,0.2,0.3,0.4,0.6,1,1.5,2,3,4.5,6,12]
+    #self.tbins =  [0.15,0.3,0.6,1,1.5,2,3,4.5,6,12]
+    comp_gk_c12_c6()
+    #print(fs.xBbins[:-1])
+    #print(fs.xBbins[1:])
 
-    for qmi,qma,in zip(qmins,qmaxs):
-        for xmi,xma in zip(xmins,xmaxs):
-            for tmi,tma in zip(tmins,tmaxs):
-                print("on {} {} {} {} {} {}".format(qmi,qma,xmi,xma,tmi,tma))
-                #try:
-                comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
-                #except Exception as e:
-                #    print(e)
-                #    pass
+    # for qmi,qma,in zip(fs.q2bins[:-1],fs.q2bins[1:]):
+    #     for xmi,xma in zip(fs.xBbins[:-1],fs.xBbins[1:]):
+    #         for tmi,tma in zip(fs.tbins[:-1],fs.tbins[1:]):
+    #             print("on {} {} {} {} {} {}".format(qmi,qma,xmi,xma,tmi,tma))
+    #             try:
+    #                 comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
+    #             except Exception as e:
+    #                 print(e)
+    #                 pass
     #comp_gk_c12_c6(qmi,qma,xmi,xma,tmi,tma)
     #comp_gk_c12_c6()
         # in=1.5,qmax=2,xmin=0.2,xmax=0.25,tmin=0.2,tmax=0.3
