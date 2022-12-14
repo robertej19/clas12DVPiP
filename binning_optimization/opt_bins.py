@@ -4,6 +4,8 @@ import numpy as np
 import sys
 from matplotlib.patches import Rectangle
 
+import scipy.integrate as integrate
+
 # 1.) Necessary imports.
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,6 +19,18 @@ import matplotlib as mpl
 from icecream import ic
 
 df = pd.read_pickle("data/df.pkl")
+
+#define top bounding function over range x
+def top_acceptance_bound(x, a, b, c):
+    #return a*x**2/(b**2 + x**2) + c
+    return a*x+b
+
+#define bottom bounding function over range x
+def bottom_acceptance_bound(x, a, b, c):
+    #return a*x**2/(b**2 + x**2) + c
+    #return exponential of x:
+    return a*np.exp(b*x)+c
+
 
 ic(df)
 
@@ -136,6 +150,38 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
     for ybin in q2_bin_edges:
         plt.hlines(ybin,xmin=.01, xmax=1, color='r')
 
+
+    a_param = 15
+    b_param = 2
+    a_param1 = .35
+    b_param1 = 4
+    c_param1 = 0
+
+
+    #make x range for plotting
+    x_range = np.linspace(xmin,xmax,1000)
+    #populate yvals with the y values for the fit
+    yvals = top_acceptance_bound(x_range,a_param,b_param,1)
+    #plot the fit
+    plt.plot(x_range,yvals,'b')
+    #make x range for plotting
+    #populate yvals with the y values for the fit
+    yvals_bottom = bottom_acceptance_bound(x_range,a_param1,b_param1,c_param1)
+    #plot the fit
+    plt.plot(x_range,yvals_bottom,'k')
+
+
+    x_int_min = .4
+    x_int_max = .5
+
+    topval = integrate.quad(lambda x: top_acceptance_bound(x,a_param,b_param,1), x_int_min, x_int_max)
+    print(topval)
+    bottomval = integrate.quad(lambda x: bottom_acceptance_bound(x,a_param1,b_param1,c_param1), x_int_min, x_int_max)
+    print(bottomval)
+    print(topval[0]-bottomval[0])
+
+
+
     if saveplot:
         #plot_title.replace("/","")
         new_plot_title = plot_title.replace("/","").replace(" ","_").replace("$","").replace("^","").replace("\\","").replace(".","").replace("<","").replace(">","")
@@ -154,6 +200,11 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
         plt.hist2d(extra_data[0], extra_data[1], bins =[x_bins, y_bins],
             range=[[xmin,xmax],[ymin,ymax]], cmap = plt.cm.nipy_spectral) #norm=mpl.colors.LogNorm())#
         plt.show()
+
+
+
+    
+
 
 
 
