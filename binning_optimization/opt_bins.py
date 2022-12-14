@@ -33,6 +33,15 @@ def bottom_acceptance_bound(x, a, b, c):
     #return exponential of x:
     return a*np.exp(b*x)+c
 
+def max_over_ybin_max(ybin_max,x,a_param1,b_param1,c_param1):
+    return max(ybin_max,bottom_acceptance_bound(x,a_param1,b_param1,c_param1))
+
+a_param = 15
+b_param = 2
+c_param = 0
+a_param1 = .35
+b_param1 = 4
+c_param1 = 0
 
 ic(df)
 
@@ -101,6 +110,85 @@ x = df_minibin["xave"]
 y = df_minibin["qave"]
 #plt.pcolormesh(x,y,colorsx,cmap=cmap)#norm=mpl.colors.LogNorm())
 
+def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
+
+    bin_vol = (xbin_max-xbin_min)*(ybin_max-ybin_min)
+    print(bin_vol)
+
+
+
+
+    # try:
+    #     root = root_scalar(bottom_acceptance_bound,args=(a_param1,b_param1,c_param1-ybin_min), bracket=[xbin_min, xbin_max])
+    # # if root cannot be found, print error message
+    # except ValueError:
+    #     print("Root not found")
+    #     sys.exit()
+    
+
+
+
+    # from scipy.optimize import fmin_tnc
+    # from scipy import optimize as opt
+
+    # #g_min = fmin_tnc(bottom_acceptance_bound,x0=((xbin_min+xbin_max)/2),approx_grad=True,args=(a_param1,b_param1,c_param1), bounds = ((xbin_min,xbin_max),))
+    # #g_max = fmin_tnc(-bottom_acceptance_bound,x0=((xbin_min+xbin_max)/2),approx_grad=True,args=(a_param1,b_param1,c_param1), bounds = ((xbin_min,xbin_max),))
+
+    # g_min = opt.fminbound(lambda x: bottom_acceptance_bound(x,a_param1,b_param1,c_param1), xbin_min,xbin_max,xtol=1e-12)
+    # g_max = opt.fminbound(lambda x: -bottom_acceptance_bound(x,a_param1,b_param1,c_param1), xbin_min,xbin_max,xtol=1e-12)
+
+
+    
+
+    x_int_min = xbin_min
+    x_int_max = xbin_max
+
+
+
+    # total_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
+    # print(total_vol)
+    # top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-ybin_max), x_int_min, x_int_max)
+    
+    #ymin_intercept = 0.6
+    # 
+    # bot_vol0 = integrate.quad(lambda x: (ybin_min-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, ymin_intercept)
+    # bot_vol1 = integrate.quad(lambda x: (bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), ymin_intercept, x_int_max)
+
+    # bot_vol = bot_vol0+bot_vol1
+
+    # bin_vol_int = total_vol[0]-top_vol[0]#-bot_vol[0]
+    # print(bin_vol_int)
+
+    total_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
+    top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-max_over_ybin_max(ybin_max,x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
+
+
+    min_g_val = bottom_acceptance_bound(xbin_min,a_param1,b_param1,c_param1)
+    max_g_val = bottom_acceptance_bound(xbin_max,a_param1,b_param1,c_param1) 
+    ic(min_g_val)
+    ic(max_g_val)
+    if min_g_val < ybin_min:        
+        if max_g_val < ybin_min:
+            #integrate over whole x range
+            bot_vol = integrate.quad(lambda x: (ybin_min-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
+        else:
+            pass
+            # we must stop integration where g(x) = ybin_min
+            ic("only integrating over range where g(x) is less than y bin lower bound")
+            integration_bound = root_scalar(bottom_acceptance_bound,args=(a_param1,b_param1,c_param1-ybin_min), bracket=[xbin_min, xbin_max])
+            ic(integration_bound.root)
+            bot_vol = integrate.quad(lambda x: (ybin_min-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, integration_bound.root)
+    else:
+        #else don't need to subtract anything
+        bot_vol = [0]
+
+    bin_vol_int = total_vol[0]-top_vol[0]-bot_vol[0]
+    #print out range of bin:
+    print("x range: ",xbin_min,xbin_max)
+    print("y range: ",ybin_min,ybin_max)
+    print("bin volume: ratio ",bin_vol_int/bin_vol)
+
+
 def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
             saveplot=False,pics_dir="none",plot_title="none",logger=False,first_label="rad",
             filename="ExamplePlot",units=["",""],extra_data=None):
@@ -153,19 +241,6 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
         plt.hlines(ybin,xmin=.01, xmax=1, color='r')
 
 
-    a_param = 15
-    b_param = 2
-    c_param = 0
-    a_param1 = .35
-    b_param1 = 4
-    c_param1 = 0
-
-    ybin_min = 3#4#3
-    ybin_max = 4#6#4
-    ymin_intercept = 0.6
-    xbin_min = 0.4
-    xbin_max = 0.6
-
     #make x range for plotting
     x_range = np.linspace(xmin,xmax,1000)
     #populate yvals with the y values for the fit
@@ -180,70 +255,6 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
 
 
 
-
-    bin_vol = (xbin_max-xbin_min)*(ybin_max-ybin_min)
-    print(bin_vol)
-
-    try:
-        root = root_scalar(bottom_acceptance_bound,args=(a_param1,b_param1,c_param1-ybin_min), bracket=[xbin_min, xbin_max])
-    # if root cannot be found, print error message
-    except ValueError:
-        print("Root not found")
-        sys.exit()
-    
-
-
-
-    from scipy.optimize import fmin_tnc
-    from scipy import optimize as opt
-
-    #g_min = fmin_tnc(bottom_acceptance_bound,x0=((xbin_min+xbin_max)/2),approx_grad=True,args=(a_param1,b_param1,c_param1), bounds = ((xbin_min,xbin_max),))
-    #g_max = fmin_tnc(-bottom_acceptance_bound,x0=((xbin_min+xbin_max)/2),approx_grad=True,args=(a_param1,b_param1,c_param1), bounds = ((xbin_min,xbin_max),))
-
-    g_min = opt.fminbound(lambda x: bottom_acceptance_bound(x,a_param1,b_param1,c_param1), xbin_min,xbin_max,xtol=1e-12)
-    g_max = opt.fminbound(lambda x: -bottom_acceptance_bound(x,a_param1,b_param1,c_param1), xbin_min,xbin_max,xtol=1e-12)
-
-
-
-    ic(g_min)
-    ic(g_max)
-
-    min_val = bottom_acceptance_bound(g_min,a_param1,b_param1,c_param1)
-    max_val = bottom_acceptance_bound(g_max,a_param1,b_param1,c_param1)
-
-    ic(min_val)
-    ic(max_val)
-
-    x_int_min = xbin_min
-    x_int_max = xbin_max
-
-
-
-    # total_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
-    # print(total_vol)
-    # top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-ybin_max), x_int_min, x_int_max)
-    
-    # bot_vol0 = integrate.quad(lambda x: (ybin_min-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, ymin_intercept)
-    # bot_vol1 = integrate.quad(lambda x: (bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), ymin_intercept, x_int_max)
-
-    # bot_vol = bot_vol0+bot_vol1
-
-    # bin_vol_int = total_vol[0]-top_vol[0]#-bot_vol[0]
-    # print(bin_vol_int)
-
-    total_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
-
-    top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-max(ybin_max,bottom_acceptance_bound(x,a_param1,b_param1,c_param1))), x_int_min, x_int_max)
-
-
-    bottom_acceptance_bound(x,a_param1,b_param1,c_param1)
-
-
-    bot_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-max(ybin_max,bottom_acceptance_bound(x,a_param1,b_param1,c_param1))), x_int_min, x_int_max)
-    
-
-    bin_vol_int = total_vol[0]-top_vol[0]-bot_vol[0]
-    print(bin_vol_int/bin_vol)
     if saveplot:
         #plot_title.replace("/","")
         new_plot_title = plot_title.replace("/","").replace(" ","_").replace("$","").replace("^","").replace("\\","").replace(".","").replace("<","").replace(">","")
@@ -268,6 +279,10 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
     
 
 
+#iterate over all xb q2 bins:
+for xmin,xmax in zip(xb_bin_edges[:-1],xb_bin_edges[1:]):
+    for ymin,ymax in zip(q2_bin_edges[:-1],q2_bin_edges[1:]):
+        calc_bin_vol_corr(xmin,xmax,ymin,ymax)
 
 
 plot_2dhist(df["xB"],df["Q2"],["xB","Q2"],[[0,1,100],[0,10,100]],colorbar=True,)
