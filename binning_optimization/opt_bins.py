@@ -159,12 +159,32 @@ def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
     # bin_vol_int = total_vol[0]-top_vol[0]#-bot_vol[0]
     # print(bin_vol_int)
 
+
     total_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
-    top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-max_over_ybin_max(ybin_max,x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
+    
+    
+    min_f_val = top_acceptance_bound(xbin_min,a_param1,b_param1,c_param1)
+    max_f_val = top_acceptance_bound(xbin_max,a_param1,b_param1,c_param1) 
+
+    if min_f_val < ybin_max:        
+        if max_f_val < ybin_max:
+            #Don't need to subtract anything            
+            top_vol = [0]
+        else:
+            #Need to subtract part of f greater than ybin max
+            ic("only integrating over range where f(x) is greater than y bin upper bound")
+            integration_bound = root_scalar(top_acceptance_bound,args=(a_param1,b_param1,c_param1-ybin_max), bracket=[xbin_min, xbin_max])
+            ic(integration_bound.root)
+            top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param1,b_param1,c_param1)-ybin_max), integration_bound.root, xbin_max)
+    else:
+        #else subtract over whole range
+        top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-max(ybin_max,bottom_acceptance_bound(x,a_param1,b_param1,c_param1))), x_int_min, x_int_max)
 
 
     min_g_val = bottom_acceptance_bound(xbin_min,a_param1,b_param1,c_param1)
     max_g_val = bottom_acceptance_bound(xbin_max,a_param1,b_param1,c_param1) 
+
+    
     ic(min_g_val)
     ic(max_g_val)
     if min_g_val < ybin_min:        
@@ -172,7 +192,6 @@ def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
             #integrate over whole x range
             bot_vol = integrate.quad(lambda x: (ybin_min-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
         else:
-            pass
             # we must stop integration where g(x) = ybin_min
             ic("only integrating over range where g(x) is less than y bin lower bound")
             integration_bound = root_scalar(bottom_acceptance_bound,args=(a_param1,b_param1,c_param1-ybin_min), bracket=[xbin_min, xbin_max])
