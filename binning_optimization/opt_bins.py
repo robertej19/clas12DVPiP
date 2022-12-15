@@ -25,7 +25,7 @@ df = pd.read_pickle("data/df.pkl")
 #define top bounding function over range x
 def top_acceptance_bound(x, a, b, c):
     #return a*x**2/(b**2 + x**2) + c
-    return a*x+b
+    return a*x+c
 
 #define bottom bounding function over range x
 def bottom_acceptance_bound(x, a, b, c):
@@ -38,7 +38,7 @@ def max_over_ybin_max(ybin_max,x,a_param1,b_param1,c_param1):
 
 a_param = 15
 b_param = 2
-c_param = 0
+c_param = 2
 a_param1 = .35
 b_param1 = 4
 c_param1 = 0
@@ -64,8 +64,10 @@ num_cols = df_np.shape[1]
 blank_bin_edges = [-1000,1000]
 initalized_bin_edges = [blank_bin_edges]*num_cols
 
-q2_bin_edges,xb_bin_edges = [1,2,3,4,6,10],[0.2,.3,0.4,.6,0.8]
+#q2_bin_edges,xb_bin_edges = [1,2,3,4,6,10],[0.1,0.2,.3,0.4,.6,.7,0.8]
 
+xb_bin_edges, q2_bin_edges = [0.175,0.25,.3,0.35,.4,0.45,.5,.55,.6,.65,.7],	[0,1,1.5,2,2.5,3,3.5,4,4.5,5,6,10,14]
+        
 initalized = [blank_bin_edges]*num_cols
 
 initalized[0] = q2_bin_edges
@@ -112,6 +114,7 @@ y = df_minibin["qave"]
 
 def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
 
+    whole_bin_outside = False
     bin_vol = (xbin_max-xbin_min)*(ybin_max-ybin_min)
     print(bin_vol)
 
@@ -163,19 +166,33 @@ def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
     total_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, x_int_max)
     
     
-    min_f_val = top_acceptance_bound(xbin_min,a_param1,b_param1,c_param1)
-    max_f_val = top_acceptance_bound(xbin_max,a_param1,b_param1,c_param1) 
-
-    if min_f_val < ybin_max:        
+    min_f_val = top_acceptance_bound(xbin_min,a_param,b_param,c_param)
+    max_f_val = top_acceptance_bound(xbin_max,a_param,b_param,c_param) 
+    ic(min_f_val)
+    ic(ybin_min)
+    if min_f_val < ybin_min:
+        if max_f_val < ybin_min:
+            whole_bin_outside = True
+        else:
+            #Need to subtract part of f less than ybin min
+            ic("only integrating over range where f(x) is less than y bin lower bound")
+            integration_bound = root_scalar(top_acceptance_bound,args=(a_param,b_param,c_param-ybin_min), bracket=[xbin_min, xbin_max])
+            ic(integration_bound.root)
+            top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-ybin_min), xbin_min, integration_bound.root)
+            #make top_vol negative
+            #top_vol = [-top_vol[0],top_vol[1]]
+        
+    elif min_f_val < ybin_max:        
         if max_f_val < ybin_max:
             #Don't need to subtract anything            
             top_vol = [0]
         else:
             #Need to subtract part of f greater than ybin max
             ic("only integrating over range where f(x) is greater than y bin upper bound")
-            integration_bound = root_scalar(top_acceptance_bound,args=(a_param1,b_param1,c_param1-ybin_max), bracket=[xbin_min, xbin_max])
+            integration_bound = root_scalar(top_acceptance_bound,args=(a_param,b_param,c_param-ybin_max), bracket=[xbin_min, xbin_max])
             ic(integration_bound.root)
-            top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param1,b_param1,c_param1)-ybin_max), integration_bound.root, xbin_max)
+            top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-ybin_max), integration_bound.root, xbin_max)
+    
     else:
         #else subtract over whole range
         top_vol = integrate.quad(lambda x: (top_acceptance_bound(x,a_param,b_param,c_param)-max(ybin_max,bottom_acceptance_bound(x,a_param1,b_param1,c_param1))), x_int_min, x_int_max)
@@ -187,6 +204,7 @@ def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
     
     ic(min_g_val)
     ic(max_g_val)
+
     if min_g_val < ybin_min:        
         if max_g_val < ybin_min:
             #integrate over whole x range
@@ -198,10 +216,18 @@ def calc_bin_vol_corr(xbin_min,xbin_max,ybin_min,ybin_max):
             ic(integration_bound.root)
             bot_vol = integrate.quad(lambda x: (ybin_min-bottom_acceptance_bound(x,a_param1,b_param1,c_param1)), x_int_min, integration_bound.root)
     else:
-        #else don't need to subtract anything
-        bot_vol = [0]
+        # if min_g_val > ybin_max:
+        #     whole_bin_outside = True
+        # else:
+        #     #else don't need to subtract anything
+            bot_vol = [0]
 
-    bin_vol_int = total_vol[0]-top_vol[0]-bot_vol[0]
+
+    if whole_bin_outside:
+        bin_vol_int = 0
+    else:
+        bin_vol_int = total_vol[0]-top_vol[0]-bot_vol[0]
+
     #print out range of bin:
     print("x range: ",xbin_min,xbin_max)
     print("y range: ",ybin_min,ybin_max)
@@ -273,6 +299,9 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
     plt.plot(x_range,yvals_bottom,'k')
 
 
+    #plt.yscale('log')
+
+    
 
     if saveplot:
         #plot_title.replace("/","")
@@ -304,4 +333,4 @@ for xmin,xmax in zip(xb_bin_edges[:-1],xb_bin_edges[1:]):
         calc_bin_vol_corr(xmin,xmax,ymin,ymax)
 
 
-plot_2dhist(df["xB"],df["Q2"],["xB","Q2"],[[0,1,100],[0,10,100]],colorbar=True,)
+plot_2dhist(df["xB"],df["Q2"],["xB","Q2"],[[0,1,100],[1,11,100]],colorbar=True,)
