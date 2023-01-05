@@ -47,6 +47,8 @@ df_GK['sigma_T'] = pd.to_numeric(df_GK["sigma_T"], errors='coerce')
 df_GK['sigma_L'] = pd.to_numeric(df_GK["sigma_L"], errors='coerce')
 df_GK['sigma_LT'] = pd.to_numeric(df_GK["sigma_LT"], errors='coerce')
 df_GK['sigma_TT'] = pd.to_numeric(df_GK["sigma_TT"], errors='coerce')
+df_GK['W'] = pd.to_numeric(df_GK["W"], errors='coerce')
+df_GK = df_GK.query('W > 2')
 
 
 #print(df_GK)
@@ -58,44 +60,135 @@ print(xB)
 print(Q2)
 
         
-qmin = min(Q2)
-qmax = max(Q2)
-qsteps = len(Q2)
-
-colorset = Q2/qmax
-
-N = int(qsteps/.002)
-cmap = plt.get_cmap('jet',N)
-
-#fig = plt.figure(figsize=(8,6))
-#ax1 = fig.add_axes([0.10,0.10,0.70,0.85])
-
-# for i,n in enumerate(np.linspace(0,2,N)):
-#     y = np.sin(x)*x**n
-#     ax1.plot(x,y,c=cmap(i))
-
-# plt.xlabel('x')
-# plt.ylabel('y')
-
-norm = mpl.colors.Normalize(vmin=qmin,vmax=qmax)
-sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-sm.set_array([])
 
 
 
 
-rainbow = True
-if rainbow:
+
+rainbow_xb = True
+rainbow_q2 = True
+
+if rainbow_q2:
+    xmin = min(xB)
+    xmax = max(xB)
+    xsteps = len(xB)
+
+    colorset = xB/xmax
+
+    #N = int(xsteps/.002)
+    #print(N)
+    N = xsteps
+    cmap = plt.get_cmap('jet',N*1000)
+
+    #fig = plt.figure(figsize=(8,6))
+    #ax1 = fig.add_axes([0.10,0.10,0.70,0.85])
+
+    # for i,n in enumerate(np.linspace(0,2,N)):
+    #     y = np.sin(x)*x**n
+    #     ax1.plot(x,y,c=cmap(i))
+
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+
+    norm = mpl.colors.Normalize(vmin=xmin,vmax=xmax)
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    for qind, q2_val in enumerate(Q2):
+    
+
+         # Create figure
+        plt.rcParams["font.size"] = "20"
+        fig, ax = plt.subplots(figsize =(14, 10))
+        plot_title = "GK Cross Section across x$_B$ at Q$^2$={}".format(q2_val)
+        plt.title(plot_title)
+        #plt.ylim([0,np.max([np.max(GK_curve_c12),np.max(fit_c12_weighted)])*1.3])
+        ax.set_xlabel('t [GeV$^2$]')
+        ax.set_ylabel(r'$\frac{d\sigma_T}{dt} + \epsilon \frac{d\sigma_L}{dt} $'+ '  [nb/GeV$^2$]')
+
+        ax.set_xlim([0.1,1])
+
+        #colorset = ['red','blue','green','orange','purple','black','purple','black','brown','pink','gray','olive','cyan','brown','pink','gray','olive','cyan','purple','black','brown','pink','gray','olive','cyan']
+
+        #colorset = int(np.ones(len(Q2))
+
+        
+
+        for xind, xb_val in enumerate(xB):
+
+            print(qind,xind)
+
+            ybounds_factor = 1
+            # if q2_val> 2.5:
+            #     ybounds_factor = 1/10
+            #     if q2_val > 7:
+            #         ybounds_factor = 1/100
+
+            query_GK_Model = "Q2=={} and xB=={} ".format(q2_val, xb_val)
+
+            df_GK_calc = df_GK.query(query_GK_Model)
+            #print(df_GK_calc)
+
+
+        
+            ax.set_ylim([0.5*ybounds_factor,1000*ybounds_factor])
+
+            plt.yscale("log")
+            #ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
+
+            #plt.savefig("GK_Model/gk_c12_plots/reduced_xsec_{}_{}_{}_{}_{}_{}.png".format(qmin,qmax,xmin,xmax,tmin,tmax))
+
+
+            plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_T']+df_GK_calc['epsilon']*df_GK_calc['sigma_L'],color=scalarMap.to_rgba(colorset[xind]), linewidth=5, label='$\sigma_T+\epsilon\sigma_L$')
+            #plt.plot(-1*df_GK_calc['mt'], -df_GK_calc['sigma_TT'],color=scalarMap.to_rgba(colorset[xind]), linewidth=5, label='$\sigma_TT$')
+            #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_TT'],'b', linewidth=10, label='$\sigma_{{TT}}$')
+            #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_LT'],'r',  linewidth=10, label='$\sigma_{{LT}}$')
+
+            #ax.legend()
+
+        cbar = plt.colorbar(sm, ticks=np.linspace(xmin,xmax,int(N)), 
+             boundaries=np.arange(xmin*0.99,xmax*1.01,0.01))
+        cbar.ax.yaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
+        
+        #plt.show()
+        #sys.exit()
+        plt.savefig("gk_big_plots_log_rainbow_q2/fig_{}_q2_{}.png".format(qind,q2_val))
+        plt.close()
+
+
+if rainbow_xb:
+    qmin = min(Q2)
+    qmax = max(Q2)
+    qsteps = len(Q2)
+
+    colorset = Q2/qmax
+
+    N = int(qsteps/.002)
+    cmap = plt.get_cmap('jet',N)
+
+    #fig = plt.figure(figsize=(8,6))
+    #ax1 = fig.add_axes([0.10,0.10,0.70,0.85])
+
+    # for i,n in enumerate(np.linspace(0,2,N)):
+    #     y = np.sin(x)*x**n
+    #     ax1.plot(x,y,c=cmap(i))
+
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+
+    norm = mpl.colors.Normalize(vmin=qmin,vmax=qmax)
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+
     for xind, xb_val in enumerate(xB):
 
          # Create figure
         plt.rcParams["font.size"] = "20"
         fig, ax = plt.subplots(figsize =(14, 10))
-        plot_title = "GK Cross Section over Q$^2$ at x$_B$={}".format(xb_val)
+        plot_title = "GK Cross Section across Q$^2$ at x$_B$={}".format(xb_val)
         plt.title(plot_title)
         #plt.ylim([0,np.max([np.max(GK_curve_c12),np.max(fit_c12_weighted)])*1.3])
         ax.set_xlabel('t [GeV$^2$]')
-        ax.set_ylabel(r'$\frac{d\sigma}{dt}$'+ '  [nb/GeV$^2$]')
+        ax.set_ylabel(r'$\frac{d\sigma_T}{dt} + \epsilon \frac{d\sigma_L}{dt} $'+ '  [nb/GeV$^2$]')
         ax.set_xlim([0.1,1])
 
         #colorset = ['red','blue','green','orange','purple','black','purple','black','brown','pink','gray','olive','cyan','brown','pink','gray','olive','cyan','purple','black','brown','pink','gray','olive','cyan']
@@ -121,7 +214,7 @@ if rainbow:
 
 
         
-            ax.set_ylim([0.5*ybounds_factor,500*ybounds_factor])
+            ax.set_ylim([0.5*ybounds_factor,1000*ybounds_factor])
 
             plt.yscale("log")
             #ax.legend()#[dtedl_2022,dtedl_2014,extra], ("2022 GK fit","2014 GK fit","+ Data",))
@@ -130,6 +223,7 @@ if rainbow:
 
 
             plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_T']+df_GK_calc['epsilon']*df_GK_calc['sigma_L'],color=scalarMap.to_rgba(colorset[qind]), linewidth=5, label='$\sigma_T+\epsilon\sigma_L$')
+            #plt.plot(-1*df_GK_calc['mt'], -df_GK_calc['sigma_TT'],color=scalarMap.to_rgba(colorset[xind]), linewidth=5, label='$\sigma_TT$')
             #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_TT'],'b', linewidth=10, label='$\sigma_{{TT}}$')
             #plt.plot(-1*df_GK_calc['mt'], df_GK_calc['sigma_LT'],'r',  linewidth=10, label='$\sigma_{{LT}}$')
 
@@ -139,9 +233,9 @@ if rainbow:
              boundaries=np.arange(qmin*0.95,qmax*1.05,0.1))
         cbar.ax.yaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
         
-        plt.show()
-        #plt.savefig("gk_big_plots_log_rainbow_xb/fig_{}_xb_{}.png".format(xind,xb_val))
-        #plt.close()
+        #plt.show()
+        plt.savefig("gk_big_plots_log_rainbow_xb/fig_{}_xb_{}.png".format(xind,xb_val))
+        plt.close()
 else:
     for qind, q2_val in enumerate(Q2):
         for xind, xb_val in enumerate(xB):

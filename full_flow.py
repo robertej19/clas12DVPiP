@@ -95,8 +95,8 @@ import json
 
 # For analysis flow
 #from make_dvpip_cuts import makeDVpi0
-#from exclusivity_cuts.sangbaek_exclusivity_cuts import makeDVpi0P
-from exclusivity_cuts.new_exclusivity_cuts import makeDVpi0P
+from exclusivity_cuts.sangbaek_exclusivity_cuts import makeDVpi0P
+#from exclusivity_cuts.new_exclusivity_cuts import makeDVpi0P
 from exclusivity_cuts.new_exclusivity_cuts import calc_ex_cut_mu_sigma
 
 
@@ -451,7 +451,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
             
             print("CALCULATING EXCLUSIVE CUTS exp for {} with sigma {}".format(datafile_base_dir+raw_data_dir+exp_file_base,sigma_multiplier))
 
-            df_dvpip_exp = makeDVpi0P(df_exp_epgg, sigma_multiplier,datafilename=datafilename, unique_identifyer = unique_identifyer)
+            df_dvpip_exp = makeDVpi0P(df_exp_epgg, sigma_multiplier=sigma_multiplier,datafilename=datafilename, unique_identifyer = unique_identifyer)
             
             #df_dvpip_exp = pd.read_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
             df_dvpip_exp.to_pickle("{}/{}_dvpip_exp.pkl".format(datafile_base_dir+dvpip_data_dir,exp_file_base))
@@ -487,7 +487,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
             print("CALCULATING EXCLUSIVE CUTS rec for {} with sigma {}".format(datafile_base_dir+raw_data_dir+exp_file_base,sigma_multiplier))
 
-            df_dvpip_rec = makeDVpi0P(df_rec_epgg, sigma_multiplier,datafilename=datafilename,unique_identifyer=unique_identifyer)
+            df_dvpip_rec = makeDVpi0P(df_rec_epgg, sigma_multiplier=sigma_multiplier,datafilename=datafilename,unique_identifyer=unique_identifyer)
 
             #df_dvpip_rec = makeDVpi0P(df_rec_epgg,data_type="rec",proton_loc=det_proton_loc,photon1_loc=det_photon1_loc,photon2_loc=det_photon2_loc,pol = mag_config,simple_exclusivity_cuts=simple_exclusivity_cuts)
             #df_dvpip_rec = pd.read_pickle("{}/{}_dvpip_rec.pkl".format(datafile_base_dir+dvpip_data_dir,rec_file_base))
@@ -1078,7 +1078,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
                         #fit2, = ax.plot(xspace, fit_y_data_weighted, color='red', linewidth=2.5)#, label='CLAS6 Fit')        
                         
                         #fit4, = ax.plot(xspace, fit_y_data_weighted_new_c12, color='blue', linewidth=2.5, label='CLAS12 Fit: t+l:{:.0f} tt:{:.0f} lt:{:.0f}'.format(tel_c12,tt_c12,lt_c12))
-                        fit4, = ax.plot(xspace, fit_y_data_weighted_new_c12, color='blue', linewidth=2.5)#, label='CLAS12 Fit')     
+                        #fit4, = ax.plot(xspace, fit_y_data_weighted_new_c12, color='blue', linewidth=2.5)#, label='CLAS12 Fit')     
                         
                         ax.legend(loc="best")
                         ax.set_xlabel("Phi")  
@@ -1613,12 +1613,13 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
     #run_name = "varied_t_phi_bins_small_phi_bins"
-    run_name = "varied_t_phi_bins_inbending_only"
+    #run_name = "varied_t_phi_bins_inbending_only"
+    run_name = "testing_binning_bug_fixed_maybe_not"
     
 
 
-    if 0==1:
-        mag_configs = ["inbending","outbending"]
+    if 1==1:
+        mag_configs = ["inbending",]#"outbending"]
         generator_type = "rad"
         proton_locs = ["All",]
         photon1_locs = ["All",]
@@ -1633,13 +1634,13 @@ if __name__ == "__main__":
                             print("ON SIGMA, MAG CONFIG: {},{}".format(sigma_multiplier,mc))
                             run_analysis(mc,generator_type,unique_identifyer=run_name,#"for_aps_gen_plots_norad_bigplots",
                                         det_proton_loc=pl,det_photon1_loc=p1l,det_photon2_loc=p2l,
-                                        convert_roots = 0,
+                                        convert_roots = 1,
                                         make_exclusive_cuts = 1,
-                                        plot_initial_distros = 0,
-                                        plot_final_distros = 0,
+                                        plot_initial_distros = 1,
+                                        plot_final_distros = 1,
                                         bin_all_events = 1,
                                         bin_gen = 1,
-                                        calc_xsection = 0,
+                                        calc_xsection = 1,
                                         plot_reduced_xsec_and_fit = 0,
                                         calc_xsection_c12_only = 1,
                                         plot_reduced_xsec_and_fit_c12_only = 1,
@@ -1647,13 +1648,13 @@ if __name__ == "__main__":
                                         simple_exclusivity_cuts=False,
                                         emergency_stop = 0,
                                         comp_2_config=False,
-                                        gen_ex_cut_table=True,
+                                        gen_ex_cut_table=False,
                                         sigma_multiplier=sigma_multiplier)
 
 
 
 
-    if 1==1:
+    if 0==1:
         mag_configs = ["outbending"]
         generator_type = "rad"
         proton_locs = ["All",]

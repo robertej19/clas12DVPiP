@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
+import argparse
 
-def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False):
+def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,
+                                  unique_identifyer="", datafilename="temporary_exclusivity_variances_",use_generic_cuts=True,
+                                  sigma_multiplier=3):
 
     
     if simple_exclusivity_cuts:
@@ -121,6 +124,7 @@ def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",pho
 
 
     else:
+        print("Executing advanced DVPiP Cuts")
         #make dvpi0 pairs
         df_dvpi0p = df_epgg
 
@@ -358,11 +362,26 @@ def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",pho
         return df_dvpi0p
 
 if __name__ == "__main__":
-    df_exp = pd.read_pickle("new_exp_convert_outbend.pkl",pol="outbending")
-    df_rec = pd.read_pickle("new_rec_convert_outbend_rad.pkl",pol="outbending")
 
-    df_dvpi0p_exp = makeDVpi0P(df_exp)
-    df_dvpi0p_rec = makeDVpi0P(df_rec)
 
-    df_dvpi0p_exp.to_pickle("new_exp_dvpi0p_outbend.pkl")
-    df_dvpi0p_rec.to_pickle("new_rec_dvpi0p_outbend_rad.pkl")
+    parser = argparse.ArgumentParser(description="Get args",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("-f","--fname", help="a single root file to convert into pickles")
+    parser.add_argument("-o","--out", help="a single pickle file name as an output", default="excuting.pkl")
+   
+    args = parser.parse_args()
+
+
+
+    df = makeDVpi0P(pd.read_pickle(args.fname))
+    df.to_pickle(args.out)
+
+
+    #df_exp = pd.read_pickle("new_exp_convert_outbend.pkl",pol="outbending")
+    #df_rec = pd.read_pickle("new_rec_convert_outbend_rad.pkl",pol="outbending")
+
+    #df_dvpi0p_exp = makeDVpi0P(df_exp)
+    #df_dvpi0p_rec = makeDVpi0P(df_rec)
+
+    #df_dvpi0p_exp.to_pickle("new_exp_dvpi0p_outbend.pkl")
+    #df_dvpi0p_rec.to_pickle("new_rec_dvpi0p_outbend_rad.pkl")

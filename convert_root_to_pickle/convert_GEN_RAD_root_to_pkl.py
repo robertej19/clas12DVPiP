@@ -78,6 +78,8 @@ def readEPGG(filename, entry_stop = None):
     
     tree = readFile(filename)
     # data frames and their keys to read Z part
+    print("TREE IS:")
+    print(tree.keys())
     df_electronGen = pd.DataFrame()
     df_protonGen = pd.DataFrame()
     df_pionGen = pd.DataFrame()

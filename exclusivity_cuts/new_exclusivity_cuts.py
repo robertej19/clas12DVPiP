@@ -46,7 +46,7 @@ from scipy.optimize import curve_fit
 #         plt.clf()
 
 
-def makeDVpi0P(df_epgg, sigma_multiplier, unique_identifyer="", datafilename="temporary_exclusivity_variances_",use_generic_cuts=True):
+def makeDVpi0P(df_epgg, pol = "inbending", sigma_multiplier=3, unique_identifyer="", datafilename="temporary_exclusivity_variances_",use_generic_cuts=True):
 
         #Variables listing:
 
