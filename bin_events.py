@@ -100,6 +100,7 @@ def bin_df(df,df_type="real"):
 
     df_np = df[["{}Q2".format(prefix),"{}xB".format(prefix),"{}t1".format(prefix),"{}phi1".format(prefix),"{}y".format(prefix)]].copy().to_numpy()
 
+    print(df_np)
     num_cols = df_np.shape[1]
     blank_bin_edges = [-1000,1000]
     initalized_bin_edges = [blank_bin_edges]*num_cols
@@ -123,8 +124,11 @@ def bin_df(df,df_type="real"):
     initalized[2] = t1_bin_edges
     initalized[3] = phi1_bin_edges
 
+    print(initalized)
 
     number_of_counts_bin_values, edges = np.histogramdd(df_np, bins=initalized)
+
+    print(number_of_counts_bin_values)
 
     weighted_q2_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,0])
     weighted_xB_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,1])
@@ -132,6 +136,7 @@ def bin_df(df,df_type="real"):
     weighted_phi1_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,3])
     weighted_y_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,4])
 
+    print(weighted_q2_values)
 
 
     q2_bin_averages = np.divide(weighted_q2_values,number_of_counts_bin_values).reshape(-1,1)
@@ -170,6 +175,7 @@ def bin_df(df,df_type="real"):
     df_minibin = pd.DataFrame(all_together_now1, columns = ['tmin','pmin','xmin','qmin','tmax','pmax','xmax','qmax','tave','pave','xave','qave','yave',str(prefix)+'counts'])
 
 
+    print(df_minibin)
 
     ########## FIX THIS - just include a logic check ##############
     #print("Total number of binned events: {}".format(df_minibin[prefix+'counts'].sum()))
@@ -178,9 +184,32 @@ def bin_df(df,df_type="real"):
 
 
 if __name__ == "__main__":
-    df = pd.read_pickle("pickled_dvpip/f18_bkmrg_in_dvpp_rec_noseccut.pkl")
-    df_binned = bin_df(df,df_type="real")
-    df_binned.to_pickle("binned_dvpip/f18_bkmrg_in_dvpp_rec_noseccut_binned.pkl")
+    #df = pd.read_pickle("pickled_dvpip/f18_bkmrg_in_dvpp_rec_noseccut.pkl")
+    #df_binned = bin_df(df,df_type="real")
+    #df_binned.to_pickle("binned_dvpip/f18_bkmrg_in_dvpp_rec_noseccut_binned.pkl")
+
+    # # dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/pickled_dvpip/merged_Fall_2018_Inbending_gen_test/"
+    # # for pklfile in os.listdir(dir_base):
+    # #     df = pd.read_pickle(dir_base+pklfile)
+    # #     # # df_test = df.head(6)
+    # #     # # df_test.to_pickle("test_binning.pkl")
+    # #     # df = pd.read_pickle("test_binning.pkl")
+    # #     print(df)
+    # #     df_binned = bin_df(df,df_type="Gen")
+    # #     df_binned.to_pickle(dir_base+"../binned_"+pklfile)
+    # #     sys.exit()
+
+    #onefime merge, needs to be written into larger script
+    dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/pickled_dvpip/binned_gen/"
+    dfs = []
+    for pklfile in os.listdir(dir_base):
+        df = pd.read_pickle(dir_base+pklfile)
+        dfs.append(df)
+
+    #This isn't going to be fast, need to properly weight the averages for tave pave etc, then concat correctly...
+
+
+
 
 # df = pd.read_pickle("pickled_data/f18_in_gen.pkl")
 # df_binned = bin_df(df,df_type="Gen")

@@ -38,7 +38,7 @@ import argparse
 import shutil
 import time
 from datetime import datetime 
-import json
+import json 
 M = 0.938272081 # target mass
 me = 0.5109989461 * 0.001 # electron mass
 ebeam = 10.604 # beam energy

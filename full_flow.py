@@ -259,7 +259,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
     inb_run_id = "inbending"+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
     outb_run_id = "outbending"+"_"+generator_type+"_"+det_proton_loc+"_"+det_photon1_loc+"_"+det_photon2_loc+"_"+unique_identifyer
 
-    datafile_base_dir = "/mnt/d/GLOBUS/CLAS12/APS2022/"
+    datafile_base_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/"
     roots_dir = "raw_roots/"
     raw_data_dir = "pickled_data/"
 
@@ -403,12 +403,13 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
             df_rec.to_pickle(datafile_base_dir+raw_data_dir+rec_file_base+".pkl")
 
         if convert_root_gen:
-            print("CONVERING ROOT GEN")
-            df_gen = gen_converter.readEPGG(
-                datafile_base_dir+roots_dir+path_to_gen_root+gen_file_base+".root")
-            print("SAVING GEN ROOT FILE TO {}".format(datafile_base_dir+raw_data_dir+gen_file_base+".pkl"))
+            pass
+            # print("CONVERING ROOT GEN")
+            # df_gen = gen_converter.readEPGG(
+            #     datafile_base_dir+roots_dir+path_to_gen_root+gen_file_base+".root")
+            # print("SAVING GEN ROOT FILE TO {}".format(datafile_base_dir+raw_data_dir+gen_file_base+".pkl"))
             
-            df_gen.to_pickle(datafile_base_dir+raw_data_dir+gen_file_base+".pkl")
+            # df_gen.to_pickle(datafile_base_dir+raw_data_dir+gen_file_base+".pkl")
 
 
 
@@ -1614,7 +1615,7 @@ if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
     #run_name = "varied_t_phi_bins_small_phi_bins"
     #run_name = "varied_t_phi_bins_inbending_only"
-    run_name = "testing_binning_bug_fixed_maybe_not"
+    run_name = "new_system_test"
     
 
 
