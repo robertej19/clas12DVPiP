@@ -201,11 +201,89 @@ if __name__ == "__main__":
 
     #onefime merge, needs to be written into larger script
     dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/pickled_dvpip/binned_gen/"
-    dfs = []
-    for pklfile in os.listdir(dir_base):
-        df = pd.read_pickle(dir_base+pklfile)
-        dfs.append(df)
 
+    pklfiles = os.listdir(dir_base)
+    #for pklfile in os.listdir(dir_base):
+    # for pklfile in [pklfiles[0],pklfiles[1]]:
+    #     df = pd.read_pickle(dir_base+pklfile)
+    #     df = df.head(2)
+    #     df.loc[:, 'tave_weighted'] = df['tave']*df['Gencounts']
+    #     df.loc[:, 'pave_weighted'] = df['pave']*df['Gencounts']
+    #     df.loc[:, 'xave_weighted'] = df['xave']*df['Gencounts']
+    #     df.loc[:, 'qave_weighted'] = df['qave']*df['Gencounts']
+    #     df.loc[:, 'yave_weighted'] = df['yave']*df['Gencounts']
+    #     tave_weights.append(df['tave_weighted'].to_list())
+    #     pave_weights.append(df['pave_weighted'].to_list())
+    #     xave_weights.append(df['xave_weighted'].to_list())
+    #     qave_weights.append(df['qave_weighted'].to_list())
+    #     yave_weights.append(df['yave_weighted'].to_list())
+    #     gencounts.append(df['Gencounts'].to_list())
+    #     print("original DF:")
+    #     print(df)
+
+    df1 = pd.read_pickle(dir_base + pklfiles[0])
+    df1.loc[:, 'tave_weighted'] = df1['tave']*df1['Gencounts']
+    df1.loc[:, 'qave_weighted'] = df1['qave']*df1['Gencounts']
+    df1.loc[:, 'pave_weighted'] = df1['pave']*df1['Gencounts']
+    df1.loc[:, 'xave_weighted'] = df1['xave']*df1['Gencounts']
+    df1.loc[:, 'yave_weighted'] = df1['yave']*df1['Gencounts']
+
+
+    df2 = pd.read_pickle(dir_base + pklfiles[1])
+    df2.loc[:, 'tave_weighted'] = df2['tave']*df2['Gencounts']
+    df2.loc[:, 'qave_weighted'] = df2['qave']*df2['Gencounts']
+    df2.loc[:, 'pave_weighted'] = df2['pave']*df2['Gencounts']
+    df2.loc[:, 'xave_weighted'] = df2['xave']*df2['Gencounts']
+    df2.loc[:, 'yave_weighted'] = df2['yave']*df2['Gencounts']
+
+
+
+
+    df_bin_ranges = df1[['tmin', 'pmin', 'xmin', 'qmin', 'tmax', 'pmax', 'xmax', 'qmax']]
+
+
+    list_of_arrays = []
+
+    for df in [df1,df2]:
+        list_of_arrays.append(df[['tave_weighted', 'qave_weighted','pave_weighted', 'xave_weighted', 'yave_weighted',
+                        'Gencounts']].to_numpy())
+
+    array_of_summed_values = np.sum(list_of_arrays, axis=0)
+    
+    array_of_averaged_values = array_of_summed_values / array_of_summed_values[:, -1][:, np.newaxis]
+    print(array_of_averaged_values[:,:-1])
+    print(array_of_summed_values[:,-1])
+    
+
+    dataframe_missing_total_gen_counts = df_bin_ranges.join(pd.DataFrame(array_of_averaged_values[:,:-1], columns=['tave_weighted', 'qave_weighted','pave_weighted', 'xave_weighted', 'yave_weighted']))
+    final_combined_df = dataframe_missing_total_gen_counts.join(pd.DataFrame(array_of_summed_values[:,-1], columns=['total_gen_counts']))
+
+    #result = np.column_stack((columns_from_df1, columns_from_df2))
+    print(final_combined_df)
+
+    sys.exit()
+    print("tave_weights:")
+    print(tave_weights)
+    print(gencounts)
+
+    sys.exit()
+
+
+    df = pd.merge(dfs[0], dfs[1], left_index=True, right_index=True)#="inner")
+    
+    # df = df.head(4)
+    print(df)
+
+    # #for now, jsut take the first two files
+    # df = pd.concat(dfs)
+
+
+    
+    # df = pd.merge(df_electronGen, df_protonGen, how='inner', on='event')
+    
+    
+    # df = df.head(4)
+    # print(df)
     #This isn't going to be fast, need to properly weight the averages for tave pave etc, then concat correctly...
 
 
