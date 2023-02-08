@@ -174,8 +174,13 @@ def bin_df(df,df_type="real"):
     # df_minibin = pd.DataFrame(all_together_now1, columns = ['qmin','xmin','tmin','pmin','qmax','xmax','tmax','pmax','qave','yave','xave','tave','pave',str(prefix)+'counts'])
     df_minibin = pd.DataFrame(all_together_now1, columns = ['tmin','pmin','xmin','qmin','tmax','pmax','xmax','qmax','tave','pave','xave','qave','yave',str(prefix)+'counts'])
 
+    #create combination columns for ease of weighting in future steps. Currently only need for gen but might need in future
+    df_minibin.loc[:, 'tave_weighted'] = df_minibin['tave']*df_minibin[str(prefix)+'counts']
+    df_minibin.loc[:, 'pave_weighted'] = df_minibin['pave']*df_minibin[str(prefix)+'counts']
+    df_minibin.loc[:, 'xave_weighted'] = df_minibin['xave']*df_minibin[str(prefix)+'counts']
+    df_minibin.loc[:, 'qave_weighted'] = df_minibin['qave']*df_minibin[str(prefix)+'counts']
+    df_minibin.loc[:, 'yave_weighted'] = df_minibin['yave']*df_minibin[str(prefix)+'counts']
 
-    print(df_minibin)
 
     ########## FIX THIS - just include a logic check ##############
     #print("Total number of binned events: {}".format(df_minibin[prefix+'counts'].sum()))
@@ -188,72 +193,38 @@ if __name__ == "__main__":
     #df_binned = bin_df(df,df_type="real")
     #df_binned.to_pickle("binned_dvpip/f18_bkmrg_in_dvpp_rec_noseccut_binned.pkl")
 
-    # # dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/pickled_dvpip/merged_Fall_2018_Inbending_gen_test/"
-    # # for pklfile in os.listdir(dir_base):
-    # #     df = pd.read_pickle(dir_base+pklfile)
-    # #     # # df_test = df.head(6)
-    # #     # # df_test.to_pickle("test_binning.pkl")
-    # #     # df = pd.read_pickle("test_binning.pkl")
-    # #     print(df)
-    # #     df_binned = bin_df(df,df_type="Gen")
-    # #     df_binned.to_pickle(dir_base+"../binned_"+pklfile)
-    # #     sys.exit()
+
+    # #Run this code for testing as of 2/2023
+    # dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/pickled_dvpip/merged_Fall_2018_Inbending_gen_test/"
+    # for pklfile in os.listdir(dir_base):
+    #     print("binning file {}".format(pklfile))
+    #     df = pd.read_pickle(dir_base+pklfile)
+    #     # # df_test = df.head(6)
+    #     # # df_test.to_pickle("test_binning.pkl")
+    #     # df = pd.read_pickle("test_binning.pkl")
+    #     print(df)
+    #     df_binned = bin_df(df,df_type="Gen")
+    #     df_binned.to_pickle(dir_base+"../binned_"+pklfile)
+    
+
+    # sys.exit()
 
     #onefime merge, needs to be written into larger script
     dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/pickled_dvpip/binned_gen/"
 
-    pklfiles = os.listdir(dir_base)
-    #for pklfile in os.listdir(dir_base):
-    # for pklfile in [pklfiles[0],pklfiles[1]]:
-    #     df = pd.read_pickle(dir_base+pklfile)
-    #     df = df.head(2)
-    #     df.loc[:, 'tave_weighted'] = df['tave']*df['Gencounts']
-    #     df.loc[:, 'pave_weighted'] = df['pave']*df['Gencounts']
-    #     df.loc[:, 'xave_weighted'] = df['xave']*df['Gencounts']
-    #     df.loc[:, 'qave_weighted'] = df['qave']*df['Gencounts']
-    #     df.loc[:, 'yave_weighted'] = df['yave']*df['Gencounts']
-    #     tave_weights.append(df['tave_weighted'].to_list())
-    #     pave_weights.append(df['pave_weighted'].to_list())
-    #     xave_weights.append(df['xave_weighted'].to_list())
-    #     qave_weights.append(df['qave_weighted'].to_list())
-    #     yave_weights.append(df['yave_weighted'].to_list())
-    #     gencounts.append(df['Gencounts'].to_list())
-    #     print("original DF:")
-    #     print(df)
-
-    df1 = pd.read_pickle(dir_base + pklfiles[0])
-    df1.loc[:, 'tave_weighted'] = df1['tave']*df1['Gencounts']
-    df1.loc[:, 'qave_weighted'] = df1['qave']*df1['Gencounts']
-    df1.loc[:, 'pave_weighted'] = df1['pave']*df1['Gencounts']
-    df1.loc[:, 'xave_weighted'] = df1['xave']*df1['Gencounts']
-    df1.loc[:, 'yave_weighted'] = df1['yave']*df1['Gencounts']
-
-
-    df2 = pd.read_pickle(dir_base + pklfiles[1])
-    df2.loc[:, 'tave_weighted'] = df2['tave']*df2['Gencounts']
-    df2.loc[:, 'qave_weighted'] = df2['qave']*df2['Gencounts']
-    df2.loc[:, 'pave_weighted'] = df2['pave']*df2['Gencounts']
-    df2.loc[:, 'xave_weighted'] = df2['xave']*df2['Gencounts']
-    df2.loc[:, 'yave_weighted'] = df2['yave']*df2['Gencounts']
-
-
-
-
-    df_bin_ranges = df1[['tmin', 'pmin', 'xmin', 'qmin', 'tmax', 'pmax', 'xmax', 'qmax']]
-
-
     list_of_arrays = []
 
-    for df in [df1,df2]:
+    for index,pklfile in enumerate(os.listdir(dir_base)):
+        df = pd.read_pickle(dir_base+pklfile)
+        if index == 0:
+            df_bin_ranges = df[['tmin', 'pmin', 'xmin', 'qmin', 'tmax', 'pmax', 'xmax', 'qmax']]
+
         list_of_arrays.append(df[['tave_weighted', 'qave_weighted','pave_weighted', 'xave_weighted', 'yave_weighted',
                         'Gencounts']].to_numpy())
 
     array_of_summed_values = np.sum(list_of_arrays, axis=0)
     
     array_of_averaged_values = array_of_summed_values / array_of_summed_values[:, -1][:, np.newaxis]
-    print(array_of_averaged_values[:,:-1])
-    print(array_of_summed_values[:,-1])
-    
 
     dataframe_missing_total_gen_counts = df_bin_ranges.join(pd.DataFrame(array_of_averaged_values[:,:-1], columns=['tave_weighted', 'qave_weighted','pave_weighted', 'xave_weighted', 'yave_weighted']))
     final_combined_df = dataframe_missing_total_gen_counts.join(pd.DataFrame(array_of_summed_values[:,-1], columns=['total_gen_counts']))
@@ -261,43 +232,23 @@ if __name__ == "__main__":
     #result = np.column_stack((columns_from_df1, columns_from_df2))
     print(final_combined_df)
 
-    sys.exit()
-    print("tave_weights:")
-    print(tave_weights)
-    print(gencounts)
+    final_combined_df.to_pickle(dir_base+"../final_combined_df.pkl")
 
-    sys.exit()
+    # import matplotlib.pyplot as plt
+    # import numpy as np
 
+    # x = final_combined_df['xave_weighted'].to_numpy()
+    # y = [0, 1, 2, 3, 4]
+    # z = [[0, 1, 2, 3, 4],
+    #     [4, 3, 2, 1, 0],
+    #     [0, 1, 2, 3, 4],
+    #     [4, 3, 2, 1, 0],
+    #     [0, 1, 2, 3, 4]]
 
-    df = pd.merge(dfs[0], dfs[1], left_index=True, right_index=True)#="inner")
-    
-    # df = df.head(4)
-    print(df)
+    # xi, yi = np.meshgrid(x, y)
 
-    # #for now, jsut take the first two files
-    # df = pd.concat(dfs)
-
-
-    
-    # df = pd.merge(df_electronGen, df_protonGen, how='inner', on='event')
-    
-    
-    # df = df.head(4)
-    # print(df)
-    #This isn't going to be fast, need to properly weight the averages for tave pave etc, then concat correctly...
-
-
-
-
-# df = pd.read_pickle("pickled_data/f18_in_gen.pkl")
-# df_binned = bin_df(df,df_type="Gen")
-# df_binned.to_pickle("binned_dvpip/f18_in_dvpp_gen_binned.pkl")
-
-# df = pd.read_pickle("pickled_dvpip/f18_in_dvpp_rec_noseccut.pkl")
-# df_binned = bin_df(df,df_type="real")
-# df_binned.to_pickle("binned_dvpip/f18_in_dvpp_rec_noseccut_binned.pkl")
-
-# df = pd.read_pickle("pickled_dvpip/f18_in_dvpp_exp_noseccut.pkl")
-# df_binned = bin_df(df,df_type="real")
-# df_binned.to_pickle("binned_dvpip/f18_in_dvpp_exp_noseccut_binned.pkl")
-
+    # plt.pcolormesh(xi, yi, z)
+    # plt.colorbar()
+    # plt.show()
+    # sys.exit()
+   

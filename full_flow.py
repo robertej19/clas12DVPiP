@@ -321,7 +321,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
         make_ex_cut_rec = False
     else:
         make_ex_cut_exp = True
-        make_ex_cut_gen = True
+        make_ex_cut_gen = False
         make_ex_cut_rec = True
 
 
@@ -570,6 +570,8 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df_exp_binned.to_pickle(datafile_base_dir+binned_data_dir+exp_file_base+run_identifiyer+"_binned"+".pkl")
         df_rec_binned.to_pickle(datafile_base_dir+binned_data_dir+rec_file_base+run_identifiyer+"_binned"+".pkl")
+        print("saved df rec binned at {}".format(datafile_base_dir+binned_data_dir+rec_file_base+run_identifiyer+"_binned"+".pkl"))
+        print("saved df exp binned at {}".format(datafile_base_dir+binned_data_dir+exp_file_base+run_identifiyer+"_binned"+".pkl"))
 
         df_exp = df_exp_binned
         df_rec = df_rec_binned
@@ -595,7 +597,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df_exp = df_exp.rename(columns={"qave": "qave_exp", "xave": "xave_exp","tave": "tave_exp", "pave": "pave_exp","counts":"counts_exp"})
         df_rec = df_rec.rename(columns={"qave": "qave_rec", "xave": "xave_rec","tave": "tave_rec", "pave": "pave_rec","counts":"counts_rec"})
-        df_gen = df_gen.rename(columns={'qave': 'qave_gen', 'xave': 'xave_gen', 'tave': 'tave_gen', 'pave': 'pave_gen', 'Gencounts': 'counts_gen'})
+        df_gen = df_gen.rename(columns={'qave': 'qave_gen', 'xave': 'xave_gen', 'tave': 'tave_gen', 'pave': 'pave_gen', 'Gencounts': 'total_gen_counts'})
 
 
         df_merged_1 = pd.merge(df_exp,df_rec,how='inner', on=['qmin','xmin','tmin','pmin'])
@@ -617,7 +619,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df.loc[:,"binvol"] = (df["qmax"]-df["qmin"])*(df["xmax"]-df["xmin"])*(df["tmax"]-df["tmin"])*(df["pmax"]-df["pmin"])*3.14159/180
 
-        df.loc[:,"acc_corr"] = df["counts_rec"]/df["counts_gen"]
+        df.loc[:,"acc_corr"] = df["counts_rec"]/df["total_gen_counts"]
 
         df.loc[:,"xsec"] = df["counts_exp"]/Clas12_exp_luminosity/df["binvol"]
         df.loc[:,"xsec_corr"] = df["xsec"]/df["acc_corr"]
@@ -629,10 +631,10 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df.loc[:,"uncert_counts_exp"] = np.sqrt(df["counts_exp"])
         df.loc[:,"uncert_counts_rec"] = np.sqrt(df["counts_rec"])
-        df.loc[:,"uncert_counts_gen"] = np.sqrt(df["counts_gen"])
+        df.loc[:,"uncert_total_gen_counts"] = np.sqrt(df["total_gen_counts"])
 
         df.loc[:,"uncert_xsec"] = df["uncert_counts_exp"]/df["counts_exp"]*df["xsec"]
-        df.loc[:,"uncert_acc_corr"] = np.sqrt(  np.square(df["uncert_counts_rec"]/df["counts_rec"]) + np.square(df["uncert_counts_gen"]/df["counts_gen"]))*df["acc_corr"]
+        df.loc[:,"uncert_acc_corr"] = np.sqrt(  np.square(df["uncert_counts_rec"]/df["counts_rec"]) + np.square(df["uncert_total_gen_counts"]/df["total_gen_counts"]))*df["acc_corr"]
         df.loc[:,"uncert_xsec_corr_red_nb"] = np.sqrt(  np.square(df["uncert_xsec"]/df["xsec"]) + np.square(df["uncert_acc_corr"]/df["acc_corr"]))*df["xsec_corr_red_nb"]
 
         df.loc[:,"uncert_xsec_ratio_exp"] = np.sqrt(  np.square(df["uncert_xsec_corr_red_nb"]/df["xsec_corr_red_nb"]) + np.square(df["stat"]/df["dsdtdp"]) + np.square(df["sys"]/df["dsdtdp"]) )*df["xsec_ratio_exp"]
@@ -893,7 +895,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df_exp = df_exp.rename(columns={"qave": "qave_exp", "xave": "xave_exp","tave": "tave_exp", "pave": "pave_exp","counts":"counts_exp"})
         df_rec = df_rec.rename(columns={"qave": "qave_rec", "xave": "xave_rec","tave": "tave_rec", "pave": "pave_rec","counts":"counts_rec"})
-        df_gen = df_gen.rename(columns={'qave': 'qave_gen', 'xave': 'xave_gen', 'tave': 'tave_gen', 'pave': 'pave_gen', 'Gencounts': 'counts_gen'})
+        df_gen = df_gen.rename(columns={'qave': 'qave_gen', 'xave': 'xave_gen', 'tave': 'tave_gen', 'pave': 'pave_gen', 'Gencounts': 'total_gen_counts'})
 
 
         df_merged_1 = pd.merge(df_exp,df_rec,how='inner', on=['qmin','xmin','tmin','pmin'])
@@ -914,7 +916,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df.loc[:,"binvol"] = (df["qmax"]-df["qmin"])*(df["xmax"]-df["xmin"])*(df["tmax"]-df["tmin"])*(df["pmax"]-df["pmin"])*3.14159/180
 
-        df.loc[:,"acc_corr"] = df["counts_rec"]/df["counts_gen"]
+        df.loc[:,"acc_corr"] = df["counts_rec"]/df["total_gen_counts"]
 
         df.loc[:,"xsec"] = df["counts_exp"]/Clas12_exp_luminosity/df["binvol"]
         df.loc[:,"xsec_corr"] = df["xsec"]/df["acc_corr"]
@@ -924,10 +926,10 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
 
         df.loc[:,"uncert_counts_exp"] = np.sqrt(df["counts_exp"])
         df.loc[:,"uncert_counts_rec"] = np.sqrt(df["counts_rec"])
-        df.loc[:,"uncert_counts_gen"] = np.sqrt(df["counts_gen"])
+        df.loc[:,"uncert_total_gen_counts"] = np.sqrt(df["total_gen_counts"])
 
         df.loc[:,"uncert_xsec"] = df["uncert_counts_exp"]/df["counts_exp"]*df["xsec"]
-        df.loc[:,"uncert_acc_corr"] = np.sqrt(  np.square(df["uncert_counts_rec"]/df["counts_rec"]) + np.square(df["uncert_counts_gen"]/df["counts_gen"]))*df["acc_corr"]
+        df.loc[:,"uncert_acc_corr"] = np.sqrt(  np.square(df["uncert_counts_rec"]/df["counts_rec"]) + np.square(df["uncert_total_gen_counts"]/df["total_gen_counts"]))*df["acc_corr"]
         df.loc[:,"uncert_xsec_corr_red_nb"] = np.sqrt(  np.square(df["uncert_xsec"]/df["xsec"]) + np.square(df["uncert_acc_corr"]/df["acc_corr"]))*df["xsec_corr_red_nb"]
 
 
@@ -970,7 +972,7 @@ def run_analysis(mag_config,generator_type,unique_identifyer="",
         df.loc[:,"uncert_xsec_corr_nb_gamma"] = np.sqrt(  np.square(df["uncert_xsec"]/df["xsec"]) + np.square(df["uncert_acc_corr"]/df["acc_corr"]))*df["xsec_corr_nb_gamma"]
         df.loc[:,"c_12_uncert_ratio"] = df['uncert_xsec_corr_nb_gamma']/df['xsec_corr_nb_gamma']
 
-        df.loc[(df.acc_corr < 0.01),'xsec_corr_nb_gamma']=np.nan
+        #df.loc[(df.acc_corr < 0.01),'xsec_corr_nb_gamma']=np.nan
 
         q2bins,xBbins, tbins, phibins = fs.q2bins, fs.xBbins, fs.tbins, fs.phibins
 
@@ -1615,7 +1617,7 @@ if __name__ == "__main__":
     #run_name = "new_f18_in_processing_simple_cuts"
     #run_name = "varied_t_phi_bins_small_phi_bins"
     #run_name = "varied_t_phi_bins_inbending_only"
-    run_name = "new_system_test"
+    run_name = "new_system_test_ver2"
     
 
 
@@ -1635,15 +1637,15 @@ if __name__ == "__main__":
                             print("ON SIGMA, MAG CONFIG: {},{}".format(sigma_multiplier,mc))
                             run_analysis(mc,generator_type,unique_identifyer=run_name,#"for_aps_gen_plots_norad_bigplots",
                                         det_proton_loc=pl,det_photon1_loc=p1l,det_photon2_loc=p2l,
-                                        convert_roots = 1,
-                                        make_exclusive_cuts = 1,
-                                        plot_initial_distros = 1,
-                                        plot_final_distros = 1,
-                                        bin_all_events = 1,
-                                        bin_gen = 1,
-                                        calc_xsection = 1,
+                                        convert_roots = 0,
+                                        make_exclusive_cuts = 0,
+                                        plot_initial_distros = 0,
+                                        plot_final_distros = 0,
+                                        bin_all_events = 0,
+                                        bin_gen = 0,
+                                        calc_xsection = 0,
                                         plot_reduced_xsec_and_fit = 0,
-                                        calc_xsection_c12_only = 1,
+                                        calc_xsection_c12_only = 0,
                                         plot_reduced_xsec_and_fit_c12_only = 1,
                                         plot_1_D_hists = 0,
                                         simple_exclusivity_cuts=False,
