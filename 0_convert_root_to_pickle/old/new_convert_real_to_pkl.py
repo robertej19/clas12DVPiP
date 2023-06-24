@@ -12,6 +12,7 @@ from copy import copy
 from utils.const import *
 from utils.physics import *
 from scipy.stats import skewnorm
+import sys
 
 class root2pickle():
     #class to read root to make epg pairs, inherited from epg
@@ -96,17 +97,28 @@ class root2pickle():
 
         # read them
         for key in eleKeysRec:
+            print("reading electron ", key)
+
             df_electronRec[key] = self.tree[key].array(library="pd", entry_start = entry_start, entry_stop=entry_stop)
         for key in proKeysRec:
+            print("reading ", key)
             df_protonRec[key] = self.tree[key].array(library="pd", entry_start = entry_start, entry_stop=entry_stop)
         for key in gamKeysRec:
             df_gammaRec[key] = self.tree[key].array(library="pd", entry_start = entry_start, entry_stop=entry_stop)
         self.closeFile()
 
+        #Keep only the first two rows of each dataframe:
+        df_electronRec = df_electronRec.loc[[0,1]]
+        df_protonRec = df_protonRec.loc[[0,1]]
+        df_gammaRec = df_gammaRec.loc[[0,1]]
+        
+        print(df_electronRec)
+        print(df_protonRec)
+        print(df_gammaRec)
         #convert data type to standard double
-        df_electronRec = df_electronRec.astype({"Epx": float, "Epy": float, "Epz": float})
-        df_protonRec = df_protonRec.astype({"Ppx": float, "Ppy": float, "Ppz": float})
-        df_gammaRec = df_gammaRec.astype({"Gpx": float, "Gpy": float, "Gpz": float, "Gedep": float, "GcX": float, "GcY": float})
+        #df_electronRec = df_electronRec.astype({"Epx": float, "Epy": float, "Epz": float})
+        #df_protonRec = df_protonRec.astype({"Ppx": float, "Ppy": float, "Ppz": float})
+        #df_gammaRec = df_gammaRec.astype({"Gpx": float, "Gpy": float, "Gpz": float, "Gedep": float, "GcX": float, "GcY": float})
 
         #apply photon fiducial cuts
         if nofid:
@@ -116,6 +128,8 @@ class root2pickle():
             df_gammaRec.loc[:, "GFid"] = 0
 
             sector_cond = [df_gammaRec.Gsector ==1, df_gammaRec.Gsector ==2, df_gammaRec.Gsector ==3, df_gammaRec.Gsector ==4, df_gammaRec.Gsector ==5, df_gammaRec.Gsector ==6]
+            print(sector_cond)
+            sys.exit()
             psplit = np.select(sector_cond, [87, 82, 85, 77, 78, 82])
             tleft = np.select(sector_cond, [58.7356, 62.8204, 62.2296, 53.7756, 58.2888, 54.5822])
             tright = np.select(sector_cond, [58.7477, 51.2589, 59.2357, 56.2415, 60.8219, 49.8914])

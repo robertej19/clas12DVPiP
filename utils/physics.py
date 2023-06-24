@@ -55,3 +55,16 @@ def getTheta(vec1):
 def getEnergy(vec1, mass):
 	# for taken 3d momenta p and mass m, return energy = sqrt(p**2 + m**2)
 	return np.sqrt(mag2(vec1)+mass**2)
+
+def vec_subtract(vec1,vec2):
+    res = tuple(map(lambda i, j: i - j, vec1, vec2)) 
+    return res
+
+def vec_add(vec1,vec2):
+    res = tuple(map(lambda i, j: i + j, vec1, vec2)) 
+    return res
+
+def calc_inv_mass_squared(four_vector):
+    fv = four_vector
+    inv_mass2 = fv[0]**2-fv[1]**2-fv[2]**2-fv[3]**2
+    return inv_mass2
