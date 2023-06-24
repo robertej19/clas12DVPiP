@@ -273,12 +273,13 @@ if __name__ == "__main__":
     test_file = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/lund_examining/norad_test/test_aao_norad_2023.lund"
     test_pickle = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/lund_examining/norad_test/all_norad.pkl"
     test_dir_rad = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/lund_examining/rad_test/"
+    big_test_rad_dir = "/mnt/d/GLOBUS/CLAS12/lund_rad_examining/lund_files/"
     parser = argparse.ArgumentParser(description="Process an input file and save the resulting DataFrame as a pickle file.")
     # Add an argument for the input file
 
     parser.add_argument('-f', '--file', default=test_file, help='The input file to process')
     parser.add_argument('-d', '--dir', default=test_dir, help='The input file to process')
-    parser.add_argument('-x', '--rad_dir', default=test_dir_rad, help='The input file to process')
+    parser.add_argument('-x', '--rad_dir', default=big_test_rad_dir, help='The input file to process')
     parser.add_argument('-p', '--pickle', default=test_pickle, help='The input file to process')
     #set a store true flag
 
@@ -290,31 +291,40 @@ if __name__ == "__main__":
     # Parse the command-line arguments
     args = parser.parse_args()
 
+    
+
+    # Append to the name based on the flags
+    if args.rad:
+        pickle_basename = test_dir_rad+"rad_output.pkl"
+    else:
+        pickle_basename = test_dir+"norad_output.pkl"
+
     if args.lund_process:
         if args.multiple:
             df = read_multiple(args)
         else:
             df = filter_norad_lund(args.file)
         # Save the resulting DataFrame as a pickle file, using the original filename but with a .pkl extension
-        df.to_pickle(os.path.splitext(args.file)[0] + '.pkl')
+        df.to_pickle(pickle_basename)
     else:
-        df = pd.read_pickle(args.pickle)
+        df = pd.read_pickle(pickle_basename)
 
+        df['W'] = np.sqrt(df['W2'])
+        print(df)
+        print("Min:", df["Q2"].min())
+        print("Max:", df["Q2"].max())
 
-        # df['W'] = np.sqrt(df['W2'])
-        # print(df)
-        # print("Min:", df["Q2"].min())
-        # print("Max:", df["Q2"].max())
-
-        # plt.hist(df['Q2'], bins=50, color='blue', edgecolor='black')
-        # plt.title('Histogram of column_name')
-        # plt.xlabel('column_name')
-        # plt.ylabel('Frequency')
-        # plt.show()
-        # df = df[df['Q2'] >= 1]
-        # print(df)
-        # df = df[df['W'] >= 2]
-        # print(df)
+        plt.hist(df['photon_E'], bins=50, color='blue', edgecolor='black')
+        plt.title('Histogram of column_name')
+        plt.xlabel('column_name')
+        plt.ylabel('Frequency')
+        #make log distribution
+        plt.yscale('log')
+        plt.show()
+        df = df[df['Q2'] >= 1]
+        print(df)
+        df = df[df['W'] >= 2]
+        print(df)
 
 
 
