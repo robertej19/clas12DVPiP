@@ -3,6 +3,7 @@
 Modules help pandas algebra without using ROOT.
 """
 import numpy as np
+import uproot
 
 def dot(vec1, vec2):
 	# dot product of two 3d vectors
@@ -68,3 +69,17 @@ def calc_inv_mass_squared(four_vector):
     fv = four_vector
     inv_mass2 = fv[0]**2-fv[1]**2-fv[2]**2-fv[3]**2
     return inv_mass2
+
+def cartesian_to_spherical(x,y,z):
+    # Spherical coordinates
+    total_mom = np.sqrt(x**2 + y**2 + z**2) # Radius
+    theta = np.arccos(z/total_mom) # polar angle - range [0, pi]
+    phi = np.arctan2(y, x) # azimuthal angle - range [-pi, pi]
+
+    return total_mom, theta, phi
+
+def readFile(fname):
+    #read root using uproot
+    ffile = uproot.open(fname)
+    tree = ffile["T"]
+    return tree

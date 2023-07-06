@@ -16,15 +16,6 @@ from itertools import combinations
 PhysicsConstants = const.PhysicsConstants()
 print(PhysicsConstants.proton_mass) # prints 0.938272081
 
-def cartesian_to_spherical(x,y,z):
-    # Spherical coordinates
-    total_mom = np.sqrt(x**2 + y**2 + z**2) # Radius
-    theta = np.arccos(z/total_mom) # polar angle - range [0, pi]
-    phi = np.arctan2(y, x) # azimuthal angle - range [-pi, pi]
-
-    return total_mom, theta, phi
-
-
 
 def read_multiple(args):
     print("READING MULTIPLE")

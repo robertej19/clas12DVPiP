@@ -97,10 +97,23 @@ def readEPGG(filename, entry_stop = None):
     for key in gamKeysGen:
         df_gammaGen[key] = tree[key].array(library="pd", entry_stop=entry_stop)
 
+
+
+        # array = tree[key].array(library="pd", entry_stop=entry_stop)
+        # print(f'Shape of {key} array: {array.shape}')
+        # df_gammaGen[key] = array
+        
+    #print all dataframes:
+    print(df_electronGen)
+    print(df_protonGen)
+    print(df_gammaGen)
+
     #convert data type to standard double
     df_electronGen = df_electronGen.astype({"GenEpx": float, "GenEpy": float, "GenEpz": float})
     df_protonGen = df_protonGen.astype({"GenPpx": float, "GenPpy": float, "GenPpz": float})
     df_gammaGen = df_gammaGen.astype({"GenGpx": float, "GenGpy": float, "GenGpz": float})
+
+    sys.exit()
 
     #set up a dummy index for merging
     df_electronGen.loc[:,'event'] = df_electronGen.index

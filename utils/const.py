@@ -16,3 +16,7 @@ class PhysicsConstants:
         self.electron_beam_3_vector = [0, 0, self.electron_beam_momentum_magnitude] # beam vector - previously: beam
         self.target_3_vector = [0, 0, 0] # target vector - previously: target
         self.target_4_vector = [self.proton_mass, 0, 0, 0] # target 4 vector - previously: target4
+
+
+
+
