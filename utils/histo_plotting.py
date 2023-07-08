@@ -137,6 +137,10 @@ def make_all_histos(df,datatype="Recon",hists_2d=False,hists_1d=False,hists_over
   
 
 
+make_all_histos(df,datatype="Gen",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
+                output_dir = "pics/",df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+
+
 
 
 

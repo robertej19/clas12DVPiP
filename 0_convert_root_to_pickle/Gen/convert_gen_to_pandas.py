@@ -163,8 +163,6 @@ def convert_gen_rad_to_pandas(args):
 
 
 
-
-
 def convert_gen_to_pandas(args):
 
     gen_file = uproot.open(args.fname)
@@ -183,6 +181,8 @@ def convert_gen_to_pandas(args):
     #Make an output directory that has the same location as the input file, and is named the same as the input file.
     filename_base = args.fname.split("/")[-1].split(".")[0]
     output_dir = "/".join(args.fname.split("/")[:-1])+"/"
+    print('Output to directory: '+output_dir+filename_base)
+
     if not os.path.exists(output_dir+filename_base):
         os.makedirs(output_dir+filename_base)
 
@@ -332,14 +332,11 @@ def convert_gen_to_pandas(args):
 
 
         #save to pickle and put in the output folder we made earlier
-        df.to_pickle(output_dir+filename_base+"/"+filename_base+"_genOnly_"+str(iteration)+"_.pkl")
+        df.to_pickle(output_dir+filename_base+"/"+filename_base+"_genOnly_"+str(iteration)+".pkl")
 
         print(df)
         starting_entry+=args.chunk_size
-
-
-        # print("saved file to "+filename_base+"_genOnly_"+str(iteration)+"_.pkl")
-        # iteration += 1
+        iteration += 1
     
 
 
