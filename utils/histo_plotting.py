@@ -212,14 +212,15 @@ if __name__ == "__main__":
 #     #     #require GenW > 1.9
 #     #     dfs.append(df_interm)
 
-#     # # Combine all the dataframes
-#     # df= pd.concat(dfs, ignore_index=True)
+#    Combine all the dataframes
+#    df= pd.concat(dfs, ignore_index=True)
 
-#     # #print(df.columns.values)
-    df = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/lund_10000_20230624_1247_norad.pkl")
+#   #print(df.columns.values)
+    #df = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/lund_10000_20230624_1247_norad.pkl")
+    df = pd.read_pickle("test_f18_exp_corr.pkl")
 
-    make_all_histos(df,datatype="Gen",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
-                   output_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/gen_norad/",df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+    make_all_histos(df,datatype="Exp",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
+                   output_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/exp/",df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
 
 
 

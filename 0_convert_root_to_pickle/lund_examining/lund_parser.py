@@ -181,7 +181,7 @@ def read_multiple(args):
 
 
         # save as output_file_base + index name
-        df.to_pickle("lund_to_pickle/{}_{}.pkl".format(output_file_base,index))
+        df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/lund_10000_20230624_1457/{}_{}.pkl".format(output_file_base,index))
 
         #increment
         index += 1
