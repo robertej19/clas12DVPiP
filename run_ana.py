@@ -3,14 +3,45 @@ import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import os, sys
 import pandas as pd
 import argparse
 from itertools import combinations
 
 
-df = pd.read_pickle("lund_output.pkl")
-print(df)
+df_no = pd.read_pickle("protonRec_nosmear.pkl")
+df_ye = pd.read_pickle("protonRec_yessmear.pkl")
+
+
+lim = 5
+
+#plot a 1d histogram of proton momentum
+fig, ax = plt.subplots(1,2, figsize=(12,6))
+ax[0].hist(df_no['MM2_egg'], bins=200, range=[0,lim], histtype='step', label='No FID')
+ax[0].hist(df_ye['MM2_egg'], bins=200, range=[0,lim], histtype='step', label='With FID')
+
+ax[0].set_xlabel("Pp [GeV]")
+ax[0].set_ylabel("Counts")
+ax[0].legend()
+plt.show()
+
+#2d histogram of Epx vs Epy
+fig, ax = plt.subplots(1,2, figsize=(12,6))
+ax[0].hist2d(df_no['Pp'],df_no['GenPp']-df_no['Pp'], bins=200,range=[[0,5],[-1,1]],norm=mpl.colors.LogNorm())
+ax[0].set_xlabel("Epx [GeV]")
+ax[0].set_ylabel("Epy [GeV]")
+ax[0].set_title("No FID")
+ax[1].hist2d(df_ye['Pp'],df_ye['GenPp']-df_ye['Pp'], bins=200, range=[[0,5],[-1,1]],norm=mpl.colors.LogNorm())
+ax[1].set_xlabel("Epx [GeV]")
+ax[1].set_ylabel("Epy [GeV]")
+ax[1].set_title("With FID")
+#show number bar
+cbar = fig.colorbar(ax[1].collections[0], ax=ax[1])
+plt.show()
+
+
+sys.exit()
 
 
 
