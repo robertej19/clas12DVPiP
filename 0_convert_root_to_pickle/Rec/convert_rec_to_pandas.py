@@ -770,9 +770,6 @@ def convert_rec_gen_to_pandas(args):
                                     0, 360.0 - df['Genphi2'], df['Genphi2'])
         
         # exclusivity variables
-        df.loc[:,'GenconeAngle'] = physics.angle(ele, pi0)
-        df.loc[:,'GenreconGam'] = physics.angle(gam, VmissEP)
-        df.loc[:,'Gencoplanarity'] = physics.angle(v3h, v3pi0)
 
         df.loc[:,'GenMPt'] = np.sqrt((df["GenEpx"] + df["GenPpx"] + df["GenPipx"])**2 +
                                 (df["GenEpy"] + df["GenPpy"] + df["GenPipy"])**2)
@@ -789,6 +786,17 @@ def convert_rec_gen_to_pandas(args):
         df.loc[:,'GenME_epgg'] = (PhysicsConstants.proton_mass + PhysicsConstants.electron_beam_energy - 
                                   df["GenEe"] - df["GenPe"] - df["GenPie"])
 
+
+        df.loc[:,'GenconeAngle'] = physics.angle(ele, pi0)
+        df.loc[:,'GenreconGam'] = physics.angle(gam, VmissEP)
+
+        df.loc[:,'Gencoplanarity'] = physics.angle(v3h, v3pi0)
+        df.loc[:,'GenconeAngle1'] = physics.angle(ele, gam) # higher energy photon for aao_norad, radiated photon for aao_rad
+        
+        if not args.rad:
+            df.loc[:,'GenconeAngle2'] = physics.angle(ele, gam2)
+            df.loc[:,'GenopeningAngle'] = physics.angle(gam, gam2)
+        
         return df
        
        #rest starts here:
