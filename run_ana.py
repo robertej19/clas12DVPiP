@@ -1,13 +1,12 @@
 import argparse
-
-# Assuming these functions are defined in another Python file named "utils.py"
-#from utils import convert_root, apply_exclusivity_cuts, bin_events, calculate_cross_section, plot_results
-
 import os
 import sys
+from utils import filestruct
+
 
 #Main data
-data_path = "/mnt/d/GLOBUS/CLAS12/Thesis/0_raw_root_files/"
+fs = filestruct.fs()
+data_path = fs.data_path
 
 config = "outbend"
 

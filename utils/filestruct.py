@@ -3,6 +3,8 @@ from icecream import ic
 
 class fs:
 	def __init__(self):
+		self.data_path = "/mnt/d/GLOBUS/CLAS12/Thesis/0_raw_root_files/"
+
 		self.phibins_test = [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342,360]
 		self.tbins_test =  [0.02,0.3,0.4,10.6]
 		self.xBbins_test = [0.025,.3,0.38,0.958]
@@ -78,9 +80,8 @@ class fs:
 
 		self.f18_inbending_total_lumi = 5.511802214933477e+40
 		self.f18_inbending_total_lumi_inv_nb = 5.511802214933477e+7
-		self.Ebeam = 10.6 #GeV, CLAS12 beam energy
-		self.m_p = 0.938 #GeV, proton mass
-		self.alpha = 1/137 #, fine structure constant
+		#self.Ebeam = 10.604 #GeV, CLAS12 beam energy MOVE TO CONST.PY
+		#self.alpha = 1/137 #, fine structure constant MOVE TO CONST.PY
 		
 
 

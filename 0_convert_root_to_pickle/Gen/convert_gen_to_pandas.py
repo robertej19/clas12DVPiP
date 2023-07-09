@@ -5,9 +5,10 @@ import pandas as pd
 import numpy as np
 import argparse
 from copy import copy
-from utils import const, physics
-import os
+from utils import const, physics, filestruct
+import os, sys
 
+fs = filestruct.fs()
 PhysicsConstants = const.PhysicsConstants()
 
 def convert_gen_rad_to_pandas(args):
@@ -197,13 +198,15 @@ def convert_gen_to_pandas(args):
         proKeysGen = ["GenPpx", "GenPpy", "GenPpz"]
         gamKeysGen = ["GenGpx", "GenGpy", "GenGpz"]
 
+        print("starting entry is: {}".format(starting_entry))
+        print("ending entry is {}".format(starting_entry+args.chunk_size))
+
         for key in eleKeysGen:
             df_electronGen[key] = gen_tree[key].array(library="pd", entry_start = starting_entry, entry_stop=starting_entry+args.chunk_size)
         for key in proKeysGen:
             df_protonGen[key] = gen_tree[key].array(library="pd",  entry_start = starting_entry, entry_stop=starting_entry+args.chunk_size)
         for key in gamKeysGen:
             df_gammaGen[key] = gen_tree[key].array(library="pd",  entry_start = starting_entry, entry_stop=starting_entry+args.chunk_size)
-
 
 
         df_electronGen = df_electronGen.astype({"GenEpx": float, "GenEpy": float, "GenEpz": float})
@@ -356,11 +359,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     test_file_norad = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Gen/test/gen_test_norad.root"
-    test_file_rad = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Gen/test/gen_test_rad.root"
+    test_file_rad = fs.data_path+ "gen_inbend_rad/" +"rad_10000_20230203_0905_Fall_2018_Inbending_50nA_gen.root"
 
     test_outfile_norad = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Gen/test/gen_test_norad.pkl"
     test_outfile_rad = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Gen/test/gen_test_rad.pkl"
-
+    
     if args.test:
         if args.rad:
             test_file = test_file_rad

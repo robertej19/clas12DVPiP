@@ -254,8 +254,8 @@
         "data_y":"Gp",
         "type_x":"pmom",
         "type_y":"gmom",
-        "label_x":"Proton Momentum",
-        "label_y":"Photon 1 Momentum",
+        "label_x":"Proton Mom.",
+        "label_y":"Photon 1 Mom.",
         "filename":"Proton_Mom_Gamma1_Mom"       
     }],
 
@@ -265,8 +265,8 @@
         "data_y":"Gp2",
         "type_x":"pmom",
         "type_y":"gmom",
-        "label_x":"Proton Momentum",
-        "label_y":"Photon 2 Momentum",
+        "label_x":"Proton Mom.",
+        "label_y":"Photon 2 Mom.",
         "filename":"Proton_Mom_Gamma2_Mom"       
     }],
     
@@ -277,7 +277,7 @@
         "type_x":"phitrento",
         "type_y":"pmom",
         "label_x":"Lepton-Hadron Angle $\\phi$",
-        "label_y":"Proton Momentum",
+        "label_y":"Proton Mom.",
         "filename":"PhiTrento_Proton_Mom"       
     }],
 
@@ -288,7 +288,7 @@
         "type_x":"phitrento",
         "type_y":"gmom",
         "label_x":"Lepton-Hadron Angle $\\phi$",
-        "label_y":"Photon 1 Momentum",
+        "label_y":"Photon 1 Mom.",
         "filename":"PhiTrento_Photon1_Mom"       
     }],
 
@@ -299,7 +299,7 @@
         "type_x":"phitrento",
         "type_y":"gmom",
         "label_x":"Lepton-Hadron Angle $\\phi$",
-        "label_y":"Photon 2 Momentum",
+        "label_y":"Photon 2 Mom.",
         "filename":"PhiTrento_Proton2_Mom"       
     }],
 
@@ -332,7 +332,7 @@
         "type_x":"phitrento",
         "type_y":"t",
         "label_x":"Lepton-Hadron Angle $\\phi$",
-        "label_y":"Momentum Transfer t",
+        "label_y":"Mom. Transfer t",
         "filename":"PhiTrento_t"       
     }],
 
@@ -369,7 +369,7 @@
         "data_y":"W",
         "type_x":"t",
         "type_y":"W",
-        "label_x":"Momentum Transfer t",
+        "label_x":"Mom. Transfer t",
         "label_y":"W",
         "filename":"W_t"       
     }],
