@@ -26,12 +26,10 @@ def read_multiple(args):
     if args.rad:
         file_dir = args.rad_dir
         filter_lund_func = filter_rad_lund
-        spherical_func = get_rad_spherical
         print("RAD")
     else:
         filter_lund_func = filter_norad_lund
         file_dir = args.dir
-        spherical_func = get_norad_spherical
         print("NORAD")
 
     # Loop over all files in the directory
@@ -48,11 +46,7 @@ def read_multiple(args):
             dfs.append(df)
 
     # Combine all dataframes into a single one
-    result = pd.concat(dfs, ignore_index=True)
-
-    df_out = spherical_func(result)
-
-    
+    df_out = pd.concat(dfs, ignore_index=True)
     return df_out
 
 
@@ -169,64 +163,6 @@ def filter_norad_lund(filename):
 
     return pd.DataFrame(data)
 
-def get_norad_spherical(df):
-    # Electron spherical coordinates
-    total_mom_e, theta_e, phi_e = physics.cartesian_to_spherical(df['GenEpx'],df['GenEpy'],df['GenEpz'])
-
-    # Proton spherical coordinates
-    total_mom_pro, theta_pro, phi_pro = physics.cartesian_to_spherical(df['GenPpx'],df['GenPpy'],df['GenPpz'])
-
-    # Higher energy photon spherical coordinates
-    total_mom_higher_photon, theta_higher_photon, phi_higher_photon = physics.cartesian_to_spherical(df['GenGpx'],df['GenGpy'],df['GenGpz'])
-
-    # Lower energy photon spherical coordinates
-    total_mom_lower_photon, theta_lower_photon, phi_lower_photon = physics.cartesian_to_spherical(df['GenGpx2'],df['GenGpy2'],df['GenGpz2'])
-
-    # Add the spherical coordinates to the DataFrame
-    df['GenEp'] = total_mom_e
-    df['GenEtheta'] = theta_e
-    df['GenEphi'] = phi_e
-    df['GenPp'] = total_mom_pro
-    df['GenPtheta'] = theta_pro
-    df['GenPphi'] = phi_pro
-    df['GenGp'] = total_mom_higher_photon
-    df['GenGtheta'] = theta_higher_photon
-    df['GenGphi'] = phi_higher_photon
-    df['GenGp2'] = total_mom_lower_photon
-    df['GenGtheta2'] = theta_lower_photon
-    df['GenGphi2'] = phi_lower_photon
-
-    return df
-
-def get_rad_spherical(df):
-    # Electron spherical coordinates
-    total_mom_e, theta_e, phi_e = physics.cartesian_to_spherical(df['GenEpx'],df['GenGpy'],df['GenGpz'])
-
-    # Proton spherical coordinates
-    total_mom_pro, theta_pro, phi_pro = physics.cartesian_to_spherical(df['GenPpx'],df['GenPpz'],df['GenPpz'])
-
-    # photon spherical coordinates
-    total_mom_photon, theta_photon, phi_photon = physics.cartesian_to_spherical(df['GenGpx'],df['GenGpy'],df['GenGpz'])
-
-    # pion spherical coordinates
-    total_mom_pion, theta_pion, phi_pion = physics.cartesian_to_spherical(df['GenPipx'],df['GenPipy'],df['GenPipz'])
-
-    # Add the spherical coordinates to the DataFrame
-    df['GenEp'] = total_mom_e
-    df['GenEtheta'] = theta_e
-    df['GenEphi'] = phi_e
-    df['GenPp'] = total_mom_pro
-    df['GenPtheta'] = theta_pro
-    df['GenPphi'] = phi_pro
-    df['GenGp'] = total_mom_photon
-    df['GenGtheta'] = theta_photon
-    df['GenGphi'] = phi_photon
-    df['GenPip'] = total_mom_pion
-    df['GenPitheta'] = theta_pion
-    df['GenPiphi'] = phi_pion
-
-
-    return df
 
 
 def plot_2d_hist(df):    # List of all the columns you want to create combinations for
@@ -295,50 +231,74 @@ if __name__ == "__main__":
 
         ele = [df['GenEpx'], df['GenEpy'], df['GenEpz']]
         df.loc[:, 'GenEp'] = physics.mag(ele)
-        df.loc[:, 'GenEe_alt'] = physics.getEnergy(ele, PhysicsConstants.electron_mass)
+        df.loc[:, 'GenEe'] = physics.getEnergy(ele, PhysicsConstants.electron_mass)
         df.loc[:, 'GenEtheta'] = physics.getTheta(ele)
         df.loc[:, 'GenEphi'] = physics.getPhi(ele)
 
         pro = [df['GenPpx'], df['GenPpy'], df['GenPpz']]
         df.loc[:, 'GenPp'] = physics.mag(pro)
-        df.loc[:, 'GenPe_alt'] = physics.getEnergy(pro, PhysicsConstants.proton_mass)
+        df.loc[:, 'GenPe'] = physics.getEnergy(pro, PhysicsConstants.proton_mass)
         df.loc[:, 'GenPtheta'] = physics.getTheta(pro)
         df.loc[:, 'GenPphi'] = physics.getPhi(pro)
 
-        gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
-        df.loc[:, 'GenGp'] = physics.mag(gam)
-        df.loc[:, 'GenGe_alt'] = physics.getEnergy(gam, 0)
-        df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
-        df.loc[:, 'GenGphi'] = physics.getPhi(gam)
-        
-        gam2 = [df['GenGpx2'], df['GenGpy2'], df['GenGpz2']]
-        df.loc[:, 'GenGp2'] = physics.mag(gam2)
-        df.loc[:,'GenGe2_alt'] = physics.getEnergy(gam2, 0)
-        df.loc[:, 'GenGtheta2'] = physics.getTheta(gam2)
-        df.loc[:, 'GenGphi2'] = physics.getPhi(gam2)
+        if args.rad:
+            gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
+            df.loc[:, 'GenGp'] = physics.mag(gam)
+            df.loc[:, 'GenGe'] = physics.getEnergy(gam, 0)
+            df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
+            df.loc[:, 'GenGphi'] = physics.getPhi(gam)
 
-        pi0 = physics.vecAdd(gam, gam2)
+            pi0 = [df['GenPipx'], df['GenPipy'], df['GenPipz']]
+            df.loc[:, 'GenPip'] = physics.mag(pi0)
+            df.loc[:, 'GenPie'] = physics.getEnergy(pi0, 0)
+            df.loc[:, 'GenPitheta'] = physics.getTheta(pi0)
+            df.loc[:, 'GenPiphi'] = physics.getPhi(pi0)
+
+        else:
+            gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
+            df.loc[:, 'GenGp'] = physics.mag(gam)
+            df.loc[:, 'GenGe'] = physics.getEnergy(gam, 0)
+            df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
+            df.loc[:, 'GenGphi'] = physics.getPhi(gam)
+            
+            gam2 = [df['GenGpx2'], df['GenGpy2'], df['GenGpz2']]
+            df.loc[:, 'GenGp2'] = physics.mag(gam2)
+            df.loc[:,'GenGe2'] = physics.getEnergy(gam2, 0)
+            df.loc[:, 'GenGtheta2'] = physics.getTheta(gam2)
+            df.loc[:, 'GenGphi2'] = physics.getPhi(gam2)
+
+            pi0 = physics.vecAdd(gam, gam2)
+            #add the components of pi0 to the dataframe
+            df.loc[:, 'GenPipx'] = pi0[0]
+            df.loc[:, 'GenPipy'] = pi0[1]
+            df.loc[:, 'GenPipz'] = pi0[2]
+            df.loc[:, 'GenPip'] = physics.mag(pi0)
+            df.loc[:, 'GenPie'] = physics.getEnergy(pi0, 0)
+            df.loc[:, 'GenPitheta'] = physics.getTheta(pi0)
+            df.loc[:, 'GenPiphi'] = physics.getPhi(pi0)
+
+
+
         VGS = [-df['GenEpx'], -df['GenEpy'], PhysicsConstants.electron_beam_momentum_magnitude - df['GenEpz']]
         v3l = physics.cross(PhysicsConstants.electron_beam_3_vector, ele)
         v3h = physics.cross(pro, VGS)
         v3g = physics.cross(VGS, gam)
         v3pi0 = physics.cross(VGS, pi0)
 
-        VmissG = [-df["GenEpx"] - df["GenPpx"], -df["GenEpy"] - df["GenPpy"],
+        VmissEP = [-df["GenEpx"] - df["GenPpx"], -df["GenEpy"] - df["GenPpy"],
                 PhysicsConstants.electron_beam_momentum_magnitude - df["GenEpz"] - df["GenPpz"]]
 
-        VmissP = [-(df["GenEpx"] + df["GenGpx"]+ df["GenGpx2"]), -(df["GenEpy"] + df["GenGpy"]+ df["GenGpy2"]),
-                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenGpz"]+ df["GenGpz2"])]
-        
-        Vmiss = [-(df["GenEpx"] + df["GenPpx"] + df["GenGpx"]+ df["GenGpx2"]), -(df["GenEpy"] + df["GenPpy"] + df["GenGpy"]+ df["GenGpy2"]),
-                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPpz"] + df["GenGpz"]+ df["GenGpz2"])]
-        
-        Vmiss2 = [-(df["GenEpx"] + df["GenPpx"] + df["GenGpx"]+ df["GenGpx2"]), -(df["GenEpy"] + df["GenPpy"] + df["GenGpy"]+ df["GenGpy2"]),
-                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPpz"] + df["GenGpz"]+ df["GenGpz2"])]
-        
-        costheta = physics.cosTheta(VGS, gam)
-        df.loc[:, 'GenMpx'], df.loc[:, 'GenMpy'], df.loc[:, 'GenMpz'] = Vmiss
 
+        VmissEGG = [-(df["GenEpx"] + df["GenPipx"]), -(df["GenEpy"] +  df["GenPipy"]),
+                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPipz"])]
+        
+        
+        VmissEPGG = [-(df["GenEpx"] + df["GenPpx"] + df["GenPipx"]), -(df["GenEpy"] + df["GenPpy"] + df["GenPipy"]),
+                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPpz"] + df["GenPipz"])]
+        
+        costheta = physics.cosTheta(VGS, pi0)
+        
+        df.loc[:, 'GenMpx'], df.loc[:, 'GenMpy'], df.loc[:, 'GenMpz'] = VmissEPGG
 
         # binning kinematics
         df.loc[:,'GenQ2'] = -((PhysicsConstants.electron_beam_energy - df['GenEe'])**2 - physics.mag2(VGS))
@@ -355,104 +315,35 @@ if __name__ == "__main__":
         df.loc[:,'Genphi1'] = physics.angle(v3l, v3h)
         df.loc[:,'Genphi1'] = np.where(physics.dot(v3l, pro) > 0, 360.0 -
                                     df['Genphi1'], df['Genphi1'])
-        df.loc[:,'Genphi2'] = physics.angle(v3l, v3g)
-        df.loc[:,'Genphi2'] = np.where(physics.dot(v3l, gam) <
+        df.loc[:,'Genphi2'] = physics.angle(v3l, v3pi0)
+        df.loc[:,'Genphi2'] = np.where(physics.dot(v3l, pi0) <
                                     0, 360.0 - df['Genphi2'], df['Genphi2'])
-        # exclusivity variables
-        df.loc[:,'GenMM2_epg'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] +
-                                df["GenPe"] + df["GenGe"])**2 - physics.mag2(Vmiss)
-        df.loc[:,'GenMM2_epgg'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] +
-                        df["GenPe"] + df["GenGe"]+ df["GenGe2"])**2 - physics.mag2(Vmiss)
         
-        df.loc[:,'GenME_epg'] = (PhysicsConstants.proton_mass + PhysicsConstants.electron_beam_energy - df["GenEe"] - df["GenPe"] - df["GenGe"])
-        df.loc[:,'GenMM2_ep'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] + df["GenPe"])**2 - physics.mag2(VmissG)
-        df.loc[:,'GenMM2_eg'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] + df["GenGe"]+ df["GenGe2"])**2 - physics.mag2(VmissP)
-        df.loc[:,'GenMPt'] = np.sqrt((df["GenEpx"] + df["GenPpx"] + df["GenGpx"])**2 +
-                                (df["GenEpy"] + df["GenPpy"] + df["GenGpy"])**2)
-        df.loc[:,'GenconeAngle'] = physics.angle(ele, gam)
-        df.loc[:,'GenreconGam'] = physics.angle(gam, VmissG)
-        df.loc[:,'Gencoplanarity'] = physics.angle(v3h, v3g)
+        # exclusivity variables
+        df.loc[:,'GenconeAngle'] = physics.angle(ele, pi0)
+        df.loc[:,'GenreconGam'] = physics.angle(gam, VmissEP)
+        df.loc[:,'Gencoplanarity'] = physics.angle(v3h, v3pi0)
 
+        df.loc[:,'GenMPt'] = np.sqrt((df["GenEpx"] + df["GenPpx"] + df["GenPipx"])**2 +
+                                (df["GenEpy"] + df["GenPpy"] + df["GenPipy"])**2)
+        
+        df.loc[:,'GenMM2_epgg'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] +
+                        df["GenPe"] + df["GenPie"])**2 - physics.mag2(VmissEPGG)
+        
+        df.loc[:,'GenMM2_ep'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] + 
+                                 df["GenPe"])**2 - physics.mag2(VmissEP)
 
-        df.to_pickle("panick3.pkl")
-
-        import matplotlib.pyplot as plt
-        import matplotlib as mpl
-
-        #plt.hist(np.sqrt(df['GenMM2_eg']), bins=50)
-        # plt.hist((df['GenEe_alt']-df['GenEe']), bins=50)
-
-        # plt.show()
-
-        # plt.hist((df['GenPe_alt']-df['GenPe']), bins=50)
-
-        # plt.show()
-        # plt.hist((df['GenGe_alt']-df['GenGe']), bins=50)
-
-        # plt.show()
-        # plt.hist((df['GenGe2_alt']-df['GenGe2']), bins=50)
-
-        # plt.show()
-
-        # make 2d histogram of GenPe_alt vs GenPe:
-        # plt.hist2d(df['GenPe_alt'], df['GenPe'], bins=50, norm=mpl.colors.LogNorm())
-        # plt.xlabel('GenPe_alt')
-        # plt.show()
-
-        pe_diff = df['GenPe_alt']-df['GenPe']
-        plt.plot(pe_diff, df['GenPe'], 'o')
-        plt.xlabel('GenPe_alt - GenPe')
-        plt.ylabel('GenPe')
-        plt.show()
-    else:
-        #df = pd.read_pickle(pickle_basename)
-        df = pd.read_pickle("panick2.pkl")
-        print(df.columns.values)
-        print(df['e_vx'].nunique())
-
-        df['W'] = np.sqrt(df['W2'])
-        df = df[df['W'] >= 2]
-        print(df)
-        print("Min:", df["Q2"].min())
-        print("Max:", df["Q2"].max())
-
-        import matplotlib as mpl
-
-        plt.hist2d(df['xB'],df['Q2'], bins=[200, 200], norm=mpl.colors.LogNorm())
-
-        #plt.hist2d(x_data, y_data, bins =[x_bins, y_bins],
-        #range=[[xmin,xmax],[ymin,ymax]],norm=mpl.colors.LogNorm())# cmap = plt.cm.nipy_spectral) 
-
-
-        plt.title('Histogram of column_name')
-        plt.xlabel('column_name')
-        plt.ylabel('Frequency')
-        #make log distribution
-        #plt.yscale('log')
-        plt.show()
-        # df = df[df['Q2'] >= 1]
-        # print(df)
-        # df = df[df['W'] >= 2]
-        # print(df)
+        df.loc[:,'GenMM2_egg'] = (-PhysicsConstants.proton_mass-PhysicsConstants.electron_beam_energy + df["GenEe"] + 
+                                  df["GenPie"])**2 - physics.mag2(VmissEGG)
+        
+        df.loc[:,'GenME_epgg'] = (PhysicsConstants.proton_mass + PhysicsConstants.electron_beam_energy - 
+                                  df["GenEe"] - df["GenPe"] - df["GenPie"])
+        
+    
+        df.to_pickle("lund_output.pkl")
 
 
 
 
 
 
-
-#plot_2d_hist(df)
-
-# # Calculate Etheta
-# df['Etheta'] = np.degrees(np.arccos(df['Epz'] / df['Ep']))
-
-# # Calculate 4-momenta
-# df['Ee'] = np.sqrt(df['Epx']**2 + df['Epy']**2 + df['Epz']**2 + PhysicsConstants.electron_mass**2)
-# df['E_4mom'] = df.apply(lambda row: (row['Ee'], row['Epx'], row['Epy'], row['Epz']), axis=1)
-
-# # Calculate Q^2, W^2, xB
-# df['Q2'] = df['E_4mom'].apply(lambda p: -physics.calc_inv_mass_squared(physics.vec_subtract(PhysicsConstants.electron_beam_4_vector, p)))
-# df['W2'] = df['E_4mom'].apply(lambda p: physics.calc_inv_mass_squared(physics.vec_subtract(physics.vec_add(PhysicsConstants.electron_beam_4_vector, PhysicsConstants.target_4_vector), p)))
-# df['nu'] = df['E_4mom'].apply(lambda p: physics.vec_subtract(PhysicsConstants.electron_beam_4_vector, p)[0])
-# df['xB'] = df['Q2'] / (2 * PhysicsConstants.proton_mass * df['nu'])
-# df['W'] = np.sqrt(df['W2'])

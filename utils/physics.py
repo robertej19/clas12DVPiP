@@ -71,12 +71,15 @@ def calc_inv_mass_squared(four_vector):
     return inv_mass2
 
 def cartesian_to_spherical(x,y,z):
-    # Spherical coordinates
-    total_mom = np.sqrt(x**2 + y**2 + z**2) # Radius
-    theta = np.arccos(z/total_mom) # polar angle - range [0, pi]
-    phi = np.arctan2(y, x) # azimuthal angle - range [-pi, pi]
-
-    return total_mom, theta, phi
+	# Spherical coordinates
+	total_mom = np.sqrt(x**2 + y**2 + z**2) # Radius
+	theta = np.arccos(z/total_mom) # polar angle - range [0, pi]
+	#convert theta to degrees
+	theta = theta * 180 / np.pi
+	phi = np.arctan2(y, x) # azimuthal angle - range [-pi, pi]
+	#convert phi to degrees
+	phi = phi * 180 / np.pi
+	return total_mom, theta, phi
 
 def readFile(fname):
     #read root using uproot
