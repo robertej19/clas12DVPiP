@@ -20,8 +20,8 @@ print(PhysicsConstants.proton_mass) # prints 0.938272081
 def read_multiple(args):
     print("READING MULTIPLE")
     # Initialize an empty list to store dataframes
-    dfs = []
-
+    chunk_size = 1000
+    index = 0
 
     if args.rad:
         file_dir = args.rad_dir
@@ -32,22 +32,162 @@ def read_multiple(args):
         file_dir = args.dir
         print("NORAD")
 
-    # Loop over all files in the directory
-    for filename in os.listdir(file_dir):
-        print("on file {}".format(filename))
-        # Check if the file is of the correct type (e.g. text file)
-        if filename.endswith(".lund"):
-            # Full file path
-            filepath = os.path.join(file_dir, filename)
-            print(filepath)
-            # Apply filter to each file and store the resulting dataframe
-            df = filter_lund_func(filepath)
-            # Append the dataframe to the list
-            dfs.append(df)
+    #convert file_dir to only have _ instead of /
+    output_file_base = file_dir.replace("/","_")
 
-    # Combine all dataframes into a single one
-    df_out = pd.concat(dfs, ignore_index=True)
-    return df_out
+
+    #make an output dir named lund_to_pickle
+    if not os.path.exists("lund_to_pickle"):
+        os.makedirs("lund_to_pickle")
+
+    file_list = os.listdir(file_dir)
+    # if there are more than 1000 files, process in batches of 1000
+    if len(file_list) > chunk_size:
+        #break into parts
+        file_list_parts = [file_list[i:i + chunk_size] for i in range(0, len(file_list), chunk_size)]
+        print("There will be {} parts".format(len(file_list_parts)))
+    else:
+        file_list_parts = [file_list]
+        print("there are only {} files".format(len(file_list)))
+
+    for part in file_list_parts:
+        print("On part {}".format(part))
+        # Loop over all files in the directory
+        dfs = []
+        for filename in part:
+            print("on file {}".format(filename))
+            # Check if the file is of the correct type (e.g. text file)
+            if filename.endswith(".lund"):
+                # Full file path
+                filepath = os.path.join(file_dir, filename)
+                print(filepath)
+                # Apply filter to each file and store the resulting dataframe
+                df_1 = filter_lund_func(filepath)
+                # Append the dataframe to the list
+                dfs.append(df_1)
+
+        # Combine all dataframes into a single one
+        df = pd.concat(dfs, ignore_index=True)
+
+        ele = [df['GenEpx'], df['GenEpy'], df['GenEpz']]
+        df.loc[:, 'GenEp'] = physics.mag(ele)
+        df.loc[:, 'GenEe'] = physics.getEnergy(ele, PhysicsConstants.electron_mass)
+        df.loc[:, 'GenEtheta'] = physics.getTheta(ele)
+        df.loc[:, 'GenEphi'] = physics.getPhi(ele)
+
+        pro = [df['GenPpx'], df['GenPpy'], df['GenPpz']]
+        df.loc[:, 'GenPp'] = physics.mag(pro)
+        df.loc[:, 'GenPe'] = physics.getEnergy(pro, PhysicsConstants.proton_mass)
+        df.loc[:, 'GenPtheta'] = physics.getTheta(pro)
+        df.loc[:, 'GenPphi'] = physics.getPhi(pro)
+
+        if args.rad:
+            gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
+            df.loc[:, 'GenGp'] = physics.mag(gam)
+            df.loc[:, 'GenGe'] = physics.getEnergy(gam, 0)
+            df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
+            df.loc[:, 'GenGphi'] = physics.getPhi(gam)
+
+            pi0 = [df['GenPipx'], df['GenPipy'], df['GenPipz']]
+            df.loc[:, 'GenPip'] = physics.mag(pi0)
+            df.loc[:, 'GenPie'] = physics.getEnergy(pi0, 0)
+            df.loc[:, 'GenPitheta'] = physics.getTheta(pi0)
+            df.loc[:, 'GenPiphi'] = physics.getPhi(pi0)
+
+        else:
+            gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
+            df.loc[:, 'GenGp'] = physics.mag(gam)
+            df.loc[:, 'GenGe'] = physics.getEnergy(gam, 0)
+            df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
+            df.loc[:, 'GenGphi'] = physics.getPhi(gam)
+            
+            gam2 = [df['GenGpx2'], df['GenGpy2'], df['GenGpz2']]
+            df.loc[:, 'GenGp2'] = physics.mag(gam2)
+            df.loc[:,'GenGe2'] = physics.getEnergy(gam2, 0)
+            df.loc[:, 'GenGtheta2'] = physics.getTheta(gam2)
+            df.loc[:, 'GenGphi2'] = physics.getPhi(gam2)
+
+            pi0 = physics.vecAdd(gam, gam2)
+            #add the components of pi0 to the dataframe
+            df.loc[:, 'GenPipx'] = pi0[0]
+            df.loc[:, 'GenPipy'] = pi0[1]
+            df.loc[:, 'GenPipz'] = pi0[2]
+            df.loc[:, 'GenPip'] = physics.mag(pi0)
+            df.loc[:, 'GenPie'] = physics.getEnergy(pi0, 0)
+            df.loc[:, 'GenPitheta'] = physics.getTheta(pi0)
+            df.loc[:, 'GenPiphi'] = physics.getPhi(pi0)
+
+
+
+        VGS = [-df['GenEpx'], -df['GenEpy'], PhysicsConstants.electron_beam_momentum_magnitude - df['GenEpz']]
+        v3l = physics.cross(PhysicsConstants.electron_beam_3_vector, ele)
+        v3h = physics.cross(pro, VGS)
+        v3g = physics.cross(VGS, gam)
+        v3pi0 = physics.cross(VGS, pi0)
+
+        VmissEP = [-df["GenEpx"] - df["GenPpx"], -df["GenEpy"] - df["GenPpy"],
+                PhysicsConstants.electron_beam_momentum_magnitude - df["GenEpz"] - df["GenPpz"]]
+
+
+        VmissEGG = [-(df["GenEpx"] + df["GenPipx"]), -(df["GenEpy"] +  df["GenPipy"]),
+                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPipz"])]
+        
+        
+        VmissEPGG = [-(df["GenEpx"] + df["GenPpx"] + df["GenPipx"]), -(df["GenEpy"] + df["GenPpy"] + df["GenPipy"]),
+                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPpz"] + df["GenPipz"])]
+        
+        costheta = physics.cosTheta(VGS, pi0)
+        
+        df.loc[:, 'GenMpx'], df.loc[:, 'GenMpy'], df.loc[:, 'GenMpz'] = VmissEPGG
+
+        # binning kinematics
+        df.loc[:,'GenQ2'] = -((PhysicsConstants.electron_beam_energy - df['GenEe'])**2 - physics.mag2(VGS))
+        df.loc[:,'Gennu'] = (PhysicsConstants.electron_beam_energy - df['GenEe'])
+        df.loc[:,'Geny'] = df['Gennu']/PhysicsConstants.electron_beam_energy
+        df.loc[:,'GenxB'] = df['GenQ2'] / 2.0 / PhysicsConstants.proton_mass / df['Gennu']
+        df.loc[:,'Gent1'] = 2 * PhysicsConstants.proton_mass * (df['GenPe'] - PhysicsConstants.proton_mass)
+        df.loc[:,'Gent2'] = (PhysicsConstants.proton_mass * df['GenQ2'] + 2 * PhysicsConstants.proton_mass * df['Gennu'] * (df['Gennu'] - np.sqrt(df['Gennu'] * df['Gennu'] + df['GenQ2']) * costheta))\
+        / (PhysicsConstants.proton_mass + df['Gennu'] - np.sqrt(df['Gennu'] * df['Gennu'] + df['GenQ2']) * costheta)
+        
+        df.loc[:,'GenW'] = np.sqrt(np.maximum(0, (PhysicsConstants.electron_beam_energy + PhysicsConstants.proton_mass - df['GenEe'])**2 - physics.mag2(VGS)))
+
+        # trento angles
+        df.loc[:,'Genphi1'] = physics.angle(v3l, v3h)
+        df.loc[:,'Genphi1'] = np.where(physics.dot(v3l, pro) > 0, 360.0 -
+                                    df['Genphi1'], df['Genphi1'])
+        df.loc[:,'Genphi2'] = physics.angle(v3l, v3pi0)
+        df.loc[:,'Genphi2'] = np.where(physics.dot(v3l, pi0) <
+                                    0, 360.0 - df['Genphi2'], df['Genphi2'])
+        
+        # exclusivity variables
+        df.loc[:,'GenconeAngle'] = physics.angle(ele, pi0)
+        df.loc[:,'GenreconGam'] = physics.angle(gam, VmissEP)
+        df.loc[:,'Gencoplanarity'] = physics.angle(v3h, v3pi0)
+
+        df.loc[:,'GenMPt'] = np.sqrt((df["GenEpx"] + df["GenPpx"] + df["GenPipx"])**2 +
+                                (df["GenEpy"] + df["GenPpy"] + df["GenPipy"])**2)
+        
+        df.loc[:,'GenMM2_epgg'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] +
+                        df["GenPe"] + df["GenPie"])**2 - physics.mag2(VmissEPGG)
+        
+        df.loc[:,'GenMM2_ep'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] + 
+                                    df["GenPe"])**2 - physics.mag2(VmissEP)
+
+        df.loc[:,'GenMM2_egg'] = (-PhysicsConstants.proton_mass-PhysicsConstants.electron_beam_energy + df["GenEe"] + 
+                                    df["GenPie"])**2 - physics.mag2(VmissEGG)
+        
+        df.loc[:,'GenME_epgg'] = (PhysicsConstants.proton_mass + PhysicsConstants.electron_beam_energy - 
+                                    df["GenEe"] - df["GenPe"] - df["GenPie"])
+
+
+        # save as output_file_base + index name
+        df.to_pickle("lund_to_pickle/{}_{}.pkl".format(output_file_base,index))
+
+        #increment
+        index += 1
+
+    #return the last dataframe
+    return df
 
 
 def filter_rad_lund(filename):
@@ -165,27 +305,6 @@ def filter_norad_lund(filename):
 
 
 
-def plot_2d_hist(df):    # List of all the columns you want to create combinations for
-    columns = df.columns
-
-    dir = "figs/"
-    # Find all combinations of 2 variables
-    comb = combinations(columns, 2)
-
-    # Iterate over each combination and create a histogram
-    for i in list(comb):
-        #print what iteration we are on
-        print(i)
-        plt.figure()
-        plt.hist2d(df[i[0]], df[i[1]], bins=30, cmap='viridis')  # adjust bins and cmap as needed
-        plt.xlabel(i[0])
-        plt.ylabel(i[1])
-        plt.colorbar(label='Counts')
-        plt.title(f'Histogram of {i[0]} vs {i[1]}')
-        plt.savefig(dir+f'{i[0]}_vs_{i[1]}_histogram.png')  # save figure
-        plt.close()
-
-
 
 # Start the entry point of the script
 if __name__ == "__main__":
@@ -226,121 +345,7 @@ if __name__ == "__main__":
             df = read_multiple(args)
         else:
             df = filter_norad_lund(args.file)
-        # Save the resulting DataFrame as a pickle file, using the original filename but with a .pkl extension
-        #df.to_pickle(pickle_basename)
-
-        ele = [df['GenEpx'], df['GenEpy'], df['GenEpz']]
-        df.loc[:, 'GenEp'] = physics.mag(ele)
-        df.loc[:, 'GenEe'] = physics.getEnergy(ele, PhysicsConstants.electron_mass)
-        df.loc[:, 'GenEtheta'] = physics.getTheta(ele)
-        df.loc[:, 'GenEphi'] = physics.getPhi(ele)
-
-        pro = [df['GenPpx'], df['GenPpy'], df['GenPpz']]
-        df.loc[:, 'GenPp'] = physics.mag(pro)
-        df.loc[:, 'GenPe'] = physics.getEnergy(pro, PhysicsConstants.proton_mass)
-        df.loc[:, 'GenPtheta'] = physics.getTheta(pro)
-        df.loc[:, 'GenPphi'] = physics.getPhi(pro)
-
-        if args.rad:
-            gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
-            df.loc[:, 'GenGp'] = physics.mag(gam)
-            df.loc[:, 'GenGe'] = physics.getEnergy(gam, 0)
-            df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
-            df.loc[:, 'GenGphi'] = physics.getPhi(gam)
-
-            pi0 = [df['GenPipx'], df['GenPipy'], df['GenPipz']]
-            df.loc[:, 'GenPip'] = physics.mag(pi0)
-            df.loc[:, 'GenPie'] = physics.getEnergy(pi0, 0)
-            df.loc[:, 'GenPitheta'] = physics.getTheta(pi0)
-            df.loc[:, 'GenPiphi'] = physics.getPhi(pi0)
-
-        else:
-            gam = [df['GenGpx'], df['GenGpy'], df['GenGpz']]
-            df.loc[:, 'GenGp'] = physics.mag(gam)
-            df.loc[:, 'GenGe'] = physics.getEnergy(gam, 0)
-            df.loc[:, 'GenGtheta'] = physics.getTheta(gam)
-            df.loc[:, 'GenGphi'] = physics.getPhi(gam)
-            
-            gam2 = [df['GenGpx2'], df['GenGpy2'], df['GenGpz2']]
-            df.loc[:, 'GenGp2'] = physics.mag(gam2)
-            df.loc[:,'GenGe2'] = physics.getEnergy(gam2, 0)
-            df.loc[:, 'GenGtheta2'] = physics.getTheta(gam2)
-            df.loc[:, 'GenGphi2'] = physics.getPhi(gam2)
-
-            pi0 = physics.vecAdd(gam, gam2)
-            #add the components of pi0 to the dataframe
-            df.loc[:, 'GenPipx'] = pi0[0]
-            df.loc[:, 'GenPipy'] = pi0[1]
-            df.loc[:, 'GenPipz'] = pi0[2]
-            df.loc[:, 'GenPip'] = physics.mag(pi0)
-            df.loc[:, 'GenPie'] = physics.getEnergy(pi0, 0)
-            df.loc[:, 'GenPitheta'] = physics.getTheta(pi0)
-            df.loc[:, 'GenPiphi'] = physics.getPhi(pi0)
-
-
-
-        VGS = [-df['GenEpx'], -df['GenEpy'], PhysicsConstants.electron_beam_momentum_magnitude - df['GenEpz']]
-        v3l = physics.cross(PhysicsConstants.electron_beam_3_vector, ele)
-        v3h = physics.cross(pro, VGS)
-        v3g = physics.cross(VGS, gam)
-        v3pi0 = physics.cross(VGS, pi0)
-
-        VmissEP = [-df["GenEpx"] - df["GenPpx"], -df["GenEpy"] - df["GenPpy"],
-                PhysicsConstants.electron_beam_momentum_magnitude - df["GenEpz"] - df["GenPpz"]]
-
-
-        VmissEGG = [-(df["GenEpx"] + df["GenPipx"]), -(df["GenEpy"] +  df["GenPipy"]),
-                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPipz"])]
-        
-        
-        VmissEPGG = [-(df["GenEpx"] + df["GenPpx"] + df["GenPipx"]), -(df["GenEpy"] + df["GenPpy"] + df["GenPipy"]),
-                    -(-PhysicsConstants.electron_beam_momentum_magnitude + df["GenEpz"] + df["GenPpz"] + df["GenPipz"])]
-        
-        costheta = physics.cosTheta(VGS, pi0)
-        
-        df.loc[:, 'GenMpx'], df.loc[:, 'GenMpy'], df.loc[:, 'GenMpz'] = VmissEPGG
-
-        # binning kinematics
-        df.loc[:,'GenQ2'] = -((PhysicsConstants.electron_beam_energy - df['GenEe'])**2 - physics.mag2(VGS))
-        df.loc[:,'Gennu'] = (PhysicsConstants.electron_beam_energy - df['GenEe'])
-        df.loc[:,'Geny'] = df['Gennu']/PhysicsConstants.electron_beam_energy
-        df.loc[:,'GenxB'] = df['GenQ2'] / 2.0 / PhysicsConstants.proton_mass / df['Gennu']
-        df.loc[:,'Gent1'] = 2 * PhysicsConstants.proton_mass * (df['GenPe'] - PhysicsConstants.proton_mass)
-        df.loc[:,'Gent2'] = (PhysicsConstants.proton_mass * df['GenQ2'] + 2 * PhysicsConstants.proton_mass * df['Gennu'] * (df['Gennu'] - np.sqrt(df['Gennu'] * df['Gennu'] + df['GenQ2']) * costheta))\
-        / (PhysicsConstants.proton_mass + df['Gennu'] - np.sqrt(df['Gennu'] * df['Gennu'] + df['GenQ2']) * costheta)
-        
-        df.loc[:,'GenW'] = np.sqrt(np.maximum(0, (PhysicsConstants.electron_beam_energy + PhysicsConstants.proton_mass - df['GenEe'])**2 - physics.mag2(VGS)))
     
-        # trento angles
-        df.loc[:,'Genphi1'] = physics.angle(v3l, v3h)
-        df.loc[:,'Genphi1'] = np.where(physics.dot(v3l, pro) > 0, 360.0 -
-                                    df['Genphi1'], df['Genphi1'])
-        df.loc[:,'Genphi2'] = physics.angle(v3l, v3pi0)
-        df.loc[:,'Genphi2'] = np.where(physics.dot(v3l, pi0) <
-                                    0, 360.0 - df['Genphi2'], df['Genphi2'])
-        
-        # exclusivity variables
-        df.loc[:,'GenconeAngle'] = physics.angle(ele, pi0)
-        df.loc[:,'GenreconGam'] = physics.angle(gam, VmissEP)
-        df.loc[:,'Gencoplanarity'] = physics.angle(v3h, v3pi0)
-
-        df.loc[:,'GenMPt'] = np.sqrt((df["GenEpx"] + df["GenPpx"] + df["GenPipx"])**2 +
-                                (df["GenEpy"] + df["GenPpy"] + df["GenPipy"])**2)
-        
-        df.loc[:,'GenMM2_epgg'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] +
-                        df["GenPe"] + df["GenPie"])**2 - physics.mag2(VmissEPGG)
-        
-        df.loc[:,'GenMM2_ep'] = (-PhysicsConstants.proton_mass - PhysicsConstants.electron_beam_energy + df["GenEe"] + 
-                                 df["GenPe"])**2 - physics.mag2(VmissEP)
-
-        df.loc[:,'GenMM2_egg'] = (-PhysicsConstants.proton_mass-PhysicsConstants.electron_beam_energy + df["GenEe"] + 
-                                  df["GenPie"])**2 - physics.mag2(VmissEGG)
-        
-        df.loc[:,'GenME_epgg'] = (PhysicsConstants.proton_mass + PhysicsConstants.electron_beam_energy - 
-                                  df["GenEe"] - df["GenPe"] - df["GenPie"])
-        
-    
-        df.to_pickle("lund_output.pkl")
 
 
 

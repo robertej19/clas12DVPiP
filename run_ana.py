@@ -1,7 +1,17 @@
-import argparse
-import os
+from utils import const, physics, filestruct
 import sys
-from utils import filestruct
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os, sys
+import pandas as pd
+import argparse
+from itertools import combinations
+
+
+df = pd.read_pickle("lund_output.pkl")
+print(df)
+
 
 
 #Main data
