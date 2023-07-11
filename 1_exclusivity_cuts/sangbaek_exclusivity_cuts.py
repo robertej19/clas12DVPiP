@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 import argparse
 
-def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,
+def makeDVpi0P(df_epgg, pol = "outbending",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,
                                   unique_identifyer="", datafilename="temporary_exclusivity_variances_",use_generic_cuts=True,
                                   sigma_multiplier=3):
 
-    
+
     if simple_exclusivity_cuts:
 
         df_epgg.loc[:, "closeness"] = np.abs(df_epgg.loc[:, "Mpi0"] - .1349766)
@@ -161,6 +161,7 @@ def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",pho
 
         df_dvpi0p.loc[:, "config"] = 0
 
+        print("USING POLARITY {}".format(pol))
         if pol == "inbending":
             #CDFT
             cut_Pp1_CDFT = df_dvpi0p.Pp > 0.3  # Pp
@@ -373,8 +374,23 @@ if __name__ == "__main__":
 
 
 
-    df = makeDVpi0P(pd.read_pickle(args.fname))
-    df.to_pickle(args.out)
+    #df = makeDVpi0P(pd.read_pickle(args.fname))
+    
+    #dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+    dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+
+
+    
+    #fname = "norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon_fid_corr_smear"
+    fname = "norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon_fid_corr_smear"
+
+    df = makeDVpi0P(pd.read_pickle(dir+fname+".pkl"))
+
+    print(df)
+    
+    #df.to_pickle("final_inbending_exclusive.pkl")
+    #df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/{}.pkl".format(fname))
+    df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/outb/rec/{}.pkl".format(fname))
 
 
     #df_exp = pd.read_pickle("new_exp_convert_outbend.pkl",pol="outbending")

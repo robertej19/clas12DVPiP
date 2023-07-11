@@ -16,8 +16,8 @@ PhysicsConstants = const.PhysicsConstants()
 def convert_exp_to_pandas(args):
 
     detRes =0
-    nofid = 0
-    pol = "inbending" 
+    nofid = 1
+    pol = args.polarity
 
     rec_file = uproot.open(args.fname)
     rec_tree = rec_file["T"]
@@ -86,7 +86,6 @@ def convert_exp_to_pandas(args):
         df_protonRec = df_protonRec.astype({"Ppx": float, "Ppy": float, "Ppz": float})
         df_gammaRec = df_gammaRec.astype({"Gpx": float, "Gpy": float, "Gpz": float, "Gedep": float, "GcX": float, "GcY": float})
 
-        print(df_protonRec)
 
         #apply photon fiducial cuts
         if nofid:
@@ -172,7 +171,6 @@ def convert_exp_to_pandas(args):
         df_protonRec.loc[:, "PDc1theta"] = -100000
 
         df_protonRec_No_corr = df_protonRec.copy()
-        print(df_protonRec_No_corr)
 
         if detRes:
             df_protonRec.loc[:, "PDc3theta"] = -100000
@@ -588,27 +586,29 @@ if __name__ == "__main__":
     test_outfile_inb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Exp/exp_test_inb.pkl"
     test_outfile_outb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Exp/exptest_outb.pkl"
 
-    if args.test:
-        if args.polarity == "inbending":
-            test_file = fs.data_path + "exp_inbend/" + "20220511_f18_in_combined_157.root"
-            # args.out = test_outfile_norad_inb
-        elif args.polarity =="outbending":
-            test_file = fs.data_path + "exp_outbend/" + "20220511_f18_out_combined_171.root"
-            # args.out = test_outfile_norad_outb
-        print("test enabled, using {}".format(test_file))
-        args.fname = test_file
+    if args.polarity == "inbending":
+        fname_base = "20220511_f18_in_combined_157"
+        test_file = fs.data_path + "exp_inbend/" + fname_base + ".root"
+        out_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/exp/"
+    elif args.polarity =="outbending":
+        fname_base = "20220511_f18_out_combined_171"
+        test_file = fs.data_path + "exp_outbend/" + fname_base+".root"
+        out_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/exp/"
 
-    fname_base = args.fname.split(".")[0]
+    args.fname = test_file
+
+
+    if args.correction:
+        outname = fname_base+ "_cor_nofid.pkl"
+    else:
+        outname = fname_base+ "_uncor_nofid.pkl"
+
 
     print("converting {} to pandas".format(args.fname))
     df = convert_exp_to_pandas(args)
 
-    print(df.columns.values)
-    print(df)
-    #print number of unique df['GenEpx']    values
 
-    #save as df_rec_out.pkl
-    df.to_pickle(args.out)
+    df.to_pickle(out_dir+outname)
 
 
 

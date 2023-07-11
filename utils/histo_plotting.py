@@ -217,10 +217,76 @@ if __name__ == "__main__":
 
 #   #print(df.columns.values)
     #df = pd.read_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/lund_10000_20230624_1247_norad.pkl")
-    df = pd.read_pickle("test_f18_exp_corr.pkl")
+    #df = pd.read_pickle("test_f18_exp_corr.pkl")
 
+    
+    # make_all_histos(df,datatype="Exp",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
+    #                output_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/exp/",df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+
+
+    # FOR EXP DATA
+    # in_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/exp/"
+    # files = ['20220511_f18_in_combined_157_cor.pkl', '20220511_f18_in_combined_157_uncor.pkl',  '20220511_f18_in_combined_157_uncor_nofid.pkl']
+    # out_dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/inb/exp/"
+    # out_dir_ext = ["cor_fid/","nocor_fid/","nocor_nofid/"]
+
+    # # loop through make_all_histos for all 3 input files
+    # for i in range(len(files)):
+    #     #print where we are 
+    #     print("Working on file: {}".format(files[i]))
+    #     df = pd.read_pickle(in_dir + files[i])
+    #     make_all_histos(df,datatype="Exp",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
+    #                output_dir = out_dir_base+out_dir_ext[i],df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+    
+
+    # in_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/exp/"    
+    # files = ['20220511_f18_out_combined_171_cor.pkl', '20220511_f18_out_combined_171_uncor.pkl',  '20220511_f18_out_combined_171_uncor_nofid.pkl']
+    # out_dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/outb/exp/"
+    # out_dir_ext = ["cor_fid/","nocor_fid/","nocor_nofid/"]
+
+    #     # loop through make_all_histos for all 3 input files
+    # for i in range(len(files)):
+    #     #print where we are 
+    #     print("Working on file: {}".format(files[i]))
+    #     df = pd.read_pickle(in_dir + files[i])
+    #     make_all_histos(df,datatype="Exp",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
+    #             output_dir = out_dir_base+out_dir_ext[i],df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+        
+    
+    #FOR REC DATA
+
+
+    # in_dirs = ['/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/',
+    #            '/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/']
+    # out_dirs = ['/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/inb/rec/',
+    #             '/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/outb/rec/']
+
+    # # for each in_dir, get a list of all files in that directory, and run make_all_histos on it
+    # for i in range(len(in_dirs)):
+    #     in_dir = in_dirs[i]
+    #     out_dir = out_dirs[i]
+    #     files = [f for f in os.listdir(in_dir) if f.endswith('.pkl')]
+    #     for j in range(len(files)):
+    #         print("Working on file: {}".format(files[j]))
+    #         suffix = files[j].split("recon_")[1].split(".")[0]
+    #         full_out_dir = out_dir + suffix + "/"
+    #         if not os.path.exists(full_out_dir):
+    #             os.makedirs(full_out_dir)
+    #         df = pd.read_pickle(in_dir + files[j])
+    #         make_all_histos(df,datatype="Rec",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
+    #                 output_dir = full_out_dir,df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+
+    # For passed exp inbending
+
+    outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/2_dvpip_distros/inb/exp/"
+    infile = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/exp/final_inbending_exclusive.pkl"
+    df = pd.read_pickle(infile)
+
+    # print max of df["t1"]
+    print(df["t1"].max())
+    print(df["t2"].max())
     make_all_histos(df,datatype="Exp",hists_2d=True,hists_1d=True,hists_overlap=False,saveplots=True,
-                   output_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/plots/1_all_event_distros/exp/",df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
+                    output_dir = outdir,df_2=None,first_label="first",second_label="second",plot_title_identifiyer="")
 
 
 

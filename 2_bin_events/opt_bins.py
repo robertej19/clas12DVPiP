@@ -19,31 +19,42 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 import matplotlib as mpl
 from icecream import ic
+from utils import filestruct
 
-df = pd.read_pickle("data/df.pkl")
+fs = filestruct.fs()
 
-#define top bounding function over range x
+
+inbending_data = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/exp/final_inbending_exclusive.pkl"
+outbending_data = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/outb/exp/final_outbending_exclusive.pkl"
+
+inb = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/exp/20220511_f18_in_combined_157_cor.pkl"
+
+df = pd.read_pickle(inb)
+# print(df)
+
+# #find events where Q2 is greater than 6
+# #df = df[df["Q2"]>8]
+# #print(df)
+
+# #make a 1d histogram of t distribution
+
+# #define top bounding function over range x
 def top_acceptance_bound(x, a, b, c):
     #return a*x**2/(b**2 + x**2) + c
-    return a*x+c
+    return (10.604-2) / (10.604)*2*0.938*x*10.604
 
 #define bottom bounding function over range x
 def bottom_acceptance_bound(x, a, b, c):
     #return a*x**2/(b**2 + x**2) + c
     #return exponential of x:
-    return a*np.exp(b*x)+c
-
+    return (4-0.938**2)/(1/x-1)
+    #return (4-0.938**2)/(1/x-1)
+    #Q = (4 - m) / (1/x - 1)
+    
 def max_over_ybin_max(ybin_max,x,a_param1,b_param1,c_param1):
     return max(ybin_max,bottom_acceptance_bound(x,a_param1,b_param1,c_param1))
 
-a_param = 15
-b_param = 2
-c_param = 2
-a_param1 = .35
-b_param1 = 4
-c_param1 = 0
 
-ic(df)
 
 #df.head(10).to_pickle("data/df_head.pkl")
 
@@ -64,9 +75,8 @@ num_cols = df_np.shape[1]
 blank_bin_edges = [-1000,1000]
 initalized_bin_edges = [blank_bin_edges]*num_cols
 
-#q2_bin_edges,xb_bin_edges = [1,2,3,4,6,10],[0.1,0.2,.3,0.4,.6,.7,0.8]
 
-xb_bin_edges, q2_bin_edges = [0.175,0.25,.3,0.35,.4,0.45,.5,.55,.6,.65,.7],	[0,1,1.5,2,2.5,3,3.5,4,4.5,5,6,10,14]
+xb_bin_edges, q2_bin_edges = [0.175,0.25,.3,0.35,.4,0.45,.5,.6],	[0,1,1.5,2,2.5,3,3.5,4,5,6,8,11]
         
 initalized = [blank_bin_edges]*num_cols
 
@@ -289,19 +299,19 @@ def plot_2dhist(x_data,y_data,var_names,ranges,colorbar=True,
     #make x range for plotting
     x_range = np.linspace(xmin,xmax,1000)
     #populate yvals with the y values for the fit
-    yvals = top_acceptance_bound(x_range,a_param,b_param,c_param)
+    yvals = top_line(x_range,a_param,b_param,c_param)
     #plot the fit
     plt.plot(x_range,yvals,'b')
     #make x range for plotting
     #populate yvals with the y values for the fit
-    yvals_bottom = bottom_acceptance_bound(x_range,a_param1,b_param1,c_param1)
+    yvals_bottom = plot_line(x_range,a_param1,b_param1,c_param1)
     #plot the fit
     plt.plot(x_range,yvals_bottom,'k')
 
 
     #plt.yscale('log')
 
-    
+    #plt.savefig("1.png")
 
     if saveplot:
         #plot_title.replace("/","")
@@ -333,4 +343,4 @@ for xmin,xmax in zip(xb_bin_edges[:-1],xb_bin_edges[1:]):
         calc_bin_vol_corr(xmin,xmax,ymin,ymax)
 
 
-plot_2dhist(df["xB"],df["Q2"],["xB","Q2"],[[0,1,100],[1,11,100]],colorbar=True,)
+plot_2dhist(df["xB"],df["Q2"],["xB","Q2"],[[0,1,200],[0,11,200]],colorbar=True,)

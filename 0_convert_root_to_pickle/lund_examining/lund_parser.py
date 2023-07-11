@@ -17,7 +17,7 @@ PhysicsConstants = const.PhysicsConstants()
 print(PhysicsConstants.proton_mass) # prints 0.938272081
 
 
-def read_multiple(args):
+def read_multiple(args,lund_batch):
     print("READING MULTIPLE")
     # Initialize an empty list to store dataframes
     chunk_size = 1000
@@ -181,7 +181,7 @@ def read_multiple(args):
 
 
         # save as output_file_base + index name
-        df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/lund_10000_20230624_1457/{}_{}.pkl".format(output_file_base,index))
+        df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/{}/{}_{}.pkl".format(lund_batch,output_file_base,index))
 
         #increment
         index += 1
@@ -340,9 +340,11 @@ if __name__ == "__main__":
     else:
         pickle_basename = test_dir+"norad_output.pkl"
 
+    lund_batch = args.dir.split("/")[-2]
+    # print(lund_batch)
     if args.lund_process:
         if args.multiple:
-            df = read_multiple(args)
+            df = read_multiple(args,lund_batch)
         else:
             df = filter_norad_lund(args.file)
     

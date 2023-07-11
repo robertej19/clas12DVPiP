@@ -328,7 +328,7 @@
     "Trentot": [{
         "type":"2D",
         "data_x":"phi1",
-        "data_y":"t",
+        "data_y":"t2",
         "type_x":"phitrento",
         "type_y":"t",
         "label_x":"Lepton-Hadron Angle $\\phi$",
@@ -365,7 +365,7 @@
 
     "tW": [{
         "type":"2D",
-        "data_x":"t",
+        "data_x":"t2",
         "data_y":"W",
         "type_x":"t",
         "type_y":"W",

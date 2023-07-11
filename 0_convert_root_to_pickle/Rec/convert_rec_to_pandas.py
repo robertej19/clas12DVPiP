@@ -17,9 +17,11 @@ def convert_rec_to_pandas(args):
     #(self, fname, entry_start = None, entry_stop = None, pol = "inbending", gen = "norad", raw = False, detRes = False, width = "mid", dvcs = False, smearing = 1, nofid = False):
     #    def readEPGG(self, entry_start = None, entry_stop = None, gen = "pi0norad", pol = "inbending", detRes = False, smearing = 1, nofid = False):
     detRes =0
-    nofid = 1
-    smearing = 1
-    pol = "inbending" 
+    nofid = args.nofid
+    smearing = args.smearing
+    pol = args.polarity
+
+    print("PROCESSING WITH OPTIONS- nofid: {} smearing: {} pol: {} correction: {}".format(nofid, smearing, pol,args.correction))
 
     rec_file = uproot.open(args.fname)
     rec_tree = rec_file["T"]
@@ -396,7 +398,7 @@ def convert_rec_to_pandas(args):
         df_gammaRec.loc[:,'event'] = df_gammaRec.index.get_level_values('entry')
         df_gammaRec.loc[:,'GIndex'] = df_gammaRec.index.get_level_values('subentry')
 
-        #prepare for proton energy loss corrections correction
+        #prepare for proton energy loss correction correction
         pro = [df_protonRec['Ppx'], df_protonRec['Ppy'], df_protonRec['Ppz']]
         df_protonRec.loc[:, 'Pp'] = physics.mag(pro)
         df_protonRec.loc[:, 'Ptheta'] = physics.getTheta(pro)
@@ -787,8 +789,6 @@ def convert_rec_to_pandas(args):
 
         df_out = pd.merge(df_epgg, df_MC, how = 'inner', on='event')
     
-        
-
         return df_out
 
 
@@ -801,7 +801,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-f","--fname", help="a single root file to convert into pickles", default="infile.root")
     parser.add_argument("-t","--test", help="use to enable testing flag", action='store_true',default=False)
-    parser.add_argument("-n","--correction", help="apply momentum corrections", action='store_true',default=False)
+    parser.add_argument("-n","--correction", help="apply momentum correction", action='store_true',default=False)
     parser.add_argument("-r","--rad", help="use radiatve generator, otherwise use norad generator", action='store_true',default=False)
     parser.add_argument("-o","--out", help="a single pickle file name as an output", default="outfile.pkl")
     parser.add_argument("-c","--chunk_size", type=int, metavar='N', help="block size of each pandas file", default = 10_000_000)
@@ -813,7 +813,7 @@ if __name__ == "__main__":
     parser.add_argument("-d","--detRes", help="include detector response", action = "store_true")
     parser.add_argument("-i","--width", help="width of selection cuts", default = "default")
     parser.add_argument("-sm","--smearing", help="change smearing factor", default = "1")
-    parser.add_argument("-nf","--nofid", help="no additional fiducial cuts", action = "store_true")
+    parser.add_argument("-nf","--nofid", help="no additional fiducial cuts", default = "0")
     
     args = parser.parse_args()
 
@@ -828,20 +828,28 @@ if __name__ == "__main__":
     test_outfile_rad_inb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_rad_inb.pkl"
     test_outfile_rad_outb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_rad_outb.pkl"
 
+
+    
     if args.test:
         if args.rad:
             if args.polarity == "inbending":
                 test_file = test_file_rad_inb
-                #args.out = test_outfile_rad_inb
+                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
             elif args.polarity =="outbending":
                 test_file = test_file_rad_outb
+                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+                
                 #args.out = test_outfile_rad_outb
         else:
             if args.polarity == "inbending":
                 test_file = test_file_norad_inb
+                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+
                # args.out = test_outfile_norad_inb
             elif args.polarity =="outbending":
                 test_file = test_file_norad_outb
+                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+
                # args.out = test_outfile_norad_outb
         print("test enabled, using {}".format(test_file))
         args.fname = test_file
@@ -849,11 +857,40 @@ if __name__ == "__main__":
     fname_base = args.fname.split(".")[0]
 
     print("converting {} to pandas".format(args.fname))
-    df = convert_rec_to_pandas(args)
 
-    print(df.columns.values)
-    print(df)
-    #print number of unique df['GenEpx']    values
 
-    #save as df_rec_out.pkl
-    df.to_pickle(args.out)
+    polarities = ["inbending", "outbending"]
+
+    options = ["_nofid_nocorr_nosmear","_fid_nocorr_nosmear","_fid_corr_nosmear","_fid_corr_smear"]
+    corr_config = [False,False,True,True]
+    smear_config = [0,0,0,1]
+    fid_config = [1,0,0,0]
+
+    nominal_inbend = fs.data_path+ "rec_inbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.root"
+    nominal_outbend = fs.data_path+ "rec_outbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon.root"
+
+    for polarity_option in polarities:
+        args.polarity =polarity_option
+        if args.polarity == "inbending":
+            args.fname = nominal_inbend
+            outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+        else:
+            args.fname = nominal_outbend
+            outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+
+        fname_base = args.fname.split(".")[0].split("/")[-1]
+        print(fname_base)
+        
+        for option in options:
+            name_suffix = option
+            args.correction = corr_config[options.index(option)]
+            args.smearing = smear_config[options.index(option)]
+            args.nofid = fid_config[options.index(option)]
+            print("converting {} to pandas".format(args.fname))
+            print("correction: {}, smearing: {}, fiducial: {}".format(args.correction, args.smearing, args.nofid))
+            df = convert_rec_to_pandas(args)
+            df.to_pickle(outdir+fname_base+name_suffix+".pkl")
+
+
+
+
