@@ -118,6 +118,7 @@ if __name__ == "__main__":
     df_binned = bin_df(df,df_type="real")
     print(df_binned)
     print(df_binned.sum(axis=0))
+    df_binned.to_pickle("sample_binned_outb.pkl")
     #df_binned.to_pickle("binned_dvpip/f18_bkmrg_in_dvpp_rec_noseccut_binned.pkl")
 
 

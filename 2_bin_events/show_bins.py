@@ -148,7 +148,7 @@ inb = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/exp/20220511_f18
 #Display nevents in each bin also
 
 configs = ["Inb.","Outb."]
-files = [inbending_data,outbending_data]
+files = [rec_in,rec_out]
 output_dirs =["/mnt/d/GLOBUS/CLAS12/Thesis/plots/3_binned_distros/inb/exp/",
               "/mnt/d/GLOBUS/CLAS12/Thesis/plots/3_binned_distros/outb/exp/"]
 
@@ -159,29 +159,44 @@ for i in range(len(configs)):
     df = pd.read_pickle(files[i])
     out_dir = output_dirs[i]
 
+    #Select data where 0.2<xB<0.25 and 1<Q2<1.5
+    df = df[(df["xB"] > 0.2) & (df["xB"] < 0.25) & (df["Q2"] > 3.5) & (df["Q2"] <4)]
+    #select data where 0.3<t<0.4 and 72<phi<108
+    df = df[(df["t1"] > 0.2) & (df["t1"] < 0.3) & (df["phi1"] > 36) & (df["phi1"] <72)]
+    print(df)
 
-    plot_2dhist(df["xB"],df["Q2"],["$x_B$","$Q^2$"],[[0.05,0.8,100],[0.5,11,100]],colorbar=True,xaxis_lines=xb_bin_edges,yaxis_lines=q2_bin_edges,
-                plot_title="$x_B$ vs $Q^2$, Exp. {}".format(config),units=["None","GeV$^2$"],xbq2plot=True,saveplot=True,pics_dir=out_dir)
 
-    plot_2dhist(df["phi1"],df["t2"],["$\phi$","t"],[[0,360,50],[0,1.8,50]],colorbar=True,xaxis_lines=phi_bin_edges,yaxis_lines=t_bin_edges,
-                plot_title="$\phi$ vs Momentum Transfer t, Exp. {}".format(config),units=["None","GeV$^2$"],saveplot=True,pics_dir=out_dir)
+    plot_2dhist(df["xB"],df["Q2"],["$x_B$","$Q^2$"],[[0.05,0.9,100],[0.5,12,100]],colorbar=True,xaxis_lines=xb_bin_edges,yaxis_lines=q2_bin_edges,
+                plot_title="$x_B$ vs $Q^2$, Exp. {}".format(config),units=["None","GeV$^2$"],xbq2plot=True,saveplot=False,pics_dir=out_dir)
 
+    plot_2dhist(df["phi1"],df["t1"],["$\phi$","t"],[[0,360,50],[0,1.8,50]],colorbar=True,xaxis_lines=phi_bin_edges,yaxis_lines=t_bin_edges,
+                plot_title="$\phi$ vs Momentum Transfer t, Exp. {}".format(config),units=["None","GeV$^2$"],saveplot=False,pics_dir=out_dir)
 
-    for i in range(len(xb_bin_edges)-1):
-        for j in range(len(q2_bin_edges)-1):
-            # Filter the dataframe for the current xb and Q2 bin
-            bin_df = df[(df["xB"] > xb_bin_edges[i]) & 
-                        (df["xB"] < xb_bin_edges[i+1]) & 
-                        (df["Q2"] > q2_bin_edges[j]) & 
-                        (df["Q2"] < q2_bin_edges[j+1])]
+    plot_2dhist(df["GenxB"],df["GenQ2"],["$x_B$","$Q^2$"],[[0.05,0.8,100],[0.5,11,100]],colorbar=True,xaxis_lines=xb_bin_edges,yaxis_lines=q2_bin_edges,
+                plot_title="$x_B$ vs $Q^2$, Exp. {}".format(config),units=["None","GeV$^2$"],xbq2plot=True,saveplot=False,pics_dir=out_dir)
+
+    plot_2dhist(df["Genphi1"],df["Gent1"],["$\phi$","t"],[[0,360,50],[0,1.8,50]],colorbar=True,xaxis_lines=phi_bin_edges,yaxis_lines=t_bin_edges,
+                plot_title="$\phi$ vs Momentum Transfer t, Exp. {}".format(config),units=["None","GeV$^2$"],saveplot=False,pics_dir=out_dir)
+
+    df = df[(df["GenxB"] > 0.2) & (df["GenxB"] < 0.25) & (df["GenQ2"] > 3.5) & (df["GenQ2"] <4)]
+    df = df[(df["Gent1"] > 0.2) & (df["Gent1"] < 0.3) & (df["Genphi1"] > 36) & (df["Genphi1"] <72)]
+    print(df)
+
+    # for i in range(len(xb_bin_edges)-1):
+    #     for j in range(len(q2_bin_edges)-1):
+    #         # Filter the dataframe for the current xb and Q2 bin
+    #         bin_df = df[(df["xB"] > xb_bin_edges[i]) & 
+    #                     (df["xB"] < xb_bin_edges[i+1]) & 
+    #                     (df["Q2"] > q2_bin_edges[j]) & 
+    #                     (df["Q2"] < q2_bin_edges[j+1])]
             
-            if len(bin_df) > 0:
+    #         if len(bin_df) > 0:
 
-                # Plot a 2D histogram of 'p' vs 't' for the filtered dataframe
+    #             # Plot a 2D histogram of 'p' vs 't' for the filtered dataframe
                 
-                # Set the title based on the bin ranges and the number of events in the bin
-                plot_title = "$\phi$ vs Momentum Transfer t, Exp. {}, {}<$x_B$<{},{}<$Q^2$<{}, N={}".format(config,xb_bin_edges[i],xb_bin_edges[i+1],q2_bin_edges[j],q2_bin_edges[j+1], len(bin_df))
+    #             # Set the title based on the bin ranges and the number of events in the bin
+    #             plot_title = "$\phi$ vs Momentum Transfer t, Exp. {}, {}<$x_B$<{},{}<$Q^2$<{}, N={}".format(config,xb_bin_edges[i],xb_bin_edges[i+1],q2_bin_edges[j],q2_bin_edges[j+1], len(bin_df))
 
-                plot_2dhist(bin_df["phi1"],bin_df["t2"],["$\phi$","t"],[[0,360,50],[0,1.8,50]],colorbar=True,xaxis_lines=phi_bin_edges,yaxis_lines=t_bin_edges,
-                        plot_title=plot_title,units=["None","GeV$^2$"],saveplot=True,pics_dir=out_dir,figsize=(30,18))
+    #             plot_2dhist(bin_df["phi1"],bin_df["t2"],["$\phi$","t"],[[0,360,50],[0,1.8,50]],colorbar=True,xaxis_lines=phi_bin_edges,yaxis_lines=t_bin_edges,
+    #                     plot_title=plot_title,units=["None","GeV$^2$"],saveplot=True,pics_dir=out_dir,figsize=(30,18))
 
