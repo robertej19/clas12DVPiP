@@ -530,7 +530,7 @@ def convert_exp_to_pandas(args):
         df_epgg.loc[:,'phi1'] = physics.angle(v3l, v3h)
         df_epgg.loc[:,'phi1'] = np.where(physics.dot(v3l, pro) > 0, 360.0 -
                                 df_epgg['phi1'], df_epgg['phi1'])
-        df_epgg.loc[:,'phi2'] = physics.angle(v3l, v3g)
+        df_epgg.loc[:,'phi2'] = physics.angle(v3l, v3pi0)
         df_epgg.loc[:,'phi2'] = np.where(physics.dot(v3l, pi0) <
                                 0, 360.0 - df_epgg['phi2'], df_epgg['phi2'])
 
