@@ -20,7 +20,12 @@ class fs:
 		self.phibins =  [0,36,72,108,144,180,216,252,288,324,360]
 	
 
+		self.inb_norad_rec_root_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/0_raw_root_files/rec_inbend_norad/"
+		self.inb_norad_rec_epgg_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+		self.inb_norad_rec_dvpip_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
+		self.inb_norad_rec_binned_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/"
 
+		self.norad_gen_events_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/"
 		#self.tbins = [0,0.2,0.4,0.6,0.8,1,2,4,7,12]
 		#self.xBbins = [0,0.2,.4,.6,.8, 1]
 		#self.q2bins = [0,1,1.5,2,2.5,3,3.5,4,4.5,5,6,10,14]
@@ -62,26 +67,28 @@ class fs:
 		# self.phibins =  [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342,360]
 
 
-		self.path_to_exp_outbending_root = "exp_outbend/"
+		# self.path_to_exp_outbending_root = "exp_outbend/"
 
-		self.path_to_rec_outbending_rad_root = "rad_outbend_rec/"
-		self.path_to_gen_outbending_rad_root = "rad_outbend_gen/"
+		# self.path_to_rec_outbending_rad_root = "rad_outbend_rec/"
+		# self.path_to_gen_outbending_rad_root = "rad_outbend_gen/"
 
-		self.path_to_rec_outbending_norad_root = "norad_outbend_rec/"
-		self.path_to_gen_outbending_norad_root = "norad_outbend_gen/"
+		# self.path_to_rec_outbending_norad_root = "norad_outbend_rec/"
+		# self.path_to_gen_outbending_norad_root = "norad_outbend_gen/"
 
 
-		self.path_to_exp_inbending_root = "exp_inbend/"
+		# self.path_to_exp_inbending_root = "exp_inbend/"
 
-		self.path_to_rec_inbending_rad_root = "rad_inbend_rec/"
-		self.path_to_gen_inbending_rad_root = "rad_inbend_gen/"
+		# self.path_to_rec_inbending_rad_root = "rad_inbend_rec/"
+		# self.path_to_gen_inbending_rad_root = "rad_inbend_gen/"
 
-		self.path_to_rec_inbending_norad_root = "norad_inbend_rec/"
-		self.path_to_gen_inbending_norad_root = "norad_inbend_gen/"
+		# self.path_to_rec_inbending_norad_root = "norad_inbend_rec/"
+		# self.path_to_gen_inbending_norad_root = "norad_inbend_gen/"
 
 
 
 		self.f18_inbending_total_lumi = 5.511802214933477e+40
+		self.f18_inbending_total_lumi_inv_fb = 5.511802214933477e+7
+
 		self.f18_inbending_total_lumi_inv_nb = 5.511802214933477e+7
 		#self.Ebeam = 10.604 #GeV, CLAS12 beam energy MOVE TO CONST.PY
 		#self.alpha = 1/137 #, fine structure constant MOVE TO CONST.PY

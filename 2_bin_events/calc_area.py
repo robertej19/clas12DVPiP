@@ -234,13 +234,14 @@ if self_calc:
 
     print(df)
 else:
-    df = pd.read_pickle("sample_binned_outb.pkl")
+    df = pd.read_pickle("sample_binned_inb.pkl")
 
     # add a column true_bin_volume
     results = df.apply(calc_bin_vol_corr_array, axis=1)
     results.columns = ['true_xbq2_bin_volume', 'nominal_xbq2_bin_volume', 'volume_ratio','tp_bin_volume','true_total_vol']
     df = pd.concat([df, results], axis=1)
     print(df)
+    df.to_pickle("sample_binned_inb_with_area.pkl")
 
 
 # #Print each row of the dataframe:

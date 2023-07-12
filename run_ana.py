@@ -10,6 +10,42 @@ import argparse
 from itertools import combinations
 
 
+fs = filestruct.fs()
+
+
+if __name__ == "__main__":
+
+    input_dir = fs.inb_norad_rec_dvpip_dir
+    output_dir = fs.inb_norad_rec_binned_dir
+
+    files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+
+    for file in files:
+            print("Binning on {}".format(input_dir+file))
+            outfile_name = output_dir+"binned_"+file
+            print("Saving to {}".format(outfile_name))
+            df = pd.read_pickle(input_dir+file)
+
+            #make 2d histogram of Q2 vs W
+            fig, ax = plt.subplots(1,2, figsize=(12,6))
+            ax[0].hist2d(df['Q2'],df['GenQ2'], bins=200,range=[[0,10],[0,10]], norm=mpl.colors.LogNorm())#
+            ax[0].set_xlabel("Q2 [GeV]")
+            ax[0].set_ylabel("W [GeV]")
+            ax[0].set_title("Rec")
+            ax[1].hist2d(df['W'],df['GenW'], bins=200, range=[[1.9,4],[1.9,4]], norm=mpl.colors.LogNorm())#
+            ax[1].set_xlabel("Q2 [GeV]")
+            ax[1].set_ylabel("W [GeV]")
+            ax[1].set_title("Generated")
+            #show number bar
+            #cbar = fig.colorbar(ax[1].collections[0], ax=ax[1])
+            plt.show()
+
+
+            sys.exit()
+
+
+
+
 df_no = pd.read_pickle("protonRec_nosmear.pkl")
 df_ye = pd.read_pickle("protonRec_yessmear.pkl")
 

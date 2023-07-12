@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
-import argparse
+import argparse, os, sys
+from utils import filestruct
 
-def makeDVpi0P(df_epgg, pol = "outbending",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,
+fs = filestruct.fs()
+
+def makeDVpi0P(df_epgg, pol = "inbending",proton_loc="All",photon1_loc="All",photon2_loc="All",simple_exclusivity_cuts=False,
                                   unique_identifyer="", datafilename="temporary_exclusivity_variances_",use_generic_cuts=True,
                                   sigma_multiplier=3):
 
@@ -125,6 +128,7 @@ def makeDVpi0P(df_epgg, pol = "outbending",proton_loc="All",photon1_loc="All",ph
 
     else:
         print("Executing advanced DVPiP Cuts")
+        print("polarity is {}".format(pol))
         #make dvpi0 pairs
         df_dvpi0p = df_epgg
 
@@ -365,32 +369,44 @@ def makeDVpi0P(df_epgg, pol = "outbending",proton_loc="All",photon1_loc="All",ph
 if __name__ == "__main__":
 
 
-    parser = argparse.ArgumentParser(description="Get args",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser = argparse.ArgumentParser(description="Get args",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("-f","--fname", help="a single root file to convert into pickles")
-    parser.add_argument("-o","--out", help="a single pickle file name as an output", default="excuting.pkl")
-   
-    args = parser.parse_args()
+        parser.add_argument("-f","--fname", help="a single root file to convert into pickles")
+        parser.add_argument("-o","--out", help="a single pickle file name as an output", default="excuting.pkl")
+
+        args = parser.parse_args()
 
 
+        input_dir = fs.inb_norad_rec_epgg_dir
+        output_dir = fs.inb_norad_rec_dvpip_dir
 
-    #df = makeDVpi0P(pd.read_pickle(args.fname))
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+
+        for file in files:
+                print("Ex. cut on {}".format(input_dir+file))
+                output_name = output_dir+"dvpip_events_"+file
+                print("saving to {}".format(output_name))
+                df_dvpi0p = makeDVpi0P(pd.read_pickle(input_dir+file),pol = "inbending")
+                df_dvpi0p.to_pickle(output_name)
+               
+
+#     #df = makeDVpi0P(pd.read_pickle(args.fname))
     
-    #dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
-    dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+#     #dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+#     dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
 
 
     
-    #fname = "norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon_fid_corr_smear"
-    fname = "norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon_fid_corr_smear"
+#     #fname = "norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon_fid_corr_smear"
+#     fname = "norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon_fid_corr_smear"
 
-    df = makeDVpi0P(pd.read_pickle(dir+fname+".pkl"))
+#     df = makeDVpi0P(pd.read_pickle(dir+fname+".pkl"))
 
-    print(df)
+#     print(df)
     
-    #df.to_pickle("final_inbending_exclusive.pkl")
-    #df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/{}.pkl".format(fname))
-    df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/outb/rec/{}.pkl".format(fname))
+#     #df.to_pickle("final_inbending_exclusive.pkl")
+#     #df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/{}.pkl".format(fname))
+#     df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/outb/rec/{}.pkl".format(fname))
 
 
     #df_exp = pd.read_pickle("new_exp_convert_outbend.pkl",pol="outbending")

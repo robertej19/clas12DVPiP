@@ -321,8 +321,6 @@ def convert_rec_to_pandas(args):
         df_protonRec = df_protonRec.astype({"Ppx": float, "Ppy": float, "Ppz": float})
         df_gammaRec = df_gammaRec.astype({"Gpx": float, "Gpy": float, "Gpz": float, "Gedep": float, "GcX": float, "GcY": float})
 
-        print(df_protonRec)
-
         #apply photon fiducial cuts
         if nofid:
             df_gammaRec.loc[:, "GFid"] = 1
@@ -406,8 +404,6 @@ def convert_rec_to_pandas(args):
 
         df_protonRec.loc[:, "PDc1theta"] = -100000
 
-        df_protonRec_No_corr = df_protonRec.copy()
-        print(df_protonRec_No_corr)
 
         if detRes:
             df_protonRec.loc[:, "PDc3theta"] = -100000
@@ -801,7 +797,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-f","--fname", help="a single root file to convert into pickles", default="infile.root")
     parser.add_argument("-t","--test", help="use to enable testing flag", action='store_true',default=False)
-    parser.add_argument("-n","--correction", help="apply momentum correction", action='store_true',default=False)
+    parser.add_argument("-n","--correction", help="apply momentum correction", action='store_true',default=True)
     parser.add_argument("-r","--rad", help="use radiatve generator, otherwise use norad generator", action='store_true',default=False)
     parser.add_argument("-o","--out", help="a single pickle file name as an output", default="outfile.pkl")
     parser.add_argument("-c","--chunk_size", type=int, metavar='N', help="block size of each pandas file", default = 10_000_000)
@@ -812,84 +808,101 @@ if __name__ == "__main__":
     parser.add_argument("-w","--raw", help="save raw only", default = False, action = "store_true")
     parser.add_argument("-d","--detRes", help="include detector response", action = "store_true")
     parser.add_argument("-i","--width", help="width of selection cuts", default = "default")
-    parser.add_argument("-sm","--smearing", help="change smearing factor", default = "1")
+    parser.add_argument("-sm","--smearing", help="change smearing factor", default = 1)
     parser.add_argument("-nf","--nofid", help="no additional fiducial cuts", default = "0")
     
     args = parser.parse_args()
 
-    test_file_norad_inb = fs.data_path+ "rec_inbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.root"
-    test_file_norad_outb = fs.data_path+ "rec_outbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon.root"
-    test_file_rad_inb = fs.data_path+ "rec_inbend_rad/" +"rad_10000_20230126_1645_Fall_2018_Inbending_50nA_recon.root"
-    test_file_rad_outb = fs.data_path+ "rec_outbend_rad/" +"rad_10000_20230126_1645_Fall_2018_Outbending_100_50nA_recon.root"
+    input_dir = fs.inb_norad_rec_root_dir
+    output_dir = fs.inb_norad_rec_epgg_dir
+
+    args.polarity = "inbending"
+
+    files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+
+    for file in files:
+        fname_base = file.split(".")[0]
+        print("converting {} to pandas".format(file))
+        output_file_name = os.path.join(output_dir, fname_base+".pkl")
+        print("will be saved as {}".format(output_file_name))
+        args.fname = os.path.join(input_dir, file)
+        df = convert_rec_to_pandas(args)
+        df.to_pickle(output_file_name)
+
+    # test_file_norad_inb = fs.data_path+ "rec_inbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.root"
+    # test_file_norad_outb = fs.data_path+ "rec_outbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon.root"
+    # test_file_rad_inb = fs.data_path+ "rec_inbend_rad/" +"rad_10000_20230126_1645_Fall_2018_Inbending_50nA_recon.root"
+    # test_file_rad_outb = fs.data_path+ "rec_outbend_rad/" +"rad_10000_20230126_1645_Fall_2018_Outbending_100_50nA_recon.root"
 
 
-    test_outfile_norad_inb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_norad_inb.pkl"
-    test_outfile_norad_outb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_norad_outb.pkl"
-    test_outfile_rad_inb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_rad_inb.pkl"
-    test_outfile_rad_outb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_rad_outb.pkl"
+    # test_outfile_norad_inb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_norad_inb.pkl"
+    # test_outfile_norad_outb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_norad_outb.pkl"
+    # test_outfile_rad_inb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_rad_inb.pkl"
+    # test_outfile_rad_outb = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/0_convert_root_to_pickle/Rec/test/rec_test_rad_outb.pkl"
 
 
     
-    if args.test:
-        if args.rad:
-            if args.polarity == "inbending":
-                test_file = test_file_rad_inb
-                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
-            elif args.polarity =="outbending":
-                test_file = test_file_rad_outb
-                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+    # if args.test:
+    #     if args.rad:
+    #         if args.polarity == "inbending":
+    #             test_file = test_file_rad_inb
+    #             outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+    #         elif args.polarity =="outbending":
+    #             test_file = test_file_rad_outb
+    #             outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
                 
-                #args.out = test_outfile_rad_outb
-        else:
-            if args.polarity == "inbending":
-                test_file = test_file_norad_inb
-                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+    #             #args.out = test_outfile_rad_outb
+    #     else:
+    #         if args.polarity == "inbending":
+    #             test_file = test_file_norad_inb
+    #             outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
 
-               # args.out = test_outfile_norad_inb
-            elif args.polarity =="outbending":
-                test_file = test_file_norad_outb
-                outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+    #            # args.out = test_outfile_norad_inb
+    #         elif args.polarity =="outbending":
+    #             test_file = test_file_norad_outb
+    #             outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
 
-               # args.out = test_outfile_norad_outb
-        print("test enabled, using {}".format(test_file))
-        args.fname = test_file
+    #            # args.out = test_outfile_norad_outb
+    #     print("test enabled, using {}".format(test_file))
+    #     args.fname = test_file
 
-    fname_base = args.fname.split(".")[0]
+    # fname_base = args.fname.split(".")[0]
 
-    print("converting {} to pandas".format(args.fname))
+    # print("converting {} to pandas".format(args.fname))
 
 
-    polarities = ["inbending", "outbending"]
+    # polarities = ["inbending", "outbending"]
 
-    options = ["_nofid_nocorr_nosmear","_fid_nocorr_nosmear","_fid_corr_nosmear","_fid_corr_smear"]
-    corr_config = [False,False,True,True]
-    smear_config = [0,0,0,1]
-    fid_config = [1,0,0,0]
+    # options = ["_nofid_nocorr_nosmear","_fid_nocorr_nosmear","_fid_corr_nosmear","_fid_corr_smear"]
+    # corr_config = [False,False,True,True]
+    # smear_config = [0,0,0,1]
+    # fid_config = [1,0,0,0]
 
-    nominal_inbend = fs.data_path+ "rec_inbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.root"
-    nominal_outbend = fs.data_path+ "rec_outbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon.root"
+    # nominal_inbend = fs.data_path+ "rec_inbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.root"
+    # nominal_outbend = fs.data_path+ "rec_outbend_norad/" +"norad_10000_20230703_1814_Fall_2018_Outbending_100_50nA_recon.root"
 
-    for polarity_option in polarities:
-        args.polarity =polarity_option
-        if args.polarity == "inbending":
-            args.fname = nominal_inbend
-            outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
-        else:
-            args.fname = nominal_outbend
-            outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
+    # for polarity_option in polarities:
+    #     args.polarity =polarity_option
+    #     if args.polarity == "inbending":
+    #         args.fname = nominal_inbend
+    #         outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+    #     else:
+    #         args.fname = nominal_outbend
+    #         outdir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/outb/rec/"
 
-        fname_base = args.fname.split(".")[0].split("/")[-1]
-        print(fname_base)
+    #     fname_base = args.fname.split(".")[0].split("/")[-1]
+    #     print(fname_base)
         
-        for option in options:
-            name_suffix = option
-            args.correction = corr_config[options.index(option)]
-            args.smearing = smear_config[options.index(option)]
-            args.nofid = fid_config[options.index(option)]
-            print("converting {} to pandas".format(args.fname))
-            print("correction: {}, smearing: {}, fiducial: {}".format(args.correction, args.smearing, args.nofid))
-            df = convert_rec_to_pandas(args)
-            df.to_pickle(outdir+fname_base+name_suffix+".pkl")
+    #     for option in options:
+    #         name_suffix = option
+    #         args.correction = corr_config[options.index(option)]
+    #         args.smearing = smear_config[options.index(option)]
+    #         args.nofid = fid_config[options.index(option)]
+    #         print("converting {} to pandas".format(args.fname))
+    #         print("correction: {}, smearing: {}, fiducial: {}".format(args.correction, args.smearing, args.nofid))
+    #         df = convert_rec_to_pandas(args)
+    #         df.to_pickle(outdir+fname_base+name_suffix+".pkl")
+
 
 
 

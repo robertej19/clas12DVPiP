@@ -24,7 +24,7 @@ def read_multiple(args,lund_batch):
     index = 0
 
     if args.rad:
-        file_dir = args.rad_dir
+        file_dir = args.dir
         filter_lund_func = filter_rad_lund
         print("RAD")
     else:
@@ -181,7 +181,13 @@ def read_multiple(args,lund_batch):
 
 
         # save as output_file_base + index name
-        df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/{}/{}_{}.pkl".format(lund_batch,output_file_base,index))
+        if args.rad:
+            #make directory if not exists:
+            if not os.path.exists("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/rad/{}".format(lund_batch)):
+                os.makedirs("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/rad/{}".format(lund_batch))
+            df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/rad/{}/{}_{}.pkl".format(lund_batch,output_file_base,index))
+        else:
+            df.to_pickle("/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/{}/{}_{}.pkl".format(lund_batch,output_file_base,index))
 
         #increment
         index += 1
@@ -334,11 +340,13 @@ if __name__ == "__main__":
 
     
 
-    # Append to the name based on the flags
-    if args.rad:
-        pickle_basename = test_dir_rad+"rad_output.pkl"
-    else:
-        pickle_basename = test_dir+"norad_output.pkl"
+    # # Append to the name based on the flags
+    # if args.rad:
+    #     pickle_basename = test_dir_rad+"rad_output.pkl"
+    # else:
+    #     pickle_basename = test_dir+"norad_output.pkl"
+
+
 
     lund_batch = args.dir.split("/")[-2]
     # print(lund_batch)

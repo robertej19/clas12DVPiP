@@ -574,7 +574,7 @@ if __name__ == "__main__":
     parser.add_argument("-w","--raw", help="save raw only", default = False, action = "store_true")
     parser.add_argument("-d","--detRes", help="include detector response", action = "store_true")
     parser.add_argument("-i","--width", help="width of selection cuts", default = "default")
-    parser.add_argument("-sm","--smearing", help="change smearing factor", default = "1")
+    parser.add_argument("-sm","--smearing", help="change smearing factor", default = 0)
     parser.add_argument("-nf","--nofid", help="no additional fiducial cuts", action = "store_true")
     
     args = parser.parse_args()
