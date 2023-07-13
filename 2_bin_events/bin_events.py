@@ -15,18 +15,18 @@ def bin_df(df,df_type="real"):
     prefix = "Gen" if df_type=="Gen" else ""
 
 
-    df_np = df[["{}Q2".format(prefix),"{}xB".format(prefix),"{}t1".format(prefix),"{}phi1".format(prefix),"{}y".format(prefix)]].copy().to_numpy()
+    df_np = df[["{}Q2".format(prefix),"{}xB".format(prefix),"{}t2".format(prefix),"{}phi1".format(prefix),"{}y".format(prefix)]].copy().to_numpy()
 
     num_cols = df_np.shape[1]
     blank_bin_edges = [-1000,1000]
     initalized_bin_edges = [blank_bin_edges]*num_cols
 
-    q2_bin_edges,xb_bin_edges, t1_bin_edges, phi1_bin_edges = fs.Q2bins, fs.xBbins, fs.tbins, fs.phibins
+    q2_bin_edges,xb_bin_edges, t2_bin_edges, phi1_bin_edges = fs.Q2bins, fs.xBbins, fs.tbins, fs.phibins
     
     # Enable for rapid testing
     # xb_bin_edges = [0.1,0.4,0.8]
     # q2_bin_edges = [1,5,11]
-    # t1_bin_edges =  [0.09,0.6,2]
+    # t2_bin_edges =  [0.09,0.6,2]
     # phi1_bin_edges = [0, 180, 360]
 
 
@@ -38,7 +38,7 @@ def bin_df(df,df_type="real"):
 
     initalized[0] = q2_bin_edges
     initalized[1] = xb_bin_edges
-    initalized[2] = t1_bin_edges
+    initalized[2] = t2_bin_edges
     initalized[3] = phi1_bin_edges
 
 
@@ -46,14 +46,14 @@ def bin_df(df,df_type="real"):
 
     weighted_q2_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,0])
     weighted_xB_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,1])
-    weighted_t1_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,2])
+    weighted_t2_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,2])
     weighted_phi1_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,3])
     weighted_y_values, edges = np.histogramdd(df_np, bins=initalized,weights=df_np[:,4])
 
 
     q2_bin_averages = np.divide(weighted_q2_values,number_of_counts_bin_values).reshape(-1,1)
     xb_bin_averages = np.divide(weighted_xB_values,number_of_counts_bin_values).reshape(-1,1)
-    t1_bin_averages = np.divide(weighted_t1_values,number_of_counts_bin_values).reshape(-1,1)
+    t2_bin_averages = np.divide(weighted_t2_values,number_of_counts_bin_values).reshape(-1,1)
     phi1_bin_averages = np.divide(weighted_phi1_values,number_of_counts_bin_values).reshape(-1,1)
     y_bin_averages = np.divide(weighted_y_values,number_of_counts_bin_values).reshape(-1,1)
 
@@ -66,8 +66,8 @@ def bin_df(df,df_type="real"):
     q2_max = edges[0][1:]
     xb_min = edges[1][:-1]
     xb_max = edges[1][1:]
-    t1_min = edges[2][:-1]
-    t1_max = edges[2][1:]
+    t2_min = edges[2][:-1]
+    t2_max = edges[2][1:]
     phi1_min = edges[3][:-1]
     phi1_max = edges[3][1:]
 
@@ -75,12 +75,12 @@ def bin_df(df,df_type="real"):
     num_of_binning_vars = 4
 
 
-    all_min = np.array(np.meshgrid(t1_min,phi1_min,xb_min,q2_min)).T.reshape(-1,num_of_binning_vars)
-    all_max = np.array(np.meshgrid(t1_max,phi1_max,xb_max,q2_max)).T.reshape(-1,num_of_binning_vars)
+    all_min = np.array(np.meshgrid(t2_min,phi1_min,xb_min,q2_min)).T.reshape(-1,num_of_binning_vars)
+    all_max = np.array(np.meshgrid(t2_max,phi1_max,xb_max,q2_max)).T.reshape(-1,num_of_binning_vars)
     all_together_now = np.concatenate((all_min, all_max), axis=1)
 
 
-    all_together_now1 = np.concatenate((all_together_now,   t1_bin_averages, phi1_bin_averages,xb_bin_averages, q2_bin_averages, y_bin_averages,number_of_counts_bin_values_reshaped), axis=1)
+    all_together_now1 = np.concatenate((all_together_now,   t2_bin_averages, phi1_bin_averages,xb_bin_averages, q2_bin_averages, y_bin_averages,number_of_counts_bin_values_reshaped), axis=1)
 
 
     #calculate p_standard_dev
