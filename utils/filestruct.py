@@ -22,8 +22,18 @@ class fs:
 
 		self.inb_norad_rec_root_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/0_raw_root_files/rec_inbend_norad/"
 		self.inb_norad_rec_epgg_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
+
+		self.inb_rad_rec_root_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/0_raw_root_files/rec_inbend_rad/"
+		self.inb_rad_rec_epgg_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec_rad/"
+
+		self.inb_norad_rec_epgg_dir_reproc = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec_reproc/"
+
 		self.inb_norad_rec_dvpip_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
+		self.inb_rad_rec_dvpip_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec_rad/"
+		self.inb_norad_rec_dvpip_dir_reproc = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec_reproc/"
+
 		self.inb_norad_rec_binned_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/"
+
 
 		self.norad_gen_events_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/"
 		#self.tbins = [0,0.2,0.4,0.6,0.8,1,2,4,7,12]

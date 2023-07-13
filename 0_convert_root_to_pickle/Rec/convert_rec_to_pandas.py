@@ -798,7 +798,7 @@ if __name__ == "__main__":
     parser.add_argument("-f","--fname", help="a single root file to convert into pickles", default="infile.root")
     parser.add_argument("-t","--test", help="use to enable testing flag", action='store_true',default=False)
     parser.add_argument("-n","--correction", help="apply momentum correction", action='store_true',default=True)
-    parser.add_argument("-r","--rad", help="use radiatve generator, otherwise use norad generator", action='store_true',default=False)
+    parser.add_argument("-r","--rad", help="use radiatve generator, otherwise use norad generator", action='store_true',default=True)
     parser.add_argument("-o","--out", help="a single pickle file name as an output", default="outfile.pkl")
     parser.add_argument("-c","--chunk_size", type=int, metavar='N', help="block size of each pandas file", default = 10_000_000)
     parser.add_argument("-s","--entry_start", type=int, metavar='N', help="entry_start to start reading the root file", default = 0)
@@ -813,8 +813,8 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    input_dir = fs.inb_norad_rec_root_dir
-    output_dir = fs.inb_norad_rec_epgg_dir
+    input_dir = fs.inb_rad_rec_root_dir
+    output_dir = fs.inb_rad_rec_epgg_dir
 
     args.polarity = "inbending"
 

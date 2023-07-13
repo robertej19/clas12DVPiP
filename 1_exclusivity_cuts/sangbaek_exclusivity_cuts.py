@@ -377,8 +377,9 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
 
-        input_dir = fs.inb_norad_rec_epgg_dir
-        output_dir = fs.inb_norad_rec_dvpip_dir
+        input_dir = fs.inb_rad_rec_epgg_dir
+        output_dir = fs.inb_rad_rec_dvpip_dir
+
 
         files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
 

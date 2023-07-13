@@ -110,7 +110,7 @@ def bin_df(df,df_type="real"):
 
 if __name__ == "__main__":
 
-    type = "exp"
+    type = "gen_rad"
 
     if type == "rec":
         input_dir = fs.inb_norad_rec_dvpip_dir
@@ -214,8 +214,45 @@ if __name__ == "__main__":
                 print(df_binned.sum(axis=0))
 
     elif type == "exp":
+        pass
+    elif type == "gen_rad":
+        gen_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen_rad/"
 
+        list_of_gen_dirs_to_process = ['rad_lund_10000_20230710_1543/',
+                                        'rad_lund_10000_20230711_1102/',
+                                        'rad_lund_10000_20230711_2032/']
+        
+        binned_gen_out_dir_base = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/"
 
+        # for each gen directory to process, get a list of files in that directory
+        for gen_subdir in list_of_gen_dirs_to_process:
+            files = [f for f in os.listdir(gen_dir+gen_subdir) if os.path.isfile(os.path.join(gen_dir+gen_subdir, f))]
+            print(files)
+            # for each file, bin it
+            for file in files:
+                print("Binning on {}".format(gen_dir+gen_subdir+"/"+file))
+
+                outfile_name = binned_gen_out_dir_base+"gen_rad/binned_"+file
+
+                print("Saving to {}".format(outfile_name))
+                df = pd.read_pickle(gen_dir+gen_subdir+"/"+file)
+                print(len(df))
+                df_binned = bin_df(df,df_type="Gen")
+                print(df_binned)
+                df_binned.to_pickle(outfile_name)
+                #print sum of counts as a check
+                print(df_binned.sum(axis=0))
+
+                outfile_name = binned_gen_out_dir_base+"gen_rad_wq2_cut/binned_"+file
+
+                #Now repeat, with including a cut on GenQ2 and GenW
+                df = df[(df["GenQ2"] > .95) & (df["GenW"] > 1.95)]
+                print(len(df))
+                df_binned = bin_df(df,df_type="Gen")
+                print(df_binned)
+                df_binned.to_pickle(outfile_name)
+                #print sum of counts as a check
+                print(df_binned.sum(axis=0))
     else:
         pass
 
