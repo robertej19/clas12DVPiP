@@ -13,28 +13,37 @@ fs = filestruct.fs()
 # binned_outb_exp = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/outb/exp/final_f18_outb_exp_binned_with_area.pkl"
 # binned_inb_exp = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/final_f18_inb_exp_binned_with_area.pkl"
 
-binned_exp = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/singles/"
+binned_exp = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/singles_t2/"
 exp_out = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/"
-binned_rec = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles/"
-rec_out = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/"
-binned_gen = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/singles/"
-gen_out = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/"
+binned_rec = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec_rad/singles_t2/"
+rec_out = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec_rad/"
+binned_gen_rad = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen_rad/singles/"
+binned_gen = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/singles"
 
-GEN = False
-REC = True
+gen_out = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen_rad/"
+
+
+gen_45na_inb = "10000_20230625_2138"
+gen_55na_inb = "10000_20230626_0753"
+gen_nominal_1 = "10000_20230624_1247"
+gen_nominal_2 = "10000_20230625_1911"
+
+
+GEN = True
+REC = False
 if GEN:
     prefix = "Gen"
     out_prefix = "gen_"
-
+    gen_sub_name = gen_nominal_2
     directory = binned_gen
     out = gen_out
-    filename = "final_f18_inb_gen_binned.pkl"
+    filename = "final_f18_gen_nominal_2_inb_binned.pkl"
 elif REC:
     prefix = ""
     out_prefix = "rec_"
     directory = binned_rec
     out = rec_out
-    filename = "final_f18_inb_rec_binned.pkl"
+    filename = "final_f18_inb_rec_binned_t2.pkl"
 else:
     prefix = ""
     out_prefix = "exp_"
@@ -53,12 +62,18 @@ else:
 
 
 
+
 # Get a list of all the files in the directory
 
 file_list = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 #only keep 2 entries from file list:
-file_list = file_list#[:2]
+#file_list = file_list#[:2]
+
+# only keep the files with a string matching gen_45na_inb
+file_list = [f for f in file_list if gen_sub_name in f]
+print(file_list)
+
 
 # Initialize DataFrame to store total counts and sums for weighted averages
 counts_total = None

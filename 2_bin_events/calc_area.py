@@ -41,6 +41,30 @@ import matplotlib as mpl
 from icecream import ic
 from utils import filestruct
 
+
+rec_45na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230705_1043_Fall_2018_Inbending_45nA_recon.pkl"
+rec_55na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230705_1046_Fall_2018_Inbending_55nA_recon.pkl"
+rec_nominal_1 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
+rec_nominal_2 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230705_1041_Fall_2018_Inbending_50nA_recon.pkl"
+rec_rad = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec_rad/final_f18_inb_rec_binned_rad_t2.pkl"
+
+
+gen_45na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_45na_inb_binned.pkl"
+gen_55na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_55na_inb_binned.pkl"
+gen_nominal_1 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_nominal_1_inb_binned.pkl"
+gen_nominal_2 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_nominal_2_inb_binned.pkl"
+gen_rad =  "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen_rad/final_f18_inb_gen_rad_binned.pkl"
+
+#ratios:
+(rec_45na_inb/gen_45na_inb)/(rec_nominal_1/gen_nominal_1)/(rec_nominal_2/gen_nominal_2)/(rec_nominal_1/gen_nominal_1)
+(rec_55na_inb/gen_55na_inb)/(rec_nominal_1/gen_nominal_1)/(rec_nominal_2/gen_nominal_2)/(rec_nominal_1/gen_nominal_1)
+(rec_rad/gen_rad)/(rec_nominal_1/gen_nominal_1)/(rec_nominal_2/gen_nominal_2)/(rec_nominal_1/gen_nominal_1)
+
+
+
+
+
+
 # turn ice cream messages off
 ic.disable()
 def bottom_acceptance_bound(x,y):
@@ -211,6 +235,7 @@ def calc_bin_vol_corr_array(row):
 fs = filestruct.fs()
 self_calc = False
 if self_calc:
+    print("self calcing")
     xb_bin_edges = fs.xBbins
     q2_bin_edges = fs.Q2bins
 
@@ -234,14 +259,24 @@ if self_calc:
 
     print(df)
 else:
-    df = pd.read_pickle("sample_binned_inb.pkl")
+    
+    input_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/singles_t2/"
+    #get a list of files in input_dir
+    files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
 
-    # add a column true_bin_volume
-    results = df.apply(calc_bin_vol_corr_array, axis=1)
-    results.columns = ['true_xbq2_bin_volume', 'nominal_xbq2_bin_volume', 'volume_ratio','tp_bin_volume','true_total_vol']
-    df = pd.concat([df, results], axis=1)
-    print(df)
-    df.to_pickle("sample_binned_inb_with_area.pkl")
+    #iterate over all files
+    for file in files:
+
+        print("Binning on {}".format(input_dir+file))
+        df = pd.read_pickle(input_dir+file)
+
+        # add a column true_bin_volume
+        results = df.apply(calc_bin_vol_corr_array, axis=1)
+        results.columns = ['true_xbq2_bin_volume', 'nominal_xbq2_bin_volume', 'volume_ratio','tp_bin_volume','true_total_vol']
+        df = pd.concat([df, results], axis=1)
+        print(df)
+        #save df as pickle file in same directory with "with_area" added to filename
+        df.to_pickle(input_dir+"with_area_"+file)
 
 
 # #Print each row of the dataframe:

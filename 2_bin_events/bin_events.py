@@ -110,11 +110,15 @@ def bin_df(df,df_type="real"):
 
 if __name__ == "__main__":
 
-    type = "gen_rad"
+    run_type = "exp"
 
-    if type == "rec":
+    if run_type == "rec":
         input_dir = fs.inb_norad_rec_dvpip_dir
         output_dir = fs.inb_norad_rec_binned_dir
+
+        #make the output dir if it doesn't exist
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
 
@@ -130,7 +134,7 @@ if __name__ == "__main__":
                 #print sum of counts as a check
                 print(df_binned.sum(axis=0))
 
-    elif type == "gen":
+    elif run_type == "gen":
         # Define the directories
         rec_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/"
         gen_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/"
@@ -213,9 +217,30 @@ if __name__ == "__main__":
                 #print sum of counts as a check
                 print(df_binned.sum(axis=0))
 
-    elif type == "exp":
-        pass
-    elif type == "gen_rad":
+    elif run_type == "exp":
+        exp_dir = fs.inb_exp_dvpip_dir
+        exp_out_dir = fs.inb_exp_binned_dir
+
+        # get a list of files in exp_dir
+        files = [f for f in os.listdir(exp_dir) if os.path.isfile(os.path.join(exp_dir, f))]
+        print(files)
+        for file in files:
+            print("Binning on {}".format(exp_dir+file))
+
+            outfile_name = exp_out_dir+"binned_"+file
+
+            print("Saving to {}".format(outfile_name))
+            df = pd.read_pickle(exp_dir+file)
+            print(len(df))
+            df_binned = bin_df(df,df_type="exp")
+            print(df_binned)
+            df_binned.to_pickle(outfile_name)
+            #print sum of counts as a check
+            print(df_binned.sum(axis=0))
+
+
+
+    elif run_type == "gen_rad":
         gen_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen_rad/"
 
         list_of_gen_dirs_to_process = ['rad_lund_10000_20230710_1543/',
