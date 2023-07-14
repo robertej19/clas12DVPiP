@@ -42,25 +42,6 @@ from icecream import ic
 from utils import filestruct
 
 
-rec_45na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230705_1043_Fall_2018_Inbending_45nA_recon.pkl"
-rec_55na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230705_1046_Fall_2018_Inbending_55nA_recon.pkl"
-rec_nominal_1 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
-rec_nominal_2 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230705_1041_Fall_2018_Inbending_50nA_recon.pkl"
-rec_rad = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec_rad/final_f18_inb_rec_binned_rad_t2.pkl"
-
-
-gen_45na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_45na_inb_binned.pkl"
-gen_55na_inb = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_55na_inb_binned.pkl"
-gen_nominal_1 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_nominal_1_inb_binned.pkl"
-gen_nominal_2 = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen/final_f18_gen_nominal_2_inb_binned.pkl"
-gen_rad =  "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/gen_rad/final_f18_inb_gen_rad_binned.pkl"
-
-#ratios:
-(rec_45na_inb/gen_45na_inb)/(rec_nominal_1/gen_nominal_1)/(rec_nominal_2/gen_nominal_2)/(rec_nominal_1/gen_nominal_1)
-(rec_55na_inb/gen_55na_inb)/(rec_nominal_1/gen_nominal_1)/(rec_nominal_2/gen_nominal_2)/(rec_nominal_1/gen_nominal_1)
-(rec_rad/gen_rad)/(rec_nominal_1/gen_nominal_1)/(rec_nominal_2/gen_nominal_2)/(rec_nominal_1/gen_nominal_1)
-
-
 
 
 
