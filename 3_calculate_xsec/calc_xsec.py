@@ -120,6 +120,25 @@ print(combined_df)
 
 
 combined_df['acc_corr'] = combined_df['rec_counts'] / combined_df['gen_counts']
+combined_df = combined_df[combined_df['acc_corr'] >= .005]
+
+#make a 1d histogram of acc_corr
+#set font size to be large
+plt.rcParams.update({'font.size': 18})
+fig, ax = plt.subplots(1,1, figsize=(12,6))
+ax.hist(combined_df['acc_corr'], bins=100, range=[0,0.15])
+#set x axis to range to 0 to 0.3
+ax.set_xlim(0,0.15)
+#set y axis log scale
+ax.set_yscale('log')
+
+ax.set_xlabel("Acceptance Correction Factor")
+ax.set_ylabel("Counts")
+#set title
+ax.set_title("Acceptance Correction Factor for All Bins")
+
+plt.savefig("acccorr.png")
+sys.exit()
 combined_df['rad_corr_alt'] = combined_df['acc_rad'] / combined_df['acc_corr']
 #error on acc_corr
 combined_df['acc_corr_err'] = combined_df['acc_corr']*np.sqrt(1/combined_df['rec_counts']+1/combined_df['gen_counts'])
@@ -224,11 +243,13 @@ combined_df.to_pickle("full_cross_section_clas12.pkl")
 
 # sys.exit()
 show_plots = 0
-show_xsec = 0
-show_xsec_2 = 1
+show_xsec = 1
+show_xsec_2 = 0
+show_xsec_22 = 0
+xerr_value = 0
 
 combine_plots = 0
-output_image_dir = "plot_test_t2_with_sys/"
+output_image_dir = "plot_test_t2_with_high_sys/"
 plot_corrs = 0
 
 
@@ -376,8 +397,7 @@ if plot_corrs:
     ax.set_xlabel('(x)')
     ax.set_ylabel('(q)')
 """
-show_xsec_22 = 0
-xerr_value = 0
+
 if show_xsec_2:
     # first, grouping by 'tmin'
     tmin_groups = combined_df.groupby(['tmin'])
@@ -682,7 +702,7 @@ if show_xsec:
             #plt.errorbar(group['pave'], group['xsec_red'], yerr=group['xsec_red_err'],fmt='r+', markersize=50,label=#slabel)
             #plot again but with red error bars
             xerr_value = 10
-            plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['total_uncert'],fmt='r.',  markersize=5,elinewidth=5)
+            plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=2*group['total_uncert'],fmt='r.',  markersize=5,elinewidth=5)
             #,label="CLAS12 Data")#elabel)
 
             plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='k.',  markersize=5,label="CLAS12 Data",elinewidth=5)#elabel)
