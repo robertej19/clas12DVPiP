@@ -983,25 +983,62 @@ double A_LU(void) {
 }
 
 
-int main(int argc, char** argv){
+int main (int argc, char** argv){
 
-    if (argc != 5) {  // 5 because program name itself is the first argument, followed by m_xbj_start, m_xbj_end, m_xbj_space, and output_file_name
-        printf("Usage: %s m_xbj_start m_xbj_end m_xbj_space output_file_name\n", argv[0]);
+    //fprintf(stdout, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
+
+
+       if (argc != 8) {  
+        printf("Usage: %s m_xbj_start m_xbj_end m_xbj_space m_Q2_start m_Q2_end m_Q2_space output_file_base_name\n", argv[0]);
         return 1;
     }
 
     double m_xbj_start = atof(argv[1]);  // Convert string argument to double
     double m_xbj_end = atof(argv[2]);
     double m_xbj_space = atof(argv[3]);
-    const char* output_file_name = argv[4];  // Name of the output file
+
+    double m_Q2_start = atof(argv[4]);
+    double m_Q2_end = atof(argv[5]);
+    double m_Q2_space = atof(argv[6]);
+
+    //create spacing for t
+    double m_t_start = -0.1;
+    double m_t_end = -2.0;
+    double m_t_space = 0.1;
+
+    const char* output_file_base_name = argv[7];  // Base name of the output file
+
+    char output_file_name[256];
+    sprintf(output_file_name, "%s_xbj_%0.2lf_%0.2lf_%0.2lf_Q2_%0.2lf_%0.2lf_%0.2lf_mt_%0.2lf_%0.2lf_%0.2lf.txt",
+            output_file_base_name,
+            m_xbj_start, m_xbj_end, m_xbj_space,
+            m_Q2_start, m_Q2_end, m_Q2_space,
+            m_t_start, m_t_end, m_t_space);
+
 
     fprintf(stdout, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
 
-    for (double m_xbj = m_xbj_start; m_xbj < m_xbj_end; m_xbj += m_xbj_space) {
-        for (double m_Q2 = 2; m_Q2 < 10; m_Q2 += 2) {
-            for (double m_t = -0.2; m_t > -1; m_t -= 0.2) {
+    for (double m_xbj = m_xbj_start; m_xbj <= m_xbj_end; m_xbj += m_xbj_space) {
 
-                //... Rest of your code here ...
+    //for (m_xbj = 0.35; m_xbj < 0.635; m_xbj += 0.2) {
+        for (m_Q2 = m_Q2_start; m_Q2 <= m_Q2_end; m_Q2 += m_Q2_space) {
+            for (m_t = m_t_start; m_t >= m_t_end; m_t -= m_t_space) {
+                
+                m_xi = m_xbj / (2.0 - m_xbj);
+
+                gammaa = 2.0 * m_xbj * PROTON_MASS / sqrt(m_Q2);
+                y = ( pow(W, 2.0) + m_Q2 - pow(PROTON_MASS, 2.0) ) / ( 2.0 * PROTON_MASS * leptonEnergy );
+                epsilon = (1.0 - y - 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0)) / (1.0 - y + 1.0 / 2.0 * pow(y, 2.0) + 1.0 / 4.0 * pow(y, 2.0) * pow(gammaa, 2.0));
+                W = sqrt(m_Q2 / m_xbj + pow(PROTON_MASS, 2.0) - m_Q2);
+
+                // minimum t value; asymptotic formula
+                m_tmin = -4. * pow(PROTON_MASS, 2.) * pow(m_xi, 2.) / (1. - pow(m_xi, 2.));
+
+                Conversion = 0.3894 * pow(10.0, 6.0) / (16.0 * M_PI * (pow(W, 2.0) - pow(PROTON_MASS, 2.0)) * 
+                                    sqrt(pow(W, 4.0) + pow(m_Q2, 2.0) + pow(PROTON_MASS, 4.0) + 2.0 * pow(W, 2.0) * m_Q2 
+                                        - 2.0 * pow(W, 2.0) * pow(PROTON_MASS, 2.0) + 2.0 * m_Q2 * pow(PROTON_MASS, 2.0)));
+
+                printf("t = %.7lf Q2=%.7lf xB=%.7lf m_xi=%.7lf W=%.7lf leptonEnergy=%.7lf \n", m_t,m_Q2, m_xbj,m_xi,W,leptonEnergy);
 
                 // Open file in append mode
                 FILE *f = fopen(output_file_name, "a");
