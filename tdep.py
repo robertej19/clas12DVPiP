@@ -31,27 +31,7 @@ PhysicsConstants = const.PhysicsConstants()
 fs = filestruct.fs()
 
 combined_df = pd.read_pickle("full_cross_section_clas12.pkl")
-"""
-['tmin' 'pmin' 'xmin' 'qmin' 'tmax' 'pmax' 'xmax' 'qmax' 'tave' 'pave'
- 'xave' 'qave' 'yave' 'counts' 'true_xbq2_bin_volume'
- 'nominal_xbq2_bin_volume' 'volume_ratio' 'tp_bin_volume' 'true_total_vol'
- 'rec_tave' 'rec_pave' 'rec_xave' 'rec_qave' 'rec_yave' 'rec_counts'
- 'gen_tave' 'gen_pave' 'gen_xave' 'gen_qave' 'gen_yave' 'gen_counts'
- 'counts_rec_45na' 'counts_rec_55na' 'counts_rec_nominal_1'
- 'counts_rec_nominal_2' 'counts_rec_rad' 'counts_gen_45na'
- 'counts_gen_55na' 'counts_gen_nominal_1' 'counts_gen_nominal_2'
- 'counts_gen_rad' 'acc_45na' 'acc_55na' 'acc_nominal_1' 'acc_nominal_2'
- 'acc_rad' '45na-nom' '55na-nom' 'rad-nom' '45na-55na' 'nom-nom'
- '45na-nom-nom-nom' '55na-nom-nom-nom' 'rad-nom-nom-nom' 'acc_corr'
- 'rad_corr_alt' 'acc_corr_err' 'acc_rad_err' 'rad_corr_alt_err'
- 'counts_err' 'rec_counts_err' 'gen_counts_err' 'acc_corr_counts'
- 'acc_corr_counts_err' 'xsec' 'xsec_err' 'y_bin' 'epsi_num' 'epsi_denom'
- 'epsilon' 'Gamma' 'xsec_red' 'xsec_red_err' 'acc_corr_counts_err_alt'
- 'xsec_err_alt' 'xsec_red_err_alt' 'sys_uncert_45na' 'sys_uncert_55na'
- 'sys_uncert_recon' 'sys_uncert_acc-corr' 'sys_uncert_rad' 'stat_uncert'
- 'total_uncert']
 
-"""
 
 
 
@@ -94,15 +74,7 @@ if show_xsec:
     for name, group in groups:
         #only plot if there are more than 10 bins
         
-        print(clas_df[['Q2_C6', 'xB_C6', 't_C6']].dtypes)
-        print(group[['qmin', 'xmin', 'tmin', 'qmax', 'xmax', 'tmax']].dtypes)
 
-
-        print(clas_df['Q2_C6'])
-        print(group['qmin'].values[0])
-
-
-        print(group['qmin'])
 
         mask = (clas_df['Q2_C6'] >= group['qmin'].values[0]) & (clas_df['Q2_C6'] <= group['qmax'].values[0]) & \
        (clas_df['xB_C6'] >= group['xmin'].values[0]) & (clas_df['xB_C6'] <= group['xmax'].values[0]) & \
@@ -307,8 +279,37 @@ if show_xsec:
 
                 # # plt.plot(phi, y,'k-',label='CLAS6 Fit high',linewidth=5)
             
+            """
+            ['tmin' 'pmin' 'xmin' 'qmin' 'tmax' 'pmax' 'xmax' 'qmax' 'tave' 'pave'
+            'xave' 'qave' 'yave' 'counts' 'true_xbq2_bin_volume'
+            'nominal_xbq2_bin_volume' 'volume_ratio' 'tp_bin_volume' 'true_total_vol'
+            'rec_tave' 'rec_pave' 'rec_xave' 'rec_qave' 'rec_yave' 'rec_counts'
+            'gen_tave' 'gen_pave' 'gen_xave' 'gen_qave' 'gen_yave' 'gen_counts'
+            'counts_rec_45na' 'counts_rec_55na' 'counts_rec_nominal_1'
+            'counts_rec_nominal_2' 'counts_rec_rad' 'counts_gen_45na'
+            'counts_gen_55na' 'counts_gen_nominal_1' 'counts_gen_nominal_2'
+            'counts_gen_rad' 'acc_45na' 'acc_55na' 'acc_nominal_1' 'acc_nominal_2'
+            'acc_rad' '45na-nom' '55na-nom' 'rad-nom' '45na-55na' 'nom-nom'
+            '45na-nom-nom-nom' '55na-nom-nom-nom' 'rad-nom-nom-nom' 'acc_corr'
+            'rad_corr_alt' 'acc_corr_err' 'acc_rad_err' 'rad_corr_alt_err'
+            'counts_err' 'rec_counts_err' 'gen_counts_err' 'acc_corr_counts'
+            'acc_corr_counts_err' 'xsec' 'xsec_err' 'y_bin' 'epsi_num' 'epsi_denom'
+            'epsilon' 'Gamma' 'xsec_red' 'xsec_red_err' 'acc_corr_counts_err_alt'
+            'xsec_err_alt' 'xsec_red_err_alt' 'sys_uncert_45na' 'sys_uncert_55na'
+            'sys_uncert_recon' 'sys_uncert_acc-corr' 'sys_uncert_rad' 'stat_uncert'
+            'total_uncert']
+
+            """
+
+
             fit_results.append([name[0],
             name[1],
+            name[2],
+            group['xmax'].values[0],
+            group['qmax'].values[0],
+            group['tmax'].values[0],
+            group['xave'].mean(),
+            group['qave'].mean(),
             group['tave'].mean(),    
             popt[0]/prefact_A,
             popt[1]/prefact_B,
@@ -330,7 +331,7 @@ if show_xsec:
             
             plt.ylim(bottom=0)
             #plt.show()
-            #plt.savefig("tdep_test/"+pltt+".png",bbox_inches='tight')
+            plt.savefig("tdep_test/"+pltt+".png",bbox_inches='tight')
             #sys.exit()
             plt.close()
             # plt.show()
@@ -338,6 +339,7 @@ if show_xsec:
             # if ind > 20:
             #     break
                 #plt.close()
-fit_results_df = pd.DataFrame(fit_results,columns=['xmin', 'qmin', 'tave', 'A','B','C','A_uncert','B_uncert','C_uncert','c6_tel','c6_tt','c6_lt','c6_tel_err','c6_tt_err','c6_lt_err','tave_c6'])
+fit_results_df = pd.DataFrame(fit_results,columns=['xmin', 'qmin', 'tmin', 'xmax', 'qmax', 'tmax', 'xave', 'qave',
+                                                 'tave', 'A','B','C','A_uncert','B_uncert','C_uncert','c6_tel','c6_tt','c6_lt','c6_tel_err','c6_tt_err','c6_lt_err','tave_c6'])
 print(fit_results_df)
 fit_results_df.to_pickle("t_dep_of_xsec.pkl")
