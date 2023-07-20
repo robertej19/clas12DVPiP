@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>  // Needed for atoi and atof functions
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_monte.h>
@@ -24,8 +25,8 @@
 
 using namespace std;
 
-double PROTON_MASS = 0.938;
-double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
+double PROTON_MASS = 0.938272081;
+double leptonEnergy = 10.604; //FIX THIS TO BE THE EXACT CORRECT VALUE
 //double leptonEnergy = 10.6; //FIX THIS TO BE THE EXACT CORRECT VALUE
 
 
@@ -982,7 +983,49 @@ double A_LU(void) {
 }
 
 
+int main(int argc, char** argv){
 
+    if (argc != 5) {  // 5 because program name itself is the first argument, followed by m_xbj_start, m_xbj_end, m_xbj_space, and output_file_name
+        printf("Usage: %s m_xbj_start m_xbj_end m_xbj_space output_file_name\n", argv[0]);
+        return 1;
+    }
+
+    double m_xbj_start = atof(argv[1]);  // Convert string argument to double
+    double m_xbj_end = atof(argv[2]);
+    double m_xbj_space = atof(argv[3]);
+    const char* output_file_name = argv[4];  // Name of the output file
+
+    fprintf(stdout, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
+
+    for (double m_xbj = m_xbj_start; m_xbj < m_xbj_end; m_xbj += m_xbj_space) {
+        for (double m_Q2 = 2; m_Q2 < 10; m_Q2 += 2) {
+            for (double m_t = -0.2; m_t > -1; m_t -= 0.2) {
+
+                //... Rest of your code here ...
+
+                // Open file in append mode
+                FILE *f = fopen(output_file_name, "a");
+
+                // If file is opened successfully, write to it.
+                if (f != NULL) {
+                    fprintf(f, " %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \t %.7lf \n", m_Q2, m_xbj, m_t, CrossSectionPi0T(), CrossSectionPi0L(), CrossSectionPi0LT(), CrossSectionPi0TT(),W,y,epsilon,gammaa,m_tmin);
+                    fclose(f); // Close the file after writing to it
+                }
+                else {
+                    // Handle error when file is not opened
+                    printf("Error opening the file.\n");
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+// Comment out the rest of the code:
+
+/* The following is old code that doesn't work well for file saving
 int main (int argc, char** argv){
 
     // print the minimum t value
@@ -1004,7 +1047,7 @@ int main (int argc, char** argv){
 
     // write cross section T L LT and TT to a file
     // FILE *f = fopen("cross_section_pi0_10600.txt", "w");
-    FILE *f = fopen("cross_section_pi0_575_new_big.txt", "w");
+    FILE *f = fopen("cross_section_pi0_10604_july.txt", "w");
 
     fprintf(f, "Q2\txB\tmt\tsigma_T\tsigma_L\tsigma_LT\tsigma_TT\tW\ty\tepsilon\tgammaa\ttmin\n");
 
@@ -1053,4 +1096,4 @@ int main (int argc, char** argv){
     return 1;
 }
 
-
+*/

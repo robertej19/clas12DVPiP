@@ -7,7 +7,7 @@ import numpy as np
 
 class PhysicsConstants:
     def __init__(self):
-        self.proton_mass = 0.938#272081 # target mass - previously: M  NOTE!: aao_gen system uses 0.938 for proton mass
+        self.proton_mass = 0.938272081 # target mass - previously: M  NOTE!: aao_gen system uses 0.938 for proton mass
         self.neutral_pion_mass = 0.1349766
 
         self.electron_mass = 0.5109989461 * 0.001 # electron mass- previously: me
