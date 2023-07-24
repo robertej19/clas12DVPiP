@@ -24,6 +24,64 @@ PhysicsConstants = const.PhysicsConstants()
 fs = filestruct.fs()
 
 bins_Q2,bins_xB, bins_t1, bins_phi1 = fs.Q2bins, fs.xBbins, fs.tbins, fs.phibins
+total_bins = (len(bins_Q2)-1)*(len(bins_xB)-1)*(len(bins_t1)-1)*(len(bins_phi1)-1)
+#create an unrolled array:
+bins_unrolled = np.arange(total_bins)
+print(len(bins_unrolled))
+
+def unroller_Gen(row, bins_Q2, bins_xB, bins_t1, bins_phi1):
+    """Unroll 4D bin numbers into 1D bin number"""
+    bin_xB, bin_Q2, bin_t1, bin_phi1 = row['bin_GenxB'], row['bin_GenQ2'], row['bin_Gent1'], row['bin_Genphi1']
+
+    # get index of bins_xB where bin_xB is
+    xb_index = np.digitize(bin_xB, bins_xB, right=False) - 1
+    # get index of bins_Q2 where bin_Q2 is
+    Q2_index = np.digitize(bin_Q2, bins_Q2, right=False) - 1
+    # get index of bins_t1 where bin_t1 is
+    t1_index = np.digitize(bin_t1, bins_t1, right=False) - 1
+    # get index of bins_phi1 where bin_phi1 is
+    phi1_index = np.digitize(bin_phi1, bins_phi1, right=False) - 1
+
+    # return the unrolled bin number
+    return xb_index * (len(bins_Q2) - 1) * (len(bins_t1) - 1) * (len(bins_phi1) - 1) + \
+           Q2_index * (len(bins_t1) - 1) * (len(bins_phi1) - 1) + \
+           t1_index * (len(bins_phi1) - 1) + \
+           phi1_index
+
+#df['bin_id_Gen'] = df.apply(unroller_Gen, axis=1, args=(bins_Q2, bins_xB, bins_t1, bins_phi1))
+
+
+# #iterate over all but last value in bins_xB
+# for x in bins_xB[:-1]:
+#         for q in bins_Q2[:-1]:
+#                 for t in bins_t1[:-1]:
+#                         for p in bins_phi1[:-1]:
+#                                 print(x,q,t,p)
+#                                 print(unroller_Gen(x,q,t,p, bins_Q2, bins_xB, bins_t1, bins_phi1))
+# sys.exit()
+
+def unroller(row, bins_Q2, bins_xB, bins_t1, bins_phi1):
+        """Unroll 4D bin numbers into 1D bin number"""
+
+        bin_xB, bin_Q2, bin_t1, bin_phi1 = row['bin_xB'], row['bin_Q2'], row['bin_t1'], row['bin_phi1']
+        #bin_xB, bin_Q2, bin_t1, bin_phi1 = x,q,t,p
+        
+        #get index of bins_xB where bin_xB is
+        # get index of bins_xB where bin_xB is
+        xb_index = np.digitize(bin_xB, bins_xB, right=False) - 1
+        # get index of bins_Q2 where bin_Q2 is
+        Q2_index = np.digitize(bin_Q2, bins_Q2, right=False) - 1
+        # get index of bins_t1 where bin_t1 is
+        t1_index = np.digitize(bin_t1, bins_t1, right=False) - 1
+        # get index of bins_phi1 where bin_phi1 is
+        phi1_index = np.digitize(bin_phi1, bins_phi1, right=False) - 1
+
+        #return the unrolled bin number
+        return xb_index * (len(bins_Q2)-1) * (len(bins_t1)-1) * (len(bins_phi1)-1) + \
+                Q2_index * (len(bins_t1)-1) * (len(bins_phi1)-1) + \
+                t1_index * (len(bins_phi1)-1) + \
+                phi1_index
+
 
 uniform_prior = uniform_prior(num_causes=4)
 causes = np.arange(4)
@@ -31,7 +89,7 @@ jeffreys_prior = jeffreys_prior(causes=causes)
 
 test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
 binned_test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
-df = pd.read_pickle(test_file)#.head(500)
+df = pd.read_pickle(test_file).head(20000)
 #remove all rows where Gent1 is larger than 1.8
 
 cutoff = 1.7
@@ -40,6 +98,25 @@ df = df[df['Gent1'] < cutoff]
 df = df[df['t1']<cutoff]
 df = df[df['t1']>cutoff_low]
 df = df[df['Gent1']>cutoff_low]
+#requre phi to be between 0 and 360
+df = df[df['phi1']<360]
+df = df[df['phi1']>0]
+#require Genphi to be between 0 and 360
+df = df[df['Genphi1']<360]
+df = df[df['Genphi1']>0]
+#require xB to be between 0 and 1
+df = df[df['xB']<.8]
+df = df[df['xB']>0]
+#require GenxB to be between 0 and 1
+df = df[df['GenxB']<.8]
+df = df[df['GenxB']>0]
+#require Q2 to be between 0 and 10
+df = df[df['Q2']<11]
+df = df[df['Q2']>1]
+#require GenQ2 to be between 0 and 10
+df = df[df['GenQ2']<11]
+df = df[df['GenQ2']>1]
+
 
 sns.set_context(context='poster')
 plt.rcParams['figure.figsize'] = (10, 8)
@@ -51,13 +128,13 @@ bins_xB_extended = np.concatenate(([-10], bins_xB, [30]))
 
 #print(bins_xB_extended)
 #print(bins_xB_extended[:-1])
-df['bin_xB'] = pd.cut(df['xB'], bins=bins_xB_extended, right=False, labels=bins_xB_extended[:-1])
-df['bin_GenxB'] = pd.cut(df['GenxB'], bins=bins_xB_extended, right=False, labels=bins_xB_extended[:-1])
+df['bin_xB'] = pd.cut(df['xB'], bins=bins_xB, right=False, labels=bins_xB[:-1])
+df['bin_GenxB'] = pd.cut(df['GenxB'], bins=bins_xB, right=False, labels=bins_xB[:-1])
 
 # for 'Q2' and 'GenQ2'
 bins_Q2_extended = np.concatenate(([-30], bins_Q2, [30]))
-df['bin_Q2'] = pd.cut(df['Q2'], bins=bins_Q2_extended, right=False, labels=bins_Q2_extended[:-1])
-df['bin_GenQ2'] = pd.cut(df['GenQ2'], bins=bins_Q2_extended, right=False, labels=bins_Q2_extended[:-1])
+df['bin_Q2'] = pd.cut(df['Q2'], bins=bins_Q2, right=False, labels=bins_Q2[:-1])
+df['bin_GenQ2'] = pd.cut(df['GenQ2'], bins=bins_Q2, right=False, labels=bins_Q2[:-1])
 
 # for 't1' and 'Gent1'
 df['bin_t1'] = pd.cut(df['t1'], bins=bins_t1, right=False, labels=bins_t1[:-1])
@@ -70,28 +147,28 @@ df['bin_Genphi1'] = pd.cut(df['Genphi1'], bins=bins_phi1, right=False, labels=bi
 
 df = df[(df['bin_t1'].isin(bins_t1[:-1])) & (df['bin_Gent1'].isin(bins_t1[:-1]))]
 df = df[(df['bin_phi1'].isin(bins_phi1[:-1])) & (df['bin_Genphi1'].isin(bins_phi1[:-1]))]
+#do also for xB and Q2
+df = df[(df['bin_xB'].isin(bins_xB[:-1])) & (df['bin_GenxB'].isin(bins_xB[:-1]))]
+df = df[(df['bin_Q2'].isin(bins_Q2[:-1])) & (df['bin_GenQ2'].isin(bins_Q2[:-1]))]
 
 
 
-# create a column with unique bin combination for 'xB', 'Q2', 't1', 'phi1'
-df['bin_comb'] = df['bin_t1'].astype(str) + '_' + df['bin_phi1'].astype(str)
+# Now use apply() to apply unroller() to every row of df
+df['bin_id'] = df.apply(unroller, axis=1, args=(bins_Q2, bins_xB, bins_t1, bins_phi1))
+print("finished unrolling observed bins")
+df['bin_id_Gen'] = df.apply(unroller_Gen, axis=1, args=(bins_Q2, bins_xB, bins_t1, bins_phi1))
+print("finished unrolling truth bins")
 
-# create a column with unique bin combination for 'GenxB', 'GenQ2', 'Gent1', 'Genphi1'
-df['bin_comb_Gen'] =  df['bin_Gent1'].astype(str) + '_' + df['bin_Genphi1'].astype(str)
 
-# create a column for unique bin numbers, using pandas' factorize method
-df['bin_number'] = pd.factorize(df['bin_comb'])[0]
+print(df['bin_id_Gen'])
+print(df['bin_id'])     
 
-# similarly for the 'Gen' bin combinations
-df['bin_number_Gen'] = pd.factorize(df['bin_comb_Gen'])[0]
-#remove any rows where bin_t1 or bin_Gent1 is -30 or bins_t1[:-1]
-# df = df[df['bin_t1'] > -30]
-# df = df[df['bin_Gent1'] > -30]
-# df = df[df['bin_t1'] < bins_t1[-1]]
-# df = df[df['bin_Gent1'] < bins_t1[-1]]
+
+print(df['bin_id_Gen'].nunique())
+print(df['bin_id'].nunique())
 
 #get the unique bins in bin_number
-unique_bins = df['bin_number'].unique()
+unique_bins = bins_unrolled
 print(unique_bins)
 phi = False
 t1 = False
@@ -110,8 +187,8 @@ else:
         bins = unique_bins
         #append a bin to the end of bins as a dummy WARNING: MIGHT CAUSE ISSUES
         bins = np.append(bins, bins[-1]+1)
-        binned_truth = 'bin_number_Gen'
-        binned_data = 'bin_number'
+        binned_truth = 'bin_id_Gen'
+        binned_data = 'bin_id'
         num_bins = len(bins)-1
 
 
@@ -149,6 +226,8 @@ hist_2d_array = hist_2d.values
 
 print(hist_2d_array)
 
+#print size of array
+print(hist_2d_array.size)
 
 #true_samples = df['Genphi1']
 #observed_samples = df['phi1']

@@ -25,150 +25,152 @@ fs = filestruct.fs()
 
 bins_Q2,bins_xB, bins_t1, bins_phi1 = fs.Q2bins, fs.xBbins, fs.tbins, fs.phibins
 
-uniform_prior = uniform_prior(num_causes=4)
-causes = np.arange(4)
-jeffreys_prior = jeffreys_prior(causes=causes)
+test_unfold = False
+if test_unfold:
+        uniform_prior = uniform_prior(num_causes=4)
+        causes = np.arange(4)
+        jeffreys_prior = jeffreys_prior(causes=causes)
 
-test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
-binned_test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
-df = pd.read_pickle(test_file)#.head(5)
-print(df.columns.values)
-#remove all rows where Gent1 is larger than 1.8
+        test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
+        binned_test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
+        df = pd.read_pickle(test_file)#.head(5)
+        print(df.columns.values)
+        #remove all rows where Gent1 is larger than 1.8
 
-cutoff = 1.7
-cutoff_low = 0.1
-df = df[df['Gent1'] < cutoff]
-df = df[df['t1']<cutoff]
-df = df[df['t1']>cutoff_low]
-df = df[df['Gent1']>cutoff_low]
+        cutoff = 1.7
+        cutoff_low = 0.1
+        df = df[df['Gent1'] < cutoff]
+        df = df[df['t1']<cutoff]
+        df = df[df['t1']>cutoff_low]
+        df = df[df['Gent1']>cutoff_low]
 
-sns.set_context(context='poster')
-plt.rcParams['figure.figsize'] = (10, 8)
-plt.rcParams['lines.markeredgewidth'] = 2
+        sns.set_context(context='poster')
+        plt.rcParams['figure.figsize'] = (10, 8)
+        plt.rcParams['lines.markeredgewidth'] = 2
 
-# for 'xB' and 'GenxB'
-# for 'xB' and 'GenxB'
-bins_xB_extended = np.concatenate(([-10], bins_xB, [30]))
+        # for 'xB' and 'GenxB'
+        # for 'xB' and 'GenxB'
+        bins_xB_extended = np.concatenate(([-10], bins_xB, [30]))
 
-#print(bins_xB_extended)
-#print(bins_xB_extended[:-1])
-df['bin_xB'] = pd.cut(df['xB'], bins=bins_xB_extended, right=False, labels=bins_xB_extended[:-1])
-df['bin_GenxB'] = pd.cut(df['GenxB'], bins=bins_xB_extended, right=False, labels=bins_xB_extended[:-1])
+        #print(bins_xB_extended)
+        #print(bins_xB_extended[:-1])
+        df['bin_xB'] = pd.cut(df['xB'], bins=bins_xB_extended, right=False, labels=bins_xB_extended[:-1])
+        df['bin_GenxB'] = pd.cut(df['GenxB'], bins=bins_xB_extended, right=False, labels=bins_xB_extended[:-1])
 
-# for 'Q2' and 'GenQ2'
-bins_Q2_extended = np.concatenate(([-30], bins_Q2, [30]))
-df['bin_Q2'] = pd.cut(df['Q2'], bins=bins_Q2_extended, right=False, labels=bins_Q2_extended[:-1])
-df['bin_GenQ2'] = pd.cut(df['GenQ2'], bins=bins_Q2_extended, right=False, labels=bins_Q2_extended[:-1])
+        # for 'Q2' and 'GenQ2'
+        bins_Q2_extended = np.concatenate(([-30], bins_Q2, [30]))
+        df['bin_Q2'] = pd.cut(df['Q2'], bins=bins_Q2_extended, right=False, labels=bins_Q2_extended[:-1])
+        df['bin_GenQ2'] = pd.cut(df['GenQ2'], bins=bins_Q2_extended, right=False, labels=bins_Q2_extended[:-1])
 
-# for 't1' and 'Gent1'
-df['bin_t1'] = pd.cut(df['t1'], bins=bins_t1, right=False, labels=bins_t1[:-1])
-df['bin_Gent1'] = pd.cut(df['Gent1'], bins=bins_t1, right=False, labels=bins_t1[:-1])
+        # for 't1' and 'Gent1'
+        df['bin_t1'] = pd.cut(df['t1'], bins=bins_t1, right=False, labels=bins_t1[:-1])
+        df['bin_Gent1'] = pd.cut(df['Gent1'], bins=bins_t1, right=False, labels=bins_t1[:-1])
 
-# for 'phi1' and 'Genphi1'
-df['bin_phi1'] = pd.cut(df['phi1'], bins=bins_phi1, right=False, labels=bins_phi1[:-1])
-df['bin_Genphi1'] = pd.cut(df['Genphi1'], bins=bins_phi1, right=False, labels=bins_phi1[:-1])
+        # for 'phi1' and 'Genphi1'
+        df['bin_phi1'] = pd.cut(df['phi1'], bins=bins_phi1, right=False, labels=bins_phi1[:-1])
+        df['bin_Genphi1'] = pd.cut(df['Genphi1'], bins=bins_phi1, right=False, labels=bins_phi1[:-1])
 
-#remove any rows where bin_t1 or bin_Gent1 is -30 or bins_t1[:-1]
-# df = df[df['bin_t1'] > -30]
-# df = df[df['bin_Gent1'] > -30]
-# df = df[df['bin_t1'] < bins_t1[-1]]
-# df = df[df['bin_Gent1'] < bins_t1[-1]]
-
-
-bins = bins_phi1
-num_bins = len(bins) - 1
-
-true_samples = df['Genphi1']
-value_counts = df['bin_Genphi1'].value_counts()
-counts_series = pd.Series(0, index=bins_phi1[:-1])
-counts = counts_series.add(value_counts, fill_value=0)
-data_true = counts.values
-
-observed_samples = df['phi1']
-value_counts = df['bin_phi1'].value_counts()
-counts_series = pd.Series(0, index=bins_phi1[:-1])
-counts = counts_series.add(value_counts, fill_value=0)
-data_observed = counts.values
-
-data_observed_err = np.sqrt(data_observed)
-efficiencies = np.ones_like(data_observed, dtype=float)
-efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
-response_hist, _, _ = np.histogram2d(observed_samples, true_samples, bins=bins)
-print(response_hist)
-#print size of response hist
-print(response_hist.size)
-sys.exit()
-response_hist_err = np.sqrt(response_hist)
+        #remove any rows where bin_t1 or bin_Gent1 is -30 or bins_t1[:-1]
+        # df = df[df['bin_t1'] > -30]
+        # df = df[df['bin_Gent1'] > -30]
+        # df = df[df['bin_t1'] < bins_t1[-1]]
+        # df = df[df['bin_Gent1'] < bins_t1[-1]]
 
 
+        bins = bins_phi1
+        num_bins = len(bins) - 1
 
-fig, ax = plt.subplots()
-ax.step(np.arange(num_bins), data_true, where='mid', lw=3,
-        alpha=0.7, label='True distribution')
-ax.step(np.arange(num_bins), data_observed, where='mid', lw=3,
-        alpha=0.7, label='Observed distribution')
-ax.set(xlabel='X bins', ylabel='Counts')
-ax.legend()
+        true_samples = df['Genphi1']
+        value_counts = df['bin_Genphi1'].value_counts()
+        counts_series = pd.Series(0, index=bins_phi1[:-1])
+        counts = counts_series.add(value_counts, fill_value=0)
+        data_true = counts.values
 
+        observed_samples = df['phi1']
+        value_counts = df['bin_phi1'].value_counts()
+        counts_series = pd.Series(0, index=bins_phi1[:-1])
+        counts = counts_series.add(value_counts, fill_value=0)
+        data_observed = counts.values
 
-plt.show()
+        data_observed_err = np.sqrt(data_observed)
+        efficiencies = np.ones_like(data_observed, dtype=float)
+        efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
+        response_hist, _, _ = np.histogram2d(observed_samples, true_samples, bins=bins)
+        print(response_hist)
+        #print size of response hist
+        print(response_hist.size)
+        sys.exit()
+        response_hist_err = np.sqrt(response_hist)
 
 
 
-
-fig, ax = plt.subplots()
-im = ax.imshow(response_hist, origin='lower')
-cbar = plt.colorbar(im, label='Counts')
-ax.set(xlabel='Cause bins', ylabel='Effect bins')
-plt.show()
-
-
-column_sums = response_hist.sum(axis=0)
-normalization_factor = efficiencies / column_sums
-
-response = response_hist * normalization_factor
-response_err = response_hist_err * normalization_factor
-
-fig, ax = plt.subplots()
-im = ax.imshow(response, origin='lower')
-cbar = plt.colorbar(im, label='$P(E_i|C_{\mu})$')
-ax.set(xlabel='Cause bins', ylabel='Effect bins',
-       title='Normalizes response matrix')
-plt.show()
-
-unfolded_results = iterative_unfold(data=data_observed,
-                                    data_err=data_observed_err,
-                                    response=response,
-                                    response_err=response_err,
-                                    efficiencies=efficiencies,
-                                    efficiencies_err=efficiencies_err,
-                                    callbacks=[Logger()])
-
-print(unfolded_results.keys())
-
-print(unfolded_results['unfolded'])
-
-print(unfolded_results['sys_err'])
+        fig, ax = plt.subplots()
+        ax.step(np.arange(num_bins), data_true, where='mid', lw=3,
+                alpha=0.7, label='True distribution')
+        ax.step(np.arange(num_bins), data_observed, where='mid', lw=3,
+                alpha=0.7, label='Observed distribution')
+        ax.set(xlabel='X bins', ylabel='Counts')
+        ax.legend()
 
 
-fig, ax = plt.subplots()
-ax.step(np.arange(num_bins), data_true, where='mid', lw=3,
-        alpha=0.7, label='True distribution')
-ax.step(np.arange(num_bins), data_observed, where='mid', lw=3,
-        alpha=0.7, label='Observed distribution')
-ax.errorbar(np.arange(num_bins), unfolded_results['unfolded'],
-            yerr=unfolded_results['sys_err'],
-            alpha=0.7,
-            elinewidth=3,
-            capsize=4,
-            ls='None', marker='.', ms=10,
-            label='Unfolded distribution')
+        plt.show()
 
-ax.set(xlabel='X bins', ylabel='Counts')
-plt.legend()
-plt.show()
 
-sys.exit()
+
+
+        fig, ax = plt.subplots()
+        im = ax.imshow(response_hist, origin='lower')
+        cbar = plt.colorbar(im, label='Counts')
+        ax.set(xlabel='Cause bins', ylabel='Effect bins')
+        plt.show()
+
+
+        column_sums = response_hist.sum(axis=0)
+        normalization_factor = efficiencies / column_sums
+
+        response = response_hist * normalization_factor
+        response_err = response_hist_err * normalization_factor
+
+        fig, ax = plt.subplots()
+        im = ax.imshow(response, origin='lower')
+        cbar = plt.colorbar(im, label='$P(E_i|C_{\mu})$')
+        ax.set(xlabel='Cause bins', ylabel='Effect bins',
+        title='Normalizes response matrix')
+        plt.show()
+
+        unfolded_results = iterative_unfold(data=data_observed,
+                                        data_err=data_observed_err,
+                                        response=response,
+                                        response_err=response_err,
+                                        efficiencies=efficiencies,
+                                        efficiencies_err=efficiencies_err,
+                                        callbacks=[Logger()])
+
+        print(unfolded_results.keys())
+
+        print(unfolded_results['unfolded'])
+
+        print(unfolded_results['sys_err'])
+
+
+        fig, ax = plt.subplots()
+        ax.step(np.arange(num_bins), data_true, where='mid', lw=3,
+                alpha=0.7, label='True distribution')
+        ax.step(np.arange(num_bins), data_observed, where='mid', lw=3,
+                alpha=0.7, label='Observed distribution')
+        ax.errorbar(np.arange(num_bins), unfolded_results['unfolded'],
+                yerr=unfolded_results['sys_err'],
+                alpha=0.7,
+                elinewidth=3,
+                capsize=4,
+                ls='None', marker='.', ms=10,
+                label='Unfolded distribution')
+
+        ax.set(xlabel='X bins', ylabel='Counts')
+        plt.legend()
+        plt.show()
+
+        sys.exit()
 
 # With PyUnfold, any response matrix should be 2-dimensional where the first dimension (rows) are effect bins and 
 # the second dimension (columns) are the causes bins.

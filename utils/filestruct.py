@@ -12,12 +12,16 @@ class fs:
 		
 
 		# FINAL BINS
+		#true bins
 		self.xBbins = [0.1,0.15,0.20,0.25,0.30,0.38,0.48,0.58,0.80]
 		self.Q2bins =  [1,1.5,2,2.5,3,3.5,4,4.5,5.5,7,11]
 		self.tbins =  [0.09,0.15,0.2,0.3,0.4,0.6,1,1.5,2]
-		#self.tbins =  [0.0,0.32,0.52,0.72,0.92,1.12]
-		# #self.phibins =  [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342,360]
 		self.phibins =  [0,36,72,108,144,180,216,252,288,324,360]
+		#for testing:
+		# self.xBbins = [0.1,0.3,0.80]
+		# self.Q2bins =  [1,3,11]
+		# self.tbins =  [0.0,0.7,2]
+		# self.phibins =  [0,150,360]
 	
 		self.inb_exp_epgg_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/exp/"
 		self.inb_exp_dvpip_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/exp/"
