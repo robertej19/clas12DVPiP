@@ -80,8 +80,31 @@ def main(xBbins, Q2bins, in_dir_path=".",out_dir_path="."):
 
 
 def get_GK():
-    gk_location = "/mnt/d/GLOBUS/CLAS12/Thesis/the_GK_model_results/cross_section_pi0_10600_big.txt"
-    df_GK = pd.read_csv(gk_location, sep='\t', header=0)
+    
+    single = False
+    if single:
+        gk_location = "/mnt/d/GLOBUS/CLAS12/Thesis/the_GK_model_results/cross_section_pi0_10600_big.txt"
+        df_GK = pd.read_csv(gk_location, sep='\t', header=0)
+    else:
+        gk_dir = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/T_GK_model/july_2023_running/outputs/"
+        csv_files = [f for f in os.listdir(gk_dir) if f.endswith('.txt')]
+
+        # Initialize an empty dataframe
+        all_data = pd.DataFrame()
+
+        column_names = ['Q2', 'xB', 'mt', 'sigma_T', 'sigma_L', 'sigma_LT', 'sigma_TT', 'W', 'y', 'epsilon', 'gammaa', 'tmin']
+
+        # Iterate over all csv files and append to all_data dataframe
+        for file in csv_files:
+            data = pd.read_csv(os.path.join(gk_dir, file),sep='\t',names=column_names)
+            all_data = all_data.append(data, ignore_index=True)
+
+        # Remove duplicate rows
+        df_GK = all_data.drop_duplicates()
+
+        print(df_GK)
+        
+        df_GK.to_csv("df_gk_saved.csv",index=False)
         #df_GK_calc = pd.read_csv('GK_Model/cross_section_pi0_10600_big.txt', sep='\t', header=0)
         #df_GK_calc = pd.read_csv('cross_section_pi0_575_new_big_1.txt', sep='\t', header=0)
         # Data Structure:
@@ -299,6 +322,9 @@ for i, (name, group) in enumerate(groups):
     # Add your custom legend.
     plt.legend(handles=legend_elements, loc='upper right')
     #plt.show()
+
+    #set x axis range to (0.1,2.0)
+    plt.xlim(0.1,2.0)
 
     #sys.exit()
 

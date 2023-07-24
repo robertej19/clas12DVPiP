@@ -28,16 +28,16 @@ unfolded_hist = np.divide(measured_hist, response_matrix)
 # Visualization
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
 
-ax1.bar(bins[:-1], true_hist, width=np.diff(bins), align="edge", alpha=0.7, label='True')
-ax1.bar(bins[:-1], measured_hist, width=np.diff(bins), align="edge", alpha=0.7, label='Measured')
+ax1.bar(bins[:-1], measured_hist-true_hist, width=np.diff(bins), align="edge", alpha=0.7, label='True')
+#ax1.bar(bins[:-1], measured_hist, width=np.diff(bins), align="edge", alpha=0.7, label='Measured')
 ax1.set_title('True and Measured Distributions')
 ax1.legend()
 
 ax2.plot(bins[:-1], response_matrix)
 ax2.set_title('Response Matrix')
 
-ax3.bar(bins[:-1], unfolded_hist, width=np.diff(bins), align="edge", alpha=0.7, label='Unfolded')
-ax3.bar(bins[:-1], true_hist, width=np.diff(bins), align="edge", alpha=0.7, label='True')
+ax3.bar(bins[:-1], unfolded_hist-true_hist, width=np.diff(bins), align="edge", alpha=0.7, label='Unfolded')
+#ax3.bar(bins[:-1], true_hist, width=np.diff(bins), align="edge", alpha=0.7, label='True')
 ax3.set_title('Unfolded and True Distributions')
 ax3.legend()
 
