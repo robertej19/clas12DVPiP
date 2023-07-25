@@ -21,7 +21,7 @@ import matplotlib as mpl
 PhysicsConstants = const.PhysicsConstants()
 
 
-
+ic.disable()
 def unfold_function(truth_data=None,
                 observed_data=None,
                 response_hist=None,
@@ -60,10 +60,10 @@ def unfold_function(truth_data=None,
 
 
 data = {
-        'truth_x':[0,0,1,1,1,2,2,1,2,2],
-        'truth_q':[0,0,0,0,0,0,0,1,1,1],
-        'observed_x':[1,1,2,1,1,2,2,1,2,1],
-        'observed_q':[0,0,1,1,1,0,1,1,1,1],
+        'truth_x':[0,0,1,1,1,2,2,1,2,2,3],
+        'truth_q':[0,0,0,0,0,0,0,1,1,1,1],
+        'observed_x':[1,1,2,1,1,2,2,1,2,1,2],
+        'observed_q':[0,0,1,1,1,0,1,1,1,1,1],
 }
 df = pd.DataFrame(data)
 
@@ -72,7 +72,7 @@ def unroll(x_bin, q_bin, x_bins):
     return unrolled_bin
 
 
-x_bins = [0,1,2]
+x_bins = [0,1,2,3]
 q_bins = [0,1]
 
 #Unroll the 2D data into 1D columns of observation and truth
@@ -82,7 +82,7 @@ df['unrolled_observed_bins'] = df['observed_q']*len(x_bins)+df['observed_x']
 binned_truth="unrolled_truth_bins"
 binned_data="unrolled_observed_bins"
 
-bins = np.arange(0, 6, 1)
+bins = np.arange(0, 8, 1)
 
 value_counts_truth = df[binned_truth].value_counts()
 counts_series_truth = pd.Series(0, index=bins)
@@ -239,7 +239,7 @@ ic(v_ids)
 enlarged_matrices = []
 # Iterate over unfolding_matrices
 for count, (element_id, unfolding_matrix) in enumerate(zip(v_ids,unfolding_matrices)):
-        unfolded_response = np.zeros((6,6))
+        unfolded_response = np.zeros((8,8))
         ## replace all zeros with nan
         unfolded_response[unfolded_response == 0] = np.nan
 
@@ -258,10 +258,6 @@ for count, (element_id, unfolding_matrix) in enumerate(zip(v_ids,unfolding_matri
                         unfolded_response[element_id[i],element_id[j]] = unfolding_matrix[i][j]
         enlarged_matrices.append(unfolded_response)
                                 
-print(enlarged_matrices[0])
-print(enlarged_matrices[1])
-
-sys.exit()
 
 
 def calculate_ratios(list_arr):
@@ -277,31 +273,93 @@ def calculate_ratios(list_arr):
         # Process each list in the input array
         ratioed_arrays = []
         for i in range(d):
-                #i = 1
+                print("the list array is:")
+                print(list_arr)
+                print(d)
+                #i = 2
                 # get smallest non-zero value in the list
         
                 # Ignore nan values and normalize remaining values to get ratios
                 ratios = np.nan_to_num(list_arr[i])
-                min_val = np.min(ratios[ratios != 0])
-                # if min_val is less than 0.000001 print warning
-                if min_val < 0.000001:
-                        print("Warning: min_val is less than 0.000001!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print(list_arr[i])
-                print(ratios)
-                ratios /= min_val
-                print(ratios)
-                #set zeros in ratio to nan
+                #if the array is all zeros, set the min val to zero
+                if np.all(ratios == 0):
+                        pass
+                        # if all zero, we don't have to scale anything
+                else:
+                        min_val = np.min(ratios[ratios != 0])
+                        # if min_val is less than 0.000001 print warning
+                        if min_val < 0.000001:
+                                print("Warning: min_val is less than 0.000001!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        ratios /= min_val
+                        #set zeros in ratio to nan
                 ratios[ratios == 0] = np.nan
                 ratioed_arrays.append(ratios)
+        
+        print("arrays are:")
+        print(ratioed_arrays)
 
         ratioed_arrays_np = np.array(ratioed_arrays)
+        
+        
         output_arr = np.nanmean(ratioed_arrays_np, axis=0)
+        print("output array is:")
+        #output_arr = np.array([ 1 ,2, np.nan, np.nan, np.nan, np.nan])
 
+        print(output_arr)
         #normalize the array
-        output_arr /= np.sum(output_arr)
+        
+        not_nan = ~np.isnan(output_arr)
+    
+        # Calculate the sum of the non-nan values
+        sum_not_nan = np.sum(output_arr[not_nan])
+        
+        # Divide the non-nan values by the sum to normalize them
+        output_arr[not_nan] /= sum_not_nan
+        #output_arr /= np.sum(output_arr)
+        print("output array is:")
 
+        print(output_arr)
         return output_arr
 
+def combine_matrices(response_matrices):
+        # Get the number of matrices (m), rows in each matrix (n), and the number of columns in each matrix (d)
+        m, n, d = np.shape(response_matrices)
+
+        print(np.shape(response_matrices))
+        # Initialize an empty list to store the averaged rows
+        averaged_rows = []
+
+        # Process each row from the response matrices
+        for i in range(n):
+                #i=1
+                # Extract the ith row from each matrix
+                rows = [matrix[i] for matrix in response_matrices]
+
+                print(rows)
+
+                # Calculate the average values of the rows and add the result to the list
+                averaged_rows.append(calculate_ratios(rows))
+                print(averaged_rows)
+        # Convert the list of averaged rows to a numpy array
+        output_matrix = np.array(averaged_rows)
+
+        return output_matrix
+
+
+print("Enlarged matrices:")
+print(enlarged_matrices[0])
+print(enlarged_matrices[1])
+# Test the function
+response_matrices = [np.array([[0.5, 0.5, np.nan], [0.5, 0.5, np.nan]]), np.array([[np.nan, 0.5, 0.5], [np.nan, 0.25, 0.75]])]
+
+
+#output_matrix = combine_matrices(response_matrices)
+output_matrix = combine_matrices(enlarged_matrices)
+
+print(output_matrix)
+print(my_array)
+
+sys.exit()
 
 def combine_response_matrices(response_matrices):
         # Initialize a zero matrix with the same shape as the response matrices
@@ -331,7 +389,6 @@ print(a)
 # Test the function
 #output_arr = calculate_ratios(list_arr)
 #print(unfolding_matrix)
-sys.exit()
 
 
     # Add padded_matrix to unfolded_response
