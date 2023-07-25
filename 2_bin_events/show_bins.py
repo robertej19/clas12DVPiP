@@ -154,11 +154,16 @@ gen = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/gen/lund_10000_20230
 
 rec_in_epgg = "/mnt/d/GLOBUS/CLAS12/Thesis/1_potential_dvpip_events/inb/rec/norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
 
+df = pd.read_pickle(rec_in_reproc)
+
 configs = ["Inb."]
 files = [rec_in_reproc]
 output_dirs =["/mnt/d/GLOBUS/CLAS12/Thesis/plots/2_dvpip_distros/inb/rec/bin_migrations/"]
 
 xb_bin_edges, q2_bin_edges,t2_bin_edges, phi1_bin_edges = fs.xBbins, fs.Q2bins, fs.tbins, fs.phibins
+
+phi_bin_edges = phi1_bin_edges
+t_bin_edges = t2_bin_edges
 
 # # # for i in range(len(configs)):
 # # #     config = configs[i]
@@ -228,7 +233,7 @@ for i in range(len(configs)):
 
 
 
-    plot_all_purities = 1
+    plot_all_purities = 0
 
     for t_option in ["t1","t2"]:
         mag_option,rad_option = "inb","norad"
@@ -593,7 +598,7 @@ for i in range(len(configs)):
                     #             plot_title=plot_title,units=["None","GeV$^2$"],saveplot=True,pics_dir=out_dir,figsize=(30,18))
 
 
-    plot_bin_mig_example = 0
+    plot_bin_mig_example = 1
 
     if plot_bin_mig_example:
         for i in range(len(xb_bin_edges)-1):
@@ -678,7 +683,7 @@ for i in range(len(configs)):
                         plot_title = "$\phi$ vs Momentum Transfer t, Sim. {}, {}<$x_B$<{},{}<$Q^2$<{}, N={}, $P$={}%".format(title_prefix,xb_bin_edges[i],xb_bin_edges[i+1],q2_bin_edges[j],q2_bin_edges[j+1],N_found, bin_purity)
 
                         plot_2dhist(bin_rec_df[prefix+"phi1"],bin_rec_df[prefix+"t2"],["$\phi$","t"],[[0,360,100],[0,1.8,100]],colorbar=True,xaxis_lines=phi_bin_edges,yaxis_lines=t_bin_edges,
-                                plot_title=plot_title,units=["None","GeV$^2$"],saveplot=True,pics_dir=out_dir,figsize=(30,18))
+                                plot_title=plot_title,units=["None","GeV$^2$"],saveplot=False,pics_dir=out_dir,figsize=(30,18))
 
 
     sys.exit()
