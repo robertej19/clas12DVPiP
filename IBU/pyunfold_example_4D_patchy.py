@@ -48,18 +48,6 @@ def unroller_Gen(row, bins_Q2, bins_xB, bins_t1, bins_phi1):
            t1_index * (len(bins_phi1) - 1) + \
            phi1_index
 
-#df['truth_bin_id'] = df.apply(unroller_Gen, axis=1, args=(bins_Q2, bins_xB, bins_t1, bins_phi1))
-
-
-# #iterate over all but last value in bins_xB
-# for x in bins_xB[:-1]:
-#         for q in bins_Q2[:-1]:
-#                 for t in bins_t1[:-1]:
-#                         for p in bins_phi1[:-1]:
-#                                 print(x,q,t,p)
-#                                 print(unroller_Gen(x,q,t,p, bins_Q2, bins_xB, bins_t1, bins_phi1))
-# sys.exit()g
-
 # Need to wrap on phi!
 def unroller(row, bins_Q2, bins_xB, bins_t1, bins_phi1):
         """Unroll 4D bin numbers into 1D bin number"""
@@ -84,16 +72,64 @@ def unroller(row, bins_Q2, bins_xB, bins_t1, bins_phi1):
                 phi1_index
 
 
-uniform_prior = uniform_prior(num_causes=4)
-causes = np.arange(4)
-jeffreys_prior = jeffreys_prior(causes=causes)
+def unfold_function(df=None,binned_truth=None, binned_data=None,bins=None):
 
+        
+        value_counts_truth = df[binned_truth].value_counts()
+        counts_series = pd.Series(0, index=bins[:-1])
+        counts_truth = counts_series.add(value_counts_truth, fill_value=0)
+        data_true = counts_truth.values
+
+        value_counts_observed= df[binned_data].value_counts()
+        counts_series = pd.Series(0, index=bins[:-1])
+        counts_observed = counts_series.add(value_counts_observed, fill_value=0)
+        data_observed = counts_observed.values
+
+        # Creating a zero-filled DataFrame with desired index and columns
+        hist_2d = pd.DataFrame(0, index=bins[:-1], columns=bins[:-1])
+
+        # Calculating the counts using crosstab
+        counts = pd.crosstab(df[binned_data], df[binned_truth])
+
+        # Filling the actual counts into our zero-filled DataFrame
+        hist_2d.update(counts)
+
+        # Converting the DataFrame to numpy array
+        response_hist = hist_2d.values
+        #print the size of the array
+        print("response_hist shape")
+        print(response_hist.shape)
+
+
+        data_observed_err = np.sqrt(data_observed)
+        efficiencies = np.ones_like(data_observed, dtype=float)
+        efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
+        response_hist_err = np.sqrt(response_hist)
+
+        column_sums = response_hist.sum(axis=0)
+        # Add a small constant to avoid division by zero
+        column_sums = column_sums + 1e-10
+        normalization_factor = efficiencies / column_sums
+
+        response = response_hist * normalization_factor
+        response_err = response_hist_err * normalization_factor
+       
+        unfolded_results = iterative_unfold(data=data_observed,
+                                    data_err=data_observed_err,
+                                    response=response,
+                                    response_err=response_err,
+                                    efficiencies=efficiencies,
+                                    efficiencies_err=efficiencies_err,
+                                    callbacks=[Logger()],
+                                    ts_stopping=0.00005,)
+        
+        return unfolded_results,data_true,data_observed,response_hist,response
 test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
 binned_test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t2/binned_dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
 binned_test_file_prepped = "binned_test_file_prepped_4x4x4xphi.pkl"
 
 data_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
-read_in = True
+read_in = False
 if read_in:
         ## for each pickle file in datadir, read it in, and then combine into one dataframe
         df = pd.DataFrame()
@@ -182,24 +218,17 @@ if read_in:
         df.to_pickle(binned_test_file_prepped)
 else:
         df = pd.read_pickle(binned_test_file_prepped)
+        print(len(df))
+
+
+#uniform_prior = uniform_prior(num_causes=4)
+#causes = np.arange(4)
+#jeffreys_prior = jeffreys_prior(causes=causes)
 
 #get the unique bins in bin_number
 unique_bins = bins_unrolled
 print(unique_bins)
-phi = False
-t1 = False
-if phi:
-        bins = bins_phi1
-        binned_truth = 'bin_Genphi1'
-        binned_data = 'bin_phi1'
-        num_bins = len(bins)-1
-elif t1: 
-        bins = bins_t1
-        binned_truth = 'bin_Gent1'
-        binned_data = 'bin_t1'
-        num_bins = len(bins)-1
-else:
-        pass
+
 print("using unrolled bins")
 #append a bin to the end of bins as a dummy WARNING: MIGHT CAUSE ISSUES
 binned_truth = 'truth_bin_id_remapped'
@@ -213,88 +242,41 @@ mapping = {value: i for i, value in enumerate(unique_truth_bin_id)}
 df['truth_bin_id_remapped'] = df['truth_bin_id'].map(mapping)
 df['observed_bin_id_remapped'] = df['observed_bin_id'].map(mapping)
 
-new_bins = sorted(df['truth_bin_id_remapped'].unique())
-bins = new_bins
-bins = np.append(bins, bins[-1]+1)
-num_bins = len(bins)-1
+bins = sorted(df['truth_bin_id_remapped'].unique())
+bins = np.append(bins, bins[-1]+1) #have to add 1 
         
 
-value_counts_truth = df[binned_truth].value_counts()
-
-counts_series = pd.Series(0, index=bins[:-1])
-counts_truth = counts_series.add(value_counts_truth, fill_value=0)
-data_true = counts_truth.values
-
-value_counts_observed= df[binned_data].value_counts()
-counts_series = pd.Series(0, index=bins[:-1])
-counts_observed = counts_series.add(value_counts_observed, fill_value=0)
-data_observed = counts_observed.values
-
-# Creating a zero-filled DataFrame with desired index and columns
-hist_2d = pd.DataFrame(0, index=bins[:-1], columns=bins[:-1])
-
-# Calculating the counts using crosstab
-counts = pd.crosstab(df[binned_data], df[binned_truth])
-
-# Filling the actual counts into our zero-filled DataFrame
-hist_2d.update(counts)
-
-# Converting the DataFrame to numpy array
-response_hist = hist_2d.values
-#print the size of the array
-print("response_hist shape")
-print(response_hist.shape)
-
-
-data_observed_err = np.sqrt(data_observed)
-efficiencies = np.ones_like(data_observed, dtype=float)
-efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
-response_hist_err = np.sqrt(response_hist)
-
-column_sums = response_hist.sum(axis=0)
-# Add a small constant to avoid division by zero
-column_sums = column_sums + 1e-10
-normalization_factor = efficiencies / column_sums
-
-response = response_hist * normalization_factor
-response_err = response_hist_err * normalization_factor
-
-
-fig, ax = plt.subplots()
-ax.step(np.arange(num_bins), data_true, where='mid', lw=3,
-        alpha=0.7, label='True distribution')
-ax.step(np.arange(num_bins), data_observed, where='mid', lw=3,
-        alpha=0.7, label='Observed distribution')
-ax.set(xlabel='X bins', ylabel='Counts')
-ax.legend()
-plt.show()
-
-
-
-
-fig, ax = plt.subplots()
-im = ax.imshow(response_hist, origin='lower')
-cbar = plt.colorbar(im, label='Counts')
-ax.set(xlabel='Cause bins', ylabel='Effect bins')
-plt.show()
-
-
-
-fig, ax = plt.subplots()
-im = ax.imshow(response, origin='lower')
-cbar = plt.colorbar(im, label='$P(E_i|C_{\mu})$')
-ax.set(xlabel='Cause bins', ylabel='Effect bins',
-       title='Normalized response matrix')
-plt.show()
-
-unfolded_results = iterative_unfold(data=data_observed,
-                                    data_err=data_observed_err,
-                                    response=response,
-                                    response_err=response_err,
-                                    efficiencies=efficiencies,
-                                    efficiencies_err=efficiencies_err,
-                                    callbacks=[Logger()],
-                                    ts_stopping=0.00005,)
+    # Iterate over xBbins, Q2bins, tbins in steps of 3
+for i in range(len(bins_xB)-3):
+        for j in range(len(bins_Q2)-3):
+                for k in range(len(bins_t1)-3):
+                        # Handle wrapping for phibins
+                        for l in range(len(bins_phi1)-1):
+                                phi_segment = bins_phi1[l:l+4]
+                                # If we're at the end of the array, wrap around
+                                if l == len(bins_phi1) - 4:
+                                        phi_segment = [bins_phi1[l], bins_phi1[l+1], bins_phi1[l+2], bins_phi1[0]]
+                                #wrap by 2 if l is at the end of the array
+                                if l == len(bins_phi1) - 3:
+                                        phi_segment = [bins_phi1[l], bins_phi1[l+1], bins_phi1[0], bins_phi1[1]]
+                                #wrap by 1 if l is at the end of the array
+                                if l == len(bins_phi1) - 2:
+                                        phi_segment = [bins_phi1[l], bins_phi1[0], bins_phi1[1], bins_phi1[2]]
+                                #wrap by 0 if l is at the end of the array
+                                if l == len(bins_phi1) - 1:
+                                        phi_segment = [bins_phi1[0], bins_phi1[1], bins_phi1[2], bins_phi1[3]]
+                                
+                                print(bins_xB[i:i+4], 
+                                bins_Q2[j:j+4], 
+                                bins_t1[k:k+4], 
+                                phi_segment)
+                    #           Call unfolding function
+                    
+sys.exit()
+unfolded_results,data_true,data_observed,response_hist,response = unfold_function(df=df,
+                                binned_truth="truth_bin_id_remapped",
+                                binned_data="observed_bin_id_remapped",
+                                bins=bins)
 
 print(unfolded_results.keys())
 
@@ -302,41 +284,65 @@ print(unfolded_results['unfolded'])
 
 print(unfolded_results['sys_err'])
 
+plotting = True
+if plotting:
+        fig, ax = plt.subplots()
+        ax.step(np.arange(len(bins)-1), data_true, where='mid', lw=3,
+                alpha=0.7, label='True distribution')
+        ax.step(np.arange(len(bins)-1), data_observed, where='mid', lw=3,
+                alpha=0.7, label='Observed distribution')
+        ax.set(xlabel='X bins', ylabel='Counts')
+        ax.legend()
+        plt.show()
 
-fig, ax = plt.subplots()
-ax.step(np.arange(num_bins), data_true, where='mid', lw=3,
-        alpha=0.7, label='True distribution')
-ax.step(np.arange(num_bins), data_observed, where='mid', lw=3,
-        alpha=0.7, label='Observed distribution')
-ax.errorbar(np.arange(num_bins), unfolded_results['unfolded'],
-            yerr=unfolded_results['sys_err'],
-            alpha=0.7,
-            elinewidth=3,
-            capsize=4,
-            ls='None', marker='.', ms=10,
-            label='Unfolded distribution')
 
-ax.set(xlabel='X bins', ylabel='Counts')
-plt.legend()
-plt.show()
+        fig, ax = plt.subplots()
+        im = ax.imshow(response_hist, origin='lower')
+        cbar = plt.colorbar(im, label='Counts')
+        ax.set(xlabel='Cause bins', ylabel='Effect bins',title='Response matrix')
+        plt.show()
 
-#create another plot for residuals
-fig, ax = plt.subplots()
-ax.errorbar(np.arange(num_bins), np.abs(data_observed-data_true),
-                alpha=0.7,
-                elinewidth=3,
-                capsize=4,
-                ls='None', marker='.', ms=10,
-                label='Observed distribution')
-ax.errorbar(np.arange(num_bins), np.abs(unfolded_results['unfolded']-data_true),
+        fig, ax = plt.subplots()
+        im = ax.imshow(response, origin='lower')
+        cbar = plt.colorbar(im, label='$P(E_i|C_{\mu})$')
+        ax.set(xlabel='Cause bins', ylabel='Effect bins',
+        title='Normalized response matrix')
+        plt.show()
+
+        fig, ax = plt.subplots()
+        ax.step(np.arange(len(bins)-1), data_true, where='mid', lw=3,
+                alpha=0.7, label='True distribution')
+        ax.step(np.arange(len(bins)-1), data_observed, where='mid', lw=3,
+                alpha=0.7, label='Observed distribution')
+        ax.errorbar(np.arange(len(bins)-1), unfolded_results['unfolded'],
+                yerr=unfolded_results['sys_err'],
                 alpha=0.7,
                 elinewidth=3,
                 capsize=4,
                 ls='None', marker='.', ms=10,
                 label='Unfolded distribution')
-ax.set(xlabel='X bins', ylabel='Counts')
-plt.legend()
-plt.show()
+
+        ax.set(xlabel='X bins', ylabel='Counts')
+        plt.legend()
+        plt.show()
+
+        #create another plot for residuals
+        fig, ax = plt.subplots()
+        ax.errorbar(np.arange(len(bins)-1), np.abs(data_observed-data_true),
+                        alpha=0.7,
+                        elinewidth=3,
+                        capsize=4,
+                        ls='None', marker='.', ms=10,
+                        label='Observed distribution')
+        ax.errorbar(np.arange(len(bins)-1), np.abs(unfolded_results['unfolded']-data_true),
+                        alpha=0.7,
+                        elinewidth=3,
+                        capsize=4,
+                        ls='None', marker='.', ms=10,
+                        label='Unfolded distribution')
+        ax.set(xlabel='X bins', ylabel='Counts')
+        plt.legend()
+        plt.show()
 
 
 sys.exit()
