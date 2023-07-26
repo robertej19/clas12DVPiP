@@ -230,6 +230,11 @@ def get_data():
 def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
                            ):
 
+        # if stride = 0, change it to 1. This is a simple fix to avoid a divide by zero error
+        if x_stride == 0:
+                x_stride = 1
+        if q_stride == 0:
+                q_stride = 1
         print("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(x_width,q_width,x_stride,q_stride))
         unfolding_matrices  = []
         v_ids = []
@@ -356,33 +361,86 @@ print(q_bins)
 min_bin_span = min(len(x_bins),len(q_bins))
 print("Minimum bin span is {}".format(min_bin_span))
 
+import time
+
+# Initialize comp_time and average_err arrays
+comp_time = np.zeros((min_bin_span, min_bin_span))
+average_err = np.zeros((min_bin_span, min_bin_span))
+true_output_matrix = None  # Variable to hold the "true" output matrix
+
+
 for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, then kernel size can be 4,3,2
-        ic(kernel_size)
         stride_max = min(kernel_size, min_bin_span - kernel_size +1)
-        ic(stride_max)
-        for stride in range(1, stride_max+1):
-                if (min_bin_span - kernel_size) % stride == 0:
-                        print("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(kernel_size,kernel_size,stride,stride))
+        stride_range = [0] if kernel_size == min_bin_span else range(1, stride_max + 1)  # add stride 0 if kernel size equals image size
+        for stride in stride_range:
+                if stride == 0 or (min_bin_span - kernel_size) % stride == 0:  # also handle stride=0 case
+                        print("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(kernel_size, kernel_size, stride, stride))
+
+                        start_time = time.time()
+
+                        output_matrix = unstich_unfold_restich(x_width=kernel_size,q_width=kernel_size,x_stride=stride,q_stride=stride)
+
+                        # Compute elapsed time and store it in comp_time array
+                        elapsed_time = time.time() - start_time
+                        comp_time[kernel_size-1][stride] = elapsed_time
+
+                        # If this is the "true" output matrix (i.e., kernel size equals min_bin_span), store it
+                        if kernel_size == min_bin_span and stride == 0:
+                                true_output_matrix = output_matrix
+
+                        error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,
+                                (output_matrix - true_output_matrix) / true_output_matrix, 0)
+
+                        # Compute average absolute difference of all non-zero and non-nan elements in error_matrix
+                        # and store it in average_err array as a percent
+                        average_err[kernel_size-1][stride] = np.nanmean(np.abs(error_matrix))*100
                         
-        #                 continue
-        #                 output_matrix = unstich_unfold_restich(x_width=width,q_width=width,x_stride=stride,q_stride=stride)
+                        unfolded_data = np.dot(output_matrix, observed_data)
 
-        #                 unfolded_data = np.dot(output_matrix, observed_data)
 
-        #                 #make a plot showing the unfolded data, the observed data, and the truth data
-        #                 fig, ax = plt.subplots()
-        #                 ax.step(bins, truth_data, where='mid', lw=3,
-        #                         alpha=0.7, label='True distribution')
-        #                 ax.step(bins, observed_data, where='mid', lw=3,
-        #                         alpha=0.7, label='Observed distribution')
-        #                 ax.errorbar(bins, unfolded_data,
-        #                         alpha=0.7,
-        #                         elinewidth=3,
-        #                         capsize=4,
-        #                         ls='None', marker='.', ms=10,
-        #                         label='Unfolded distribution')
-        #                 plt.show()
+                        # #make a plot showing the unfolded data, the observed data, and the truth data
+                        # fig, ax = plt.subplots()
+                        # ax.step(bins, truth_data, where='mid', lw=3,
+                        #         alpha=0.7, label='True distribution')
+                        # ax.step(bins, observed_data, where='mid', lw=3,
+                        #         alpha=0.7, label='Observed distribution')
+                        # ax.errorbar(bins, unfolded_data,
+                        #         alpha=0.7,
+                        #         elinewidth=3,
+                        #         capsize=4,
+                        #         ls='None', marker='.', ms=10,
+                        #         label='Unfolded distribution')
+                        # plt.show()
 
+fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+# Create the array for x and y ticks (add 1 to match original kernel size, add 0 for stride)
+x_ticks = np.arange(min_bin_span+1)  # consider additional column for stride=0
+y_ticks = np.arange(min_bin_span) + 1
+
+# Create heatmap for comp_time (use transpose to swap axes)
+c1 = axs[0].imshow(comp_time.T, cmap='hot', interpolation='nearest', origin='lower')
+fig.colorbar(c1, ax=axs[0])
+axs[0].set_title('Computation Time')
+axs[0].set_xlabel('Kernel Size')
+axs[0].set_ylabel('Stride')
+axs[0].set_xticks(np.arange(min_bin_span))
+axs[0].set_yticks(np.arange(min_bin_span+1))
+axs[0].set_xticklabels(y_ticks)
+axs[0].set_yticklabels(x_ticks)
+
+# Create heatmap for average_err (use transpose to swap axes)
+c2 = axs[1].imshow(average_err.T, cmap='hot', interpolation='nearest', origin='lower')
+fig.colorbar(c2, ax=axs[1])
+axs[1].set_title('Average Error')
+axs[1].set_xlabel('Kernel Size')
+axs[1].set_ylabel('Stride')
+axs[1].set_xticks(np.arange(min_bin_span))
+axs[1].set_yticks(np.arange(min_bin_span+1))
+axs[1].set_xticklabels(y_ticks)
+axs[1].set_yticklabels(x_ticks)
+
+plt.show()
 
 
 
