@@ -4,7 +4,6 @@ from scipy.stats import norm
 from pyunfold.priors import uniform_prior
 from pyunfold.priors import jeffreys_prior
 import pandas as pd
-from utils import filestruct, const, make_histos
 import numpy as np
 import sys, os
 from icecream import ic
@@ -18,7 +17,49 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from utils import filestruct, const, make_histos
+
 PhysicsConstants = const.PhysicsConstants()
+
+
+fs = filestruct.fs()
+
+test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/dvpip_events_norad_10000_20230703_1814_Fall_2018_Inbending_50nA_recon.pkl"
+
+df = pd.read_pickle(test_file)
+
+bins_Q2,bins_xB, bins_t1, bins_phi1 = fs.Q2bins, fs.xBbins, fs.tbins, fs.phibins
+
+
+# Define a dictionary to map column names to their bins
+columns_and_bins = {
+    'xB': bins_xB,
+    'Q2': bins_Q2,
+    't1': bins_t1,
+    'phi1': bins_phi1,
+    'GenxB': bins_xB,
+    'GenQ2': bins_Q2,
+    'Gent1': bins_t1,
+    'Genphi1': bins_phi1
+}
+
+# Perform the operation for all specified columns
+for column, bins in columns_and_bins.items():
+    # creating the binning
+    df[f'{column}_bin_category'] = pd.cut(df[column], bins=bins, right=False, include_lowest=True)
+
+    # getting the minimum edge of the bin
+    df[f'{column}_bin'] = df[f'{column}_bin_category'].apply(lambda x: x.left)
+
+    # getting the bin number
+    df[f'{column}_bin_number'] = df[f'{column}_bin_category'].cat.codes
+
+    # dropping the temporary bin_category column
+    df = df.drop(columns=[f'{column}_bin_category'])
+
+# Now, filter out rows where any bin_number column contains '-1'
+for column in columns_and_bins.keys():
+    df = df[df[f'{column}_bin_number'] != -1]
 
 """
 With PyUnfold, any response matrix should be 2-dimensional where the first dimension (rows) are effect bins and 
@@ -161,6 +202,8 @@ def unfold_function(truth_data=None,
         observed_data_patch = observed_data[vector_ids]
         truth_data_patch = truth_data[vector_ids]
 
+        ic(response_hist_patch)
+
         observed_data_err = np.sqrt(observed_data_patch)
         efficiencies = np.ones_like(observed_data_patch, dtype=float)
         efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
@@ -181,35 +224,45 @@ def unfold_function(truth_data=None,
                                     efficiencies=efficiencies,
                                     efficiencies_err=efficiencies_err,
                                     callbacks=[Logger()],
-                                    ts_stopping=0.00005,)
+                                    ts_stopping=0.0000005,)
         
         return unfolded_results,truth_data_patch,observed_data_patch,response_hist_patch,response_normalized_patch
-
-
-data = {
-        'truth_x':[0,0,1,1,1,2,2,1,2,2,3],
-        'truth_q':[0,0,0,0,0,0,0,1,1,1,1],
-        'observed_x':[1,1,2,1,1,2,2,1,2,1,2],
-        'observed_q':[0,0,1,1,1,0,1,1,1,1,1],
-}
-df = pd.DataFrame(data)
 
 def unroll(x_bin, q_bin, x_bins):
     unrolled_bin = q_bin * len(x_bins) + x_bin
     return unrolled_bin
 
+#need to replace the xbin qbin values with their indicies, and then should be good.
 
-x_bins = [0,1,2,3]
-q_bins = [0,1]
+# data = {
+#         'truth_x':[0,0,1,1,1,2,2,1,2,2,3],
+#         'truth_q':[0,0,0,0,0,0,0,1,1,1,1],
+#         'observed_x':[1,1,2,1,1,2,2,1,2,1,2],
+#         'observed_q':[0,0,1,1,1,0,1,1,1,1,1],
+# }
+# df = pd.DataFrame(data)
+# x_bins = [0,1,2,3]
+# q_bins = [0,1]
+
+x_bins = np.arange(0,len(bins_xB)-1,1) #need to subtract 1 because bins_xB includes edges, and x_bins is just the bin labels number
+q_bins = np.arange(0,len(bins_Q2)-1,1)
+
+df['observed_x'] = df['xB_bin_number']
+df['observed_q'] = df['Q2_bin_number']
+df['truth_x'] = df['GenxB_bin_number']
+df['truth_q'] = df['GenQ2_bin_number']
+
 total_unrolled_number_of_bins = len(x_bins)*len(q_bins)
 #Unroll the 2D data into 1D columns of observation and truth
 df['unrolled_truth_bins'] = df['truth_q']*len(x_bins)+df['truth_x']
 df['unrolled_observed_bins'] = df['observed_q']*len(x_bins)+df['observed_x']
 
+
 binned_truth="unrolled_truth_bins"
 binned_data="unrolled_observed_bins"
 
 bins = np.arange(0, total_unrolled_number_of_bins, 1)
+ic(bins)
 
 value_counts_truth = df[binned_truth].value_counts()
 counts_series_truth = pd.Series(0, index=bins)
@@ -233,7 +286,9 @@ hist_2d.update(counts)
 # Converting the DataFrame to numpy array
 response_hist = hist_2d.values
 #print the size of the array
-
+#round the array to the nearest integer
+response_hist = np.round(response_hist).astype(int)
+#print out each row in response_hist
 
 results = np.zeros((len(x_bins), len(q_bins)))
 x_width = 2 # kernel x width
@@ -265,7 +320,7 @@ for x in range(0,len(x_bins)-(x_width-1),x_stride):
                 # Still need to do something with the err propagation
                 # Need to investigate priors, efficencies, and one other thing
                 # Can see everything avaliable with:
-                # ic(unfolded_results.keys())
+                #ic(unfolded_results.keys())
                 # ic(unfolded_results['sys_err'])
 
                 plotting = False
@@ -286,22 +341,24 @@ for count, (element_id, unfolding_matrix) in enumerate(zip(v_ids,unfolding_matri
 
         for i in range(unfolding_matrix.shape[0]):  # iterating over rows
                 for j in range(unfolding_matrix.shape[1]):  # iterating over columns
-                        ic(i)
-                        ic(j)
-                        ic(element_id[i])
-                        ic(element_id[j])
-                        ic(unfolding_matrix[i][j])
                         unfolded_response[element_id[i],element_id[j]] = unfolding_matrix[i][j]
         enlarged_matrices.append(unfolded_response)
                                 
 
 
-
+for i,mat in enumerate(enlarged_matrices):
+        np.savetxt("partial_response_{}.csv".format(i), mat, delimiter=",")# header="Column1,Column2,Column3")
 
 output_matrix = combine_matrices(enlarged_matrices)
+np.savetxt("partial_response_{}.csv".format("reconstructed"), output_matrix, delimiter=",")# header="Column1,Column2,Column3")
+
+ic(output_matrix)
+ic(enlarged_matrices[0]-output_matrix)
 #replace nan values with zero
 output_matrix[np.isnan(output_matrix)] = 0
-unfolded_data = np.dot(output_matrix,observed_data)
+#take transpose of output matrix
+output_matrix = output_matrix.T
+unfolded_data = np.dot(output_matrix, observed_data)
 print(output_matrix)
 
 #make a plot showing the unfolded data, the observed data, and the truth data
@@ -316,6 +373,12 @@ ax.errorbar(bins, unfolded_data,
         capsize=4,
         ls='None', marker='.', ms=10,
         label='Unfolded distribution')
+# ax.errorbar(bins, unfolded_results['unfolded'],
+#         alpha=0.7,
+#         elinewidth=3,
+#         capsize=4,
+#         ls='None', marker='.', ms=10,
+#         label='Unfolded distribution')
 plt.show()
 
 

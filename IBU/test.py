@@ -1,11 +1,19 @@
 import numpy as np
 
-nan = np.nan
-arr_1 = np.array([ 1., nan, nan, nan, nan, nan])
-arr_2 = np.array([ nan, nan, nan, nan, nan, nan])
+# Assuming arrays is your list of n 1xd numpy arrays. For example:
+arrays = [
+    np.array([0.2, 0.3, np.nan, 0.5]),
+    np.array([0.4, np.nan, 0.1, 0.5]),
+    np.array([np.nan, 0.5, np.nan, 0.5])
+]
 
-list_of_arrays = [arr_1,arr_2]
-filtered_list = [arr for arr in list_of_arrays if not np.all(np.isnan(arr))]
+# Convert list of arrays into a 2D numpy array
+arrays_2d = np.array(arrays)
 
-o = np.nanmean(filtered_list, axis=0)
-print(o)
+# Compute the mean of each column (i.e., each element across arrays), ignoring nan values
+averages = np.nanmean(arrays_2d, axis=0)
+
+# Normalize the averages so they sum to 1
+output = averages / np.nansum(averages)
+
+print(output)
