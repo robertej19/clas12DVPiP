@@ -1,8 +1,9 @@
 import numpy as np
 from pyunfold import iterative_unfold
 from scipy.stats import norm
-from pyunfold.priors import uniform_prior
-from pyunfold.priors import jeffreys_prior
+#from pyunfold.priors import uniform_prior
+#from pyunfold.priors import jeffreys_prior
+from pyunfold import priors
 import pandas as pd
 import numpy as np
 import sys, os
@@ -150,13 +151,21 @@ def unfold_function(truth_data=None,
 
         response_normalized_patch = response_hist_patch * normalization_factor
         response_err_patch_normalized = response_hist_err_patch * normalization_factor
-       
+
+        #uniform_prior = priors.uniform_prior(num_causes=len(truth_data_patch))
+        causes = np.arange(len(truth_data_patch))
+        num_causes = len(truth_data_patch)
+        cause_lim = np.logspace(0, 3, num_causes)
+        jeffreys_prior = priors.jeffreys_prior(cause_lim)
+        print(jeffreys_prior)
+        
         unfolded_results = iterative_unfold(data=observed_data_patch,
                                     data_err=observed_data_err,
                                     response=response_normalized_patch,
                                     response_err=response_err_patch_normalized,
                                     efficiencies=efficiencies,
                                     efficiencies_err=efficiencies_err,
+                                    prior=jeffreys_prior,
                                     callbacks=[Logger()],
                                     ts_stopping=0.0000005,)
         
@@ -387,6 +396,18 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                         # If this is the "true" output matrix (i.e., kernel size equals min_bin_span), store it
                         if kernel_size == min_bin_span and stride == 0:
                                 true_output_matrix = output_matrix
+                                # #calcuate inverse of response matrix
+                                # response_matrix_inv = np.linalg.inv(response_hist)
+                                # #compare true_output_matrix to response matrix inverse
+                                # ic(true_output_matrix)
+                                # ic(response_matrix_inv)
+                                # diffs = np.abs(true_output_matrix/response_matrix_inv-1)*100
+                                # #replace nan with zero
+                                # diffs[np.isnan(diffs)] = 0
+                                # # round each value to nearest int
+                                # diffs = np.round(diffs).astype(int)
+                                # ic(diffs)
+                                # sys.exit()
 
                         error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,
                                 (output_matrix - true_output_matrix) / true_output_matrix, 0)
@@ -398,19 +419,19 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                         unfolded_data = np.dot(output_matrix, observed_data)
 
 
-                        # #make a plot showing the unfolded data, the observed data, and the truth data
-                        # fig, ax = plt.subplots()
-                        # ax.step(bins, truth_data, where='mid', lw=3,
-                        #         alpha=0.7, label='True distribution')
-                        # ax.step(bins, observed_data, where='mid', lw=3,
-                        #         alpha=0.7, label='Observed distribution')
-                        # ax.errorbar(bins, unfolded_data,
-                        #         alpha=0.7,
-                        #         elinewidth=3,
-                        #         capsize=4,
-                        #         ls='None', marker='.', ms=10,
-                        #         label='Unfolded distribution')
-                        # plt.show()
+                        #make a plot showing the unfolded data, the observed data, and the truth data
+                        fig, ax = plt.subplots()
+                        ax.step(bins, truth_data, where='mid', lw=3,
+                                alpha=0.7, label='True distribution')
+                        ax.step(bins, observed_data, where='mid', lw=3,
+                                alpha=0.7, label='Observed distribution')
+                        ax.errorbar(bins, unfolded_data,
+                                alpha=0.7,
+                                elinewidth=3,
+                                capsize=4,
+                                ls='None', marker='.', ms=10,
+                                label='Unfolded distribution')
+                        plt.show()
 
 fig, axs = plt.subplots(1, 2, figsize=(12, 6))
 
