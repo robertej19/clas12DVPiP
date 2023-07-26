@@ -133,43 +133,45 @@ def plot_distributions(bins, truth_data_patch, observed_data_patch, response_his
         plt.legend()
         plt.show()
 
-def calculate_ratios(list_arr):
-        # Convert input to numpy array for easier processing
-        list_arr = np.array(list_arr)
+# def calculate_ratios(list_arr):
+#         # Convert input to numpy array for easier processing
+#         list_arr = np.array(list_arr)
 
-        # Get the number of lists (d) and the size of each list (n)
-        d, n = list_arr.shape
+#         # Get the number of lists (d) and the size of each list (n)
+#         d, n = list_arr.shape
 
-        # Initialize an output array with zeros
-        output_arr = np.zeros(n)
+#         # Initialize an output array with zeros
+#         output_arr = np.zeros(n)
 
-        # Process each list in the input array
-        ratioed_arrays = []
-        for i in range(d):
-                # Ignore nan values and normalize remaining values to get ratios
-                ratios = np.nan_to_num(list_arr[i])
-                #if the array is all zeros, set the min val to zero
-                if np.all(ratios == 0):
-                        pass
-                        # if all zero, we don't have to scale anything
-                else:
-                        min_val = np.min(ratios[ratios != 0])
-                        # if min_val is less than 0.000001 print warning
-                        if min_val < 0.000001:
-                                print("Warning: min_val is less than 0.000001!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                        ratios /= min_val
-                        #set zeros in ratio to nan
-                ratios[ratios == 0] = np.nan
-                ratioed_arrays.append(ratios)
+#         # Process each list in the input array
+#         ratioed_arrays = []
+#         for i in range(d):
+#                 # Ignore nan values and normalize remaining values to get ratios
+#                 ratios = np.nan_to_num(list_arr[i])
+#                 #if the array is all zeros, set the min val to zero
+#                 if np.all(ratios == 0):
+#                         pass
+#                         # if all zero, we don't have to scale anything
+#                 else:
+#                         min_val = np.min(ratios[ratios != 0])
+#                         # if min_val is less than 0.000001 print warning
+#                         if min_val < 0.000001:
+#                                 print("Warning: min_val is less than 0.000001!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+#                         ratios /= min_val
+#                         #set zeros in ratio to nan
+#                 ratios[ratios == 0] = np.nan
+#                 ratioed_arrays.append(ratios)
         
-        ratioed_arrays_np = np.array(ratioed_arrays)
-        output_arr = np.nanmean(ratioed_arrays_np, axis=0)
-        not_nan = ~np.isnan(output_arr)
-        # Calculate the sum of the non-nan values
-        sum_not_nan = np.sum(output_arr[not_nan])
-        # Divide the non-nan values by the sum to normalize them
-        output_arr[not_nan] /= sum_not_nan
-        return output_arr
+#         ratioed_arrays_np = np.array(ratioed_arrays)
+#         output_arr = np.nanmean(ratioed_arrays_np, axis=0)
+#         not_nan = ~np.isnan(output_arr)
+#         # Calculate the sum of the non-nan values
+#         sum_not_nan = np.sum(output_arr[not_nan])
+#         # Divide the non-nan values by the sum to normalize them
+#         output_arr[not_nan] /= sum_not_nan
+#         print(output_arr)
+#         sys.exit()
+#         return output_arr
 
 def combine_matrices(response_matrices):
         # Get the number of matrices (m), rows in each matrix (n), and the number of columns in each matrix (d)
@@ -181,13 +183,27 @@ def combine_matrices(response_matrices):
 
         # Process each row from the response matrices
         for i in range(n):
+                #i=1
                 # Extract the ith row from each matrix
                 rows = [matrix[i] for matrix in response_matrices]
 
                 # Calculate the average values of the rows and add the result to the list
-                averaged_rows.append(calculate_ratios(rows))
+                #averaged_rows.append(calculate_ratios(rows))
+                # Convert list of arrays into a 2D numpy array
+                arrays_2d = np.array(rows)
+
+                # Compute the mean of each column (i.e., each element across arrays), ignoring nan values
+                averages = np.nanmean(arrays_2d, axis=0)
+
+                # Normalize the averages so they sum to 1
+                averaged_row = averages / np.nansum(averages)
+                averaged_rows.append(averaged_row)
+                print(averaged_rows)
+
         # Convert the list of averaged rows to a numpy array
         output_matrix = np.array(averaged_rows)
+        #replace nan with zero
+        output_matrix[np.isnan(output_matrix)] = 0
         return output_matrix
 
 def unfold_function(truth_data=None,
@@ -291,8 +307,8 @@ response_hist = np.round(response_hist).astype(int)
 #print out each row in response_hist
 
 results = np.zeros((len(x_bins), len(q_bins)))
-x_width = 2 # kernel x width
-q_width = 2 # kernel q width
+x_width = 4 # kernel x width
+q_width = 4 # kernel q width
 x_stride = 1 # kernel x stride
 q_stride = 1 # kernel q stride
 unfolding_matrices  = []
@@ -346,20 +362,34 @@ for count, (element_id, unfolding_matrix) in enumerate(zip(v_ids,unfolding_matri
                                 
 
 
-for i,mat in enumerate(enlarged_matrices):
-        np.savetxt("partial_response_{}.csv".format(i), mat, delimiter=",")# header="Column1,Column2,Column3")
+# for i,mat in enumerate(enlarged_matrices):
+#         np.savetxt("partial_response_{}.csv".format(i), mat, delimiter=",")# header="Column1,Column2,Column3")
 
 output_matrix = combine_matrices(enlarged_matrices)
-np.savetxt("partial_response_{}.csv".format("reconstructed"), output_matrix, delimiter=",")# header="Column1,Column2,Column3")
+#np.savetxt("full_response_{}.csv".format("reconstructed"), output_matrix, delimiter=",")# header="Column1,Column2,Column3")
 
-ic(output_matrix)
-ic(enlarged_matrices[0]-output_matrix)
+#read "full_response_{}.csv".format("reconstructed") into a numpy array
+output_matrix_full = np.genfromtxt("full_response_{}.csv".format("reconstructed"), delimiter=',')
+
+diffs = np.abs(output_matrix/output_matrix_full-1)*100
+#replace nan with zero
+diffs[np.isnan(diffs)] = 0
+# round each value to nearest int
+diffs = np.round(diffs).astype(int)
+ic(diffs)
+#print the first 6x6 elements of the array
+for end in range(0,len(diffs),1):
+        ic(diffs[0:end,0:end])
+#check if any elements are larger than 0.05
+if np.any(diffs > 2):
+       #print which elements are
+       print("The following elements are larger than 5% different from the original matrix:")
+       print(np.where(np.abs(output_matrix/output_matrix_full-1)*100 > 5))
 #replace nan values with zero
 output_matrix[np.isnan(output_matrix)] = 0
 #take transpose of output matrix
 output_matrix = output_matrix.T
 unfolded_data = np.dot(output_matrix, observed_data)
-print(output_matrix)
 
 #make a plot showing the unfolded data, the observed data, and the truth data
 fig, ax = plt.subplots()

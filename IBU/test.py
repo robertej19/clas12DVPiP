@@ -16,4 +16,8 @@ averages = np.nanmean(arrays_2d, axis=0)
 # Normalize the averages so they sum to 1
 output = averages / np.nansum(averages)
 
-print(output)
+print(output/0.07692308)
+#remove nan from array
+output = output[~np.isnan(output)]
+#print sum of output
+print(np.sum(output))
