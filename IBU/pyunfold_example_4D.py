@@ -93,15 +93,15 @@ binned_test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t
 binned_test_file_prepped = "binned_test_file_prepped_4x4x4xphi.pkl"
 
 data_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
-read_in = True
+read_in = False
 if read_in:
         ## for each pickle file in datadir, read it in, and then combine into one dataframe
-        df = pd.DataFrame()
-        for file in os.listdir(data_dir):
-                if file.endswith(".pkl"):
-                        print(file)
-                        df = df.append(pd.read_pickle(data_dir+file), ignore_index=True)
-        #df = pd.read_pickle(test_file).head(300_0)
+        # df = pd.DataFrame()
+        # for file in os.listdir(data_dir):
+        #         if file.endswith(".pkl"):
+        #                 print(file)
+        #                 df = df.append(pd.read_pickle(data_dir+file), ignore_index=True)
+        df = pd.read_pickle(test_file)#.head(300_00)
         #remove all rows where Gent1 is larger than 1.8
 
         cutoff = 1.7
