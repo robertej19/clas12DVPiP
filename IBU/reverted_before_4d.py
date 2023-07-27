@@ -140,16 +140,14 @@ def unfold_function(truth_data=None,
         observed_data_patch = observed_data[vector_ids]
         truth_data_patch = truth_data[vector_ids]
 
-        #ic(response_hist_patch)
+        #####ic(response_hist_patch)
 
-        #print size of response_hist_patch
-        ##ic(response_hist_patch.shape)
         observed_data_err = np.sqrt(observed_data_patch)
         efficiencies = np.ones_like(observed_data_patch, dtype=float)
         efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
         response_hist_err_patch = np.sqrt(response_hist_patch)
 
-        column_sums = response_hist_patch.sum(axis=0)
+        column_sums = response_hist_patch.sum(axis=1)
         # Add a small constant to avoid division by zero
         column_sums = column_sums + 1e-10
         normalization_factor = efficiencies / column_sums
@@ -163,8 +161,9 @@ def unfold_function(truth_data=None,
         cause_lim = np.logspace(0, 3, num_causes)
         #jeffreys_prior = priors.jeffreys_prior(cause_lim)
         #print(jeffreys_prior)
+
+        ic(response_hist_patch)
         
-        print('unfolding')
         unfolded_results = iterative_unfold(data=observed_data_patch,
                                     data_err=observed_data_err,
                                     response=response_normalized_patch,
@@ -174,15 +173,15 @@ def unfold_function(truth_data=None,
                                     prior=uniform_prior,
                                     #callbacks=[Logger()],
                                     callbacks=[],
-                                    ts_stopping=0.00005,)
+
+                                    ts_stopping=0.000005,)
         
         return unfolded_results,truth_data_patch,observed_data_patch,response_hist_patch,response_normalized_patch
 
-def unroll(x_bin, q_bin, t_bin, phi_bin, x_bins, q_bins, t_bins, phi_bins):
-    
-    unrolled_bin = x_bin*len(q_bins)*len(t_bins)*len(phi_bins)+q_bin*len(t_bins)*len(phi_bins)+t_bin*len(phi_bins)+phi_bin
-
-    return unrolled_bin
+def unroll(x_bin, q_bin, t_bin, p_bin, x_bins, q_bins, t_bins, p_bins):
+    # unrolled_bin = x_bin*len(q_bins)*len(t_bins)*len(p_bins)+q_bin*len(t_bins)*len(p_bins)+t_bin*len(p_bins)+p_bin
+    unrolled_bin = x_bin*len(q_bins)*len(t_bins)+q_bin*len(t_bins)+t_bin
+    return unrolled_bin        
 
 def get_data():
         print("Getting data")
@@ -232,16 +231,16 @@ def get_data():
         x_bins = np.arange(0,len(bins_xB)-1,1) #need to subtract 1 because bins_xB includes edges, and x_bins is just the bin labels number
         q_bins = np.arange(0,len(bins_Q2)-1,1)
         t_bins = np.arange(0,len(bins_t1)-1,1)
-        phi_bins = np.arange(0,len(bins_phi1)-1,1)
+        p_bins = np.arange(0,len(bins_phi1)-1,1)
 
         df['observed_x'] = df['xB_bin_number']
         df['observed_q'] = df['Q2_bin_number']
         df['observed_t'] = df['t1_bin_number']
-        df['observed_phi'] = df['phi1_bin_number']
+        df['observed_p'] = df['phi1_bin_number']
         df['truth_x'] = df['GenxB_bin_number']
         df['truth_q'] = df['GenQ2_bin_number']
         df['truth_t'] = df['Gent1_bin_number']
-        df['truth_phi'] = df['Genphi1_bin_number']
+        df['truth_p'] = df['Genphi1_bin_number']
 
         # #Unroll the 2D data into 1D columns of observation and truth
         # total_unrolled_number_of_bins = len(x_bins)*len(q_bins)
@@ -249,84 +248,78 @@ def get_data():
         # df['unrolled_observed_bins'] = df['observed_q']*len(x_bins)+df['observed_x']
 
         #Unroll the 4D data into 1D columns of observation and truth
-        total_unrolled_number_of_bins = len(x_bins)*len(q_bins)*len(t_bins)*len(phi_bins)
-        df['unrolled_truth_bins'] = df['truth_x']*len(q_bins)*len(t_bins)*len(phi_bins)+df['truth_q']*len(t_bins)*len(phi_bins)+df['truth_t']*len(phi_bins)+df['truth_phi']
-        df['unrolled_observed_bins'] = df['observed_x']*len(q_bins)*len(t_bins)*len(phi_bins)+df['observed_q']*len(t_bins)*len(phi_bins)+df['observed_t']*len(phi_bins)+df['observed_phi']
+        total_unrolled_number_of_bins = len(x_bins)*len(q_bins)*len(t_bins)#*len(p_bins)
+        df['unrolled_truth_bins'] = df['truth_x']*len(q_bins)*len(t_bins)+df['truth_q']*len(t_bins)+df['truth_t']
+        df['unrolled_observed_bins'] = df['observed_x']*len(q_bins)*len(t_bins)+df['observed_q']*len(t_bins)+df['observed_t']
 
-        return df, total_unrolled_number_of_bins, x_bins, q_bins, t_bins, phi_bins
+        return df, total_unrolled_number_of_bins, x_bins, q_bins, t_bins, p_bins
 
 
-def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
-                           x_width=3,q_width=3,t_width=3,phi_width=3,
-                           x_stride=1,q_stride=1,t_stride=1,phi_stride=1):
+
+
+def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
+                           ):
 
         # if stride = 0, change it to 1. This is a simple fix to avoid a divide by zero error
         if x_stride == 0:
                 x_stride = 1
         if q_stride == 0:
                 q_stride = 1
-        if t_stride == 0:
-                t_stride = 1
-        if phi_stride == 0:
-                phi_stride = 1
-        print("Unfolding with x-q-t-p kernel of size {}x{}x{}x{} with strides of {}x{}x{}x{}".format(x_width,q_width,t_width,phi_width,
-                                                                                                     x_stride,q_stride,t_stride,phi_stride))
+        print("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(x_width,q_width,x_stride,q_stride))
         unfolding_matrices  = []
         stat_errors  = []
         sys_errors  = []
 
         v_ids = []
-        iteration = 0
+        t_width = x_width
+        p_width = q_width
+        t_stride = x_stride
+        p_stride = q_stride
         for x in range(0,len(x_bins)-(x_width-1),x_stride):
                 for q in range(0,len(q_bins)-(q_width-1),q_stride):
                         for t in range(0,len(t_bins)-(t_width-1),t_stride):
-                                for phi in range(0,len(phi_bins)-(phi_width-1),phi_stride):
+                                #for p in range(0,len(p_bins)-(p_width-1),p_stride):
+                                    x_range = x_bins[x:x+x_width]
+                                    q_range = q_bins[q:q+q_width]
+                                    t_range = t_bins[t:t+t_width]
+                                   # p_range = p_bins[p:p+p_width]
+                                    
+                                    print("Calculating unfolding matrix for x bins {} and q bins {}".format(x_range,q_range))
+                                    bin_ids = []
+                                    for x_bin in x_range:
+                                            for q_bin in q_range:
+                                                for t_bin in t_range:
+                                                    #for p_bin in p_range:                                                            
+                                                            p_bin=1
+                                                            unrolled_bin = unroll(x_bin, q_bin, t_bin, p_bin, x_bins, q_bins, t_bins, p_bins)
+                                                            print(x_bin,q_bin,t_bin,unrolled_bin)
+                                                            bin_ids.append(unrolled_bin)
 
-                                        x_range = x_bins[x:x+x_width]
-                                        q_range = q_bins[q:q+q_width]
-                                        t_range = t_bins[t:t+t_width]
-                                        phi_range = phi_bins[phi:phi+phi_width]
-                                        
-                                        #print("Calculating unfolding matrix for x bins {} and q bins {}".format(x_range,q_range))
-                                        print("Calculating unfolding matrix for x bins {} q bins {} t bins {} phi bins {}".format(x_range,q_range,t_range,phi_range))
-                                        bin_ids = []
-                                        for x_bin in x_range:
-                                                print("x_bin is {}".format(x_bin))
-                                                for q_bin in q_range:
-                                                        for t_bin in t_range:
-                                                                for phi_bin in phi_range:
-                                                                        unrolled_bin = unroll(x_bin, q_bin, t_bin, phi_bin, x_bins, q_bins, t_bins, phi_bins)
-                                                                        bin_ids.append(unrolled_bin)
-                                        bin_ids = np.sort(bin_ids)
+                                    bin_ids = np.sort(bin_ids)
 
-                                        v_ids.append(bin_ids)
-                                        #sort the bin_ids
-                                        print("On iteration {}".format(iteration))
-                                        unfolded_results,truth_data_patch,observed_data_patch,response_hist_patch,response_normalized_patch = unfold_function(truth_data=truth_data,
-                                                                                                        observed_data=observed_data,
-                                                                                                        response_hist=response_hist,
-                                                                                                        vector_ids=bin_ids)                
-                                        
-                                        ic(response_hist_patch[0][0])
-                                        sys.exit()
-                                        unfolding_matrices.append(unfolded_results['unfolding_matrix'])
-                                        iteration +=1
+                                    v_ids.append(bin_ids)
+                                    #sort the bin_ids
+                                    unfolded_results,truth_data_patch,observed_data_patch,response_hist_patch,response_normalized_patch = unfold_function(truth_data=truth_data,
+                                                                                                    observed_data=observed_data,
+                                                                                                    response_hist=response_hist,
+                                                                                                    vector_ids=bin_ids)                
+                                    unfolding_matrices.append(unfolded_results['unfolding_matrix'])
 
-                                        ic(unfolded_results['unfolding_matrix'])
+                                    ic(unfolded_results['unfolding_matrix'])
+                                    # Need to investigate priors, efficencies, and one other thing
+                                    # Can see everything avaliable with:
+                                    #####ic(unfolded_results.keys())
+                                    
+                                    stat_errors.append(np.diag(unfolded_results['stat_err']))
+                                    sys_errors.append(np.diag(unfolded_results['sys_err']))
 
-                                        # Need to investigate priors, efficencies, and one other thing
-                                        # Can see everything avaliable with:
-                                        ###ic(unfolded_results.keys())
-                                        
-                                        stat_errors.append(np.diag(unfolded_results['stat_err']))
-                                        sys_errors.append(np.diag(unfolded_results['sys_err']))
+                                    #stat_errors)
 
-
-                                        plotting = False
-                                        if plotting:
-                                                plot_distributions(np.arange(0, len(bin_ids), 1), truth_data_patch, 
-                                                                observed_data_patch, response_hist_patch, 
-                                                                response_normalized_patch, unfolded_results)
+                                    plotting = False
+                                    if plotting:
+                                            plot_distributions(np.arange(0, len(bin_ids), 1), truth_data_patch, 
+                                                            observed_data_patch, response_hist_patch, 
+                                                            response_normalized_patch, unfolded_results)
                                 
         enlarged_unfolding_matrices = []
         enlarged_sys_errors_matrices = []
@@ -343,36 +336,33 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                 sys_errors_response[sys_errors_response == 0] = np.nan
                 stat_errors_response[stat_errors_response == 0] = np.nan
 
-                ##ic(stat_error_mat)
-                ##ic(sys_error_mat)
-                ##ic(unfolding_matrix)
+                ####ic(stat_error_mat)
+                ####ic(sys_error_mat)
+                ####ic(unfolding_matrix)
                 for i in range(unfolding_matrix.shape[0]):  # iterating over rows
                         for j in range(unfolding_matrix.shape[1]):  # iterating over columns
+                                ####ic(i,j)
                                 unfolded_response[element_id[i],element_id[j]] = unfolding_matrix[i][j]
                                 sys_errors_response[element_id[i],element_id[j]] = sys_error_mat[i][j]
                                 stat_errors_response[element_id[i],element_id[j]] = stat_error_mat[i][j]
 
-                ic(enlarged_unfolding_matrices)
-                #save as csv file
-                np.savetxt("recon_enlarged_unfolding_matrices_{}.csv".format(count), unfolded_response, delimiter=",")
-                # save unenlarged unfolding matrix
+                #save unfolded response to csv
+                #np.savetxt("recon_unfolding_matrix_{}_{}.csv".format(x_width,count), unfolded_response, delimiter=",")# header="Column1,Column2,Column3")
                 enlarged_unfolding_matrices.append(unfolded_response)
                 enlarged_sys_errors_matrices.append(sys_errors_response)
                 enlarged_stat_errors_matrices.append(stat_errors_response)
 
 
 
-
-        ##ic(enlarged_unfolding_matrices)
-        ##ic(enlarged_sys_errors_matrices)
+        ####ic(enlarged_unfolding_matrices)
+        ####ic(enlarged_sys_errors_matrices)
         output_matrix = combine_matrices(enlarged_unfolding_matrices,normalization=True)
-        np.savetxt("recon_unfolding_matrix{}_{}_{}_{}.csv".format(x,q,t,phi), output_matrix, delimiter=",")
-
-        sys.exit()
-
         output_sys_err_matrix = combine_matrices(enlarged_sys_errors_matrices,normalization=False)
         output_stat_err_matrix = combine_matrices(enlarged_stat_errors_matrices,normalization=False)
 
+        #save output matrix to csv
+        #np.savetxt("full_response_{}.csv".format(x_width), output_matrix, delimiter=",")# header="Column1,Column2,Column3")
+        #ic(output_matrix)
         
         
         #replace nan values with zero
@@ -385,11 +375,31 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
         output_sys_err_matrix = output_sys_err_matrix.T
         output_stat_err_matrix = output_stat_err_matrix.T
 
-        ##ic(output_matrix)
-        ##ic(output_sys_err_matrix)
-        ##ic(output_stat_err_matrix)
+        ####ic(output_matrix)
+        ####ic(output_sys_err_matrix)
+        ####ic(output_stat_err_matrix)
         
         return output_matrix, output_sys_err_matrix, output_stat_err_matrix
+        # Old code for manually comparing matrices
+        # np.savetxt("full_response_{}.csv".format("reconstructed"), output_matrix, delimiter=",")# header="Column1,Column2,Column3")
+
+        # #read "full_response_{}.csv".format("reconstructed") into a numpy array
+        # output_matrix_full = np.genfromtxt("full_response_{}.csv".format("reconstructed"), delimiter=',')
+
+        # diffs = np.abs(output_matrix/output_matrix_full-1)*100
+        # #replace nan with zero
+        # diffs[np.isnan(diffs)] = 0
+        # # round each value to nearest int
+        # diffs = np.round(diffs).astype(int)
+        # ####ic(diffs)
+        # #print the first 6x6 elements of the array
+        # for end in range(0,len(diffs),1):
+        #         ####ic(diffs[0:end,0:end])
+        # #check if any elements are larger than 0.05
+        # if np.any(diffs > 2):
+        #         #print which elements are
+        #         print("The following elements are larger than 5% different from the original matrix:")
+        #         print(np.where(np.abs(output_matrix/output_matrix_full-1)*100 > 5))
 
 
 
@@ -431,17 +441,34 @@ def calc_resp_matrix(df, total_unrolled_number_of_bins):
 #####################
 
 # Get initial data
-df, total_unrolled_number_of_bins, x_bins, q_bins, t_bins, phi_bins = get_data()
+df, total_unrolled_number_of_bins, x_bins, q_bins, t_bins, p_bins = get_data()
+
 # Calculate globablly useful things
 truth_data, observed_data, response_hist, bins = calc_resp_matrix(df, total_unrolled_number_of_bins)
 
+#print the first row of the response_hist
+# ic(response_hist[0,:])
+# #print first column of response_hist
+# ic(response_hist[:,0])
+# #print the first 27 elements of the first row, then the next 27, then the last 27
+# x1 = response_hist[0,0:27]
+# x1_q1 = x1[0:9]
+# x1_q2 = x1[9:18]
+# x1_q3 = x1[18:27]
+# ic(x1_q1)
+# ic(x1_q2)
+# ic(x1_q3)
+# sys.exit()
+# ic(response_hist[0,27:54])
+# ic(response_hist[0,54:81])
+# sys.exit()
 ####################
 ####################
 
 print(x_bins)
 print(q_bins)
 #since using square kernels, need the minimum bin span
-min_bin_span = min(len(x_bins),len(q_bins),len(t_bins),len(phi_bins))
+min_bin_span = min(len(x_bins),len(q_bins))
 print("Minimum bin span is {}".format(min_bin_span))
 
 import time
@@ -457,21 +484,13 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
         stride_range = [0] if kernel_size == min_bin_span else range(1, stride_max + 1)  # add stride 0 if kernel size equals image size
         for stride in stride_range:
                 if stride == 0 or (min_bin_span - kernel_size) % stride == 0:  # also handle stride=0 case
-                        kernel_size = 3
-                        stride = 1
+                        #kernel_size = 2
+                        #stride = 1
                         print("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(kernel_size, kernel_size, stride, stride))
 
                         start_time = time.time()
 
-                        output_matrix, output_sys_err_matrix, output_stat_err_matrix = unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
-                                                                                                                x_width=kernel_size,
-                                                                                                                q_width=kernel_size,
-                                                                                                                t_width=kernel_size,
-                                                                                                                phi_width=kernel_size,
-                                                                                                                x_stride=stride,
-                                                                                                                q_stride=stride,
-                                                                                                                t_stride=stride,
-                                                                                                                phi_stride=stride)
+                        output_matrix, output_sys_err_matrix, output_stat_err_matrix = unstich_unfold_restich(x_width=kernel_size,q_width=kernel_size,x_stride=stride,q_stride=stride)
 
                         # Compute elapsed time and store it in comp_time array
                         elapsed_time = time.time() - start_time
@@ -483,14 +502,14 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                                 # #calcuate inverse of response matrix
                                 # response_matrix_inv = np.linalg.inv(response_hist)
                                 # #compare true_output_matrix to response matrix inverse
-                                # ##ic(true_output_matrix)
-                                # ##ic(response_matrix_inv)
+                                # ####ic(true_output_matrix)
+                                # ####ic(response_matrix_inv)
                                 # diffs = np.abs(true_output_matrix/response_matrix_inv-1)*100
                                 # #replace nan with zero
                                 # diffs[np.isnan(diffs)] = 0
                                 # # round each value to nearest int
                                 # diffs = np.round(diffs).astype(int)
-                                # #ic(diffs)
+                                # ####ic(diffs)
                                 # sys.exit()
 
                         # error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,
@@ -521,53 +540,45 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                                 label='Unfolded distribution')
                         plt.show()
 
-plot_dists = False
-if plot_dists:
-        print("Average error matrix:")
-        print(average_err)
-        print("Computation time matrix:")
-        print(comp_time)
-        import numpy.ma as ma
-        import matplotlib.pyplot as plt
+# print("Average error matrix:")
+# print(average_err)
+# print("Computation time matrix:")
+# print(comp_time)
+# import numpy.ma as ma
+# import matplotlib.pyplot as plt
 
-        # Define your colormap
-        cmap = plt.cm.viridis
-        cmap.set_bad(color='white')
+# # Define your colormap
+# cmap = plt.cm.viridis
+# cmap.set_bad(color='white')
 
-        # Create the masked arrays
-        comp_time_masked = ma.masked_where(np.isnan(comp_time) | (comp_time == 0), comp_time)
-        average_err_masked = ma.masked_where(np.isnan(average_err) | (average_err == 0), average_err)
+# # Create the masked arrays
+# comp_time_masked = ma.masked_where(np.isnan(comp_time) | (comp_time == 0), comp_time)
+# average_err_masked = ma.masked_where(np.isnan(average_err) | (average_err == 0), average_err)
 
-        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+# fig, axs = plt.subplots(1, 2, figsize=(12, 6))
 
-        x_ticks = np.arange(min_bin_span+1)  # consider additional column for stride=0
-        y_ticks = np.arange(min_bin_span) + 1
+# x_ticks = np.arange(min_bin_span+1)  # consider additional column for stride=0
+# y_ticks = np.arange(min_bin_span) + 1
 
-        # Modify imshow calls to use masked array and the colormap with white for bad values
-        c1 = axs[0].imshow(comp_time_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
-        fig.colorbar(c1, ax=axs[0])
-        axs[0].set_title('Computation Time')
-        axs[0].set_xlabel('Kernel Size')
-        axs[0].set_ylabel('Stride')
-        axs[0].set_xticks(np.arange(min_bin_span))
-        axs[0].set_yticks(np.arange(min_bin_span+1))
-        axs[0].set_xticklabels(y_ticks)
-        axs[0].set_yticklabels(x_ticks)
+# # Modify imshow calls to use masked array and the colormap with white for bad values
+# c1 = axs[0].imshow(comp_time_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
+# fig.colorbar(c1, ax=axs[0])
+# axs[0].set_title('Computation Time')
+# axs[0].set_xlabel('Kernel Size')
+# axs[0].set_ylabel('Stride')
+# axs[0].set_xticks(np.arange(min_bin_span))
+# axs[0].set_yticks(np.arange(min_bin_span+1))
+# axs[0].set_xticklabels(y_ticks)
+# axs[0].set_yticklabels(x_ticks)
 
-        c2 = axs[1].imshow(average_err_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
-        fig.colorbar(c2, ax=axs[1])
-        axs[1].set_title('Average Error')
-        axs[1].set_xlabel('Kernel Size')
-        axs[1].set_ylabel('Stride')
-        axs[1].set_xticks(np.arange(min_bin_span))
-        axs[1].set_yticks(np.arange(min_bin_span+1))
-        axs[1].set_xticklabels(y_ticks)
-        axs[1].set_yticklabels(x_ticks)
+# c2 = axs[1].imshow(average_err_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
+# fig.colorbar(c2, ax=axs[1])
+# axs[1].set_title('Average Error')
+# axs[1].set_xlabel('Kernel Size')
+# axs[1].set_ylabel('Stride')
+# axs[1].set_xticks(np.arange(min_bin_span))
+# axs[1].set_yticks(np.arange(min_bin_span+1))
+# axs[1].set_xticklabels(y_ticks)
+# axs[1].set_yticklabels(x_ticks)
 
-        plt.show()
-
-
-
-
-
-
+# plt.show()

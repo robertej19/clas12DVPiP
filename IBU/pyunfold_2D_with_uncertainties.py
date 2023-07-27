@@ -140,7 +140,7 @@ def unfold_function(truth_data=None,
         observed_data_patch = observed_data[vector_ids]
         truth_data_patch = truth_data[vector_ids]
 
-        ic(response_hist_patch)
+        ##ic(response_hist_patch)
 
         observed_data_err = np.sqrt(observed_data_patch)
         efficiencies = np.ones_like(observed_data_patch, dtype=float)
@@ -161,6 +161,7 @@ def unfold_function(truth_data=None,
         cause_lim = np.logspace(0, 3, num_causes)
         #jeffreys_prior = priors.jeffreys_prior(cause_lim)
         #print(jeffreys_prior)
+        ic(response_hist_patch)
         
         unfolded_results = iterative_unfold(data=observed_data_patch,
                                     data_err=observed_data_err,
@@ -274,14 +275,15 @@ def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
                                                                                         vector_ids=bin_ids)                
                         unfolding_matrices.append(unfolded_results['unfolding_matrix'])
 
+                        ic(unfolding_matrices)
                         # Need to investigate priors, efficencies, and one other thing
                         # Can see everything avaliable with:
-                        #ic(unfolded_results.keys())
+                        ###ic(unfolded_results.keys())
                         
                         stat_errors.append(np.diag(unfolded_results['stat_err']))
                         sys_errors.append(np.diag(unfolded_results['sys_err']))
 
-                        ic(stat_errors)
+                        ##ic(stat_errors)
 
                         plotting = False
                         if plotting:
@@ -304,12 +306,12 @@ def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
                 sys_errors_response[sys_errors_response == 0] = np.nan
                 stat_errors_response[stat_errors_response == 0] = np.nan
 
-                ic(stat_error_mat)
-                ic(sys_error_mat)
-                ic(unfolding_matrix)
+                ##ic(stat_error_mat)
+                ##ic(sys_error_mat)
+                ##ic(unfolding_matrix)
                 for i in range(unfolding_matrix.shape[0]):  # iterating over rows
                         for j in range(unfolding_matrix.shape[1]):  # iterating over columns
-                                ic(i,j)
+                                ###ic(i,j)
                                 unfolded_response[element_id[i],element_id[j]] = unfolding_matrix[i][j]
                                 sys_errors_response[element_id[i],element_id[j]] = sys_error_mat[i][j]
                                 stat_errors_response[element_id[i],element_id[j]] = stat_error_mat[i][j]
@@ -320,8 +322,8 @@ def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
 
 
 
-        ic(enlarged_unfolding_matrices)
-        ic(enlarged_sys_errors_matrices)
+        ###ic(enlarged_unfolding_matrices)
+        ###ic(enlarged_sys_errors_matrices)
         output_matrix = combine_matrices(enlarged_unfolding_matrices,normalization=True)
         output_sys_err_matrix = combine_matrices(enlarged_sys_errors_matrices,normalization=False)
         output_stat_err_matrix = combine_matrices(enlarged_stat_errors_matrices,normalization=False)
@@ -338,9 +340,9 @@ def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
         output_sys_err_matrix = output_sys_err_matrix.T
         output_stat_err_matrix = output_stat_err_matrix.T
 
-        ic(output_matrix)
-        ic(output_sys_err_matrix)
-        ic(output_stat_err_matrix)
+        ###ic(output_matrix)
+        ###ic(output_sys_err_matrix)
+        ##ic(output_stat_err_matrix)
         
         return output_matrix, output_sys_err_matrix, output_stat_err_matrix
         # Old code for manually comparing matrices
@@ -354,10 +356,10 @@ def unstich_unfold_restich(x_width=3,q_width=3,x_stride=1,q_stride=1,
         # diffs[np.isnan(diffs)] = 0
         # # round each value to nearest int
         # diffs = np.round(diffs).astype(int)
-        # ic(diffs)
+        # ##ic(diffs)
         # #print the first 6x6 elements of the array
         # for end in range(0,len(diffs),1):
-        #         ic(diffs[0:end,0:end])
+        #         ##ic(diffs[0:end,0:end])
         # #check if any elements are larger than 0.05
         # if np.any(diffs > 2):
         #         #print which elements are
@@ -448,14 +450,14 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                                 # #calcuate inverse of response matrix
                                 # response_matrix_inv = np.linalg.inv(response_hist)
                                 # #compare true_output_matrix to response matrix inverse
-                                # ic(true_output_matrix)
-                                # ic(response_matrix_inv)
+                                # ##ic(true_output_matrix)
+                                # ##ic(response_matrix_inv)
                                 # diffs = np.abs(true_output_matrix/response_matrix_inv-1)*100
                                 # #replace nan with zero
                                 # diffs[np.isnan(diffs)] = 0
                                 # # round each value to nearest int
                                 # diffs = np.round(diffs).astype(int)
-                                # ic(diffs)
+                                # ##ic(diffs)
                                 # sys.exit()
 
                         error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,

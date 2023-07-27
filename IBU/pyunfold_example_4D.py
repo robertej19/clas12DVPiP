@@ -7,6 +7,7 @@ import pandas as pd
 from utils import filestruct, const, make_histos
 import numpy as np
 import sys, os
+from scipy.linalg import block_diag
 
 from pyunfold import iterative_unfold
 from pyunfold.callbacks import Logger
@@ -93,7 +94,7 @@ binned_test_file = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/rec/singles_t
 binned_test_file_prepped = "binned_test_file_prepped_4x4x4xphi.pkl"
 
 data_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
-read_in = False
+read_in = True
 if read_in:
         ## for each pickle file in datadir, read it in, and then combine into one dataframe
         # df = pd.DataFrame()
@@ -271,9 +272,15 @@ plt.show()
 
 
 
+#we only want to plot the non-zero values
+#the colormap should be viridis
+cmap = mpl.cm.viridis
+#the color should be the log of the value
+norm = mpl.colors.LogNorm()
+#the color should be the log of the value
 
 fig, ax = plt.subplots()
-im = ax.imshow(response_hist, origin='lower')
+im = ax.imshow(response_hist, origin='lower', cmap=cmap, norm=norm)
 cbar = plt.colorbar(im, label='Counts')
 ax.set(xlabel='Cause bins', ylabel='Effect bins')
 plt.show()
@@ -281,7 +288,7 @@ plt.show()
 
 
 fig, ax = plt.subplots()
-im = ax.imshow(response, origin='lower')
+im = ax.imshow(response, origin='lower',cmap=cmap)#, norm=norm)
 cbar = plt.colorbar(im, label='$P(E_i|C_{\mu})$')
 ax.set(xlabel='Cause bins', ylabel='Effect bins',
        title='Normalized response matrix')
