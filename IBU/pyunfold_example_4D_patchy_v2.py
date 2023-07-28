@@ -182,8 +182,8 @@ def unfold_function(truth_data=None,
                                     efficiencies=efficiencies,
                                     efficiencies_err=efficiencies_err,
                                     prior=uniform_prior,
-                                    #callbacks=[Logger()],
-                                    callbacks=[],
+                                    callbacks=[Logger()],
+                                    #callbacks=[],
                                     ts_stopping=0.000005,)
         
         return unfolded_results,truth_data_patch,observed_data_patch,response_hist_patch,response_normalized_patch
@@ -485,7 +485,7 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                         stride_range = [0] if kernel_size == min_bin_span else range(1, stride_max + 1)  # add stride 0 if kernel size equals image size
         #for stride in stride_range:
                 #if stride == 0 or (min_bin_span - kernel_size) % stride == 0:  # also handle stride=0 case
-                        kernel_size = 4
+                        kernel_size = 3
                         stride = 1
                         print("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(kernel_size, kernel_size, stride, stride))
 
