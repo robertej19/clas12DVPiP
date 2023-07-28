@@ -147,7 +147,7 @@ def unfold_function(truth_data=None,
         efficiencies_err = np.full_like(efficiencies, 0.1, dtype=float)
         response_hist_err_patch = np.sqrt(response_hist_patch)
 
-        column_sums = response_hist_patch.sum(axis=1)
+        column_sums = response_hist_patch.sum(axis=0)
         # Add a small constant to avoid division by zero
         column_sums = column_sums + 1e-10
         normalization_factor = efficiencies / column_sums
