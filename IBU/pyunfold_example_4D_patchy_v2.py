@@ -241,7 +241,7 @@ def get_data():
                 df[f'{column}_bin'] = df[f'{column}_bin_category'].apply(lambda x: x.left)
 
                 # getting the bin number
-                df[f'{column}_bin_number'] = df[f'{column}_bin_category'].cat.codes
+                df[f'{column}_bin_number'] = df[f'{column}_bin_category'].cat.codes.astype(np.int64)
 
                 # dropping the temporary bin_category column
                 df = df.drop(columns=[f'{column}_bin_category'])
@@ -255,6 +255,7 @@ def get_data():
         t_bins = np.arange(0,len(bins_t1)-1,1)
         phi_bins = np.arange(0,len(bins_phi1)-1,1)
 
+
         df['observed_x'] = df['xB_bin_number']
         df['observed_q'] = df['Q2_bin_number']
         df['observed_t'] = df['t2_bin_number']
@@ -264,7 +265,9 @@ def get_data():
         df['truth_t'] = df['Gent2_bin_number']
         df['truth_phi'] = df['Genphi1_bin_number']
 
-        # #Unroll the 2D data into 1D columns of observation and truth
+        print(df[['xB_bin_number', 'Q2_bin_number', 't2_bin_number', 'phi1_bin_number', 'GenxB_bin_number', 'GenQ2_bin_number', 'Gent2_bin_number', 'Genphi1_bin_number']].min())
+
+        #print unique values of all columns
         # total_unrolled_number_of_bins = len(x_bins)*len(q_bins)
         # df['unrolled_truth_bins'] = df['truth_q']*len(x_bins)+df['truth_x']
         # df['unrolled_observed_bins'] = df['observed_q']*len(x_bins)+df['observed_x']
@@ -274,6 +277,7 @@ def get_data():
         df['unrolled_truth_bins'] = df['truth_x']*len(q_bins)*len(t_bins)*len(phi_bins)+df['truth_q']*len(t_bins)*len(phi_bins)+df['truth_phi']*len(t_bins)+df['truth_t']
         df['unrolled_observed_bins'] = df['observed_x']*len(q_bins)*len(t_bins)*len(phi_bins)+df['observed_q']*len(t_bins)*len(phi_bins)+df['observed_phi']*len(t_bins)+df['observed_t']
 
+        #get the rows wehre unrolled_truth_bins = -116
         if read_in:
                 #save in local dir for quick rerunning
                 df.to_pickle(df_name)
@@ -423,8 +427,6 @@ def calc_resp_matrix(df, total_unrolled_number_of_bins):
         binned_data="unrolled_observed_bins"
 
         bins = np.arange(0, total_unrolled_number_of_bins, 1)
-        ic(bins)
-        ic(bins.shape)
 
         value_counts_truth = df[binned_truth].value_counts()
         counts_series_truth = pd.Series(0, index=bins)
@@ -435,10 +437,6 @@ def calc_resp_matrix(df, total_unrolled_number_of_bins):
         counts_series_observed = pd.Series(0, index=bins)
         counts_observed = counts_series_observed.add(value_counts_observed, fill_value=0)
         observed_data = counts_observed.values
-        ic(observed_data)
-        #get size of observed data
-        ic(observed_data.shape)
-        #sys.exit()
         # Creating a zero-filled DataFrame with desired index and columns
         hist_2d = pd.DataFrame(0, index=bins, columns=bins)
 
