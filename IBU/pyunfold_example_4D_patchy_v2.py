@@ -302,9 +302,7 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                 phi_stride = 1
         ###ic("Unfolding with x-q-t-p kernel of size {}x{}x{}x{} with strides of {}x{}x{}x{}".format(x_width,q_width,t_width,phi_width,
                                                                                                      #x_stride,q_stride,t_stride,phi_stride))
-        unfolding_matrices  = []
-        stat_errors  = []
-        sys_errors  = []
+
 
         total_its = 0
         for x in range(0,len(x_bins)-(x_width-1),x_stride):
@@ -314,14 +312,21 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                                 for phi in range(0, len(phi_bins), phi_stride):
                                         total_its +=1
 
+        unfolding_matrices  = []
+        stat_errors  = []
+        sys_errors  = []
         v_ids = []
         iteration = 0
+
+        # Define a directory to save your data
+        save_dir = './saved_data'
+        if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+
         for x in range(0,len(x_bins)-(x_width-1),x_stride):
                 for q in range(0,len(q_bins)-(q_width-1),q_stride):
                         for t in range(0,len(t_bins)-(t_width-1),t_stride):
-                                #for phi in range(0,len(phi_bins)-(phi_width-1),phi_stride):
                                 for phi in range(0, len(phi_bins), phi_stride):
-                                        # For phi, use modulo operation to wrap indices around
                                         iteration +=1
                                         x_range = x_bins[x:x+x_width]
                                         q_range = q_bins[q:q+q_width]
@@ -329,13 +334,9 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                                         phi_indices = [(phi + i) % len(phi_bins) for i in range(phi_width)]
                                         phi_range = phi_bins[phi_indices]
 
-                                        #phi_range = phi_bins[phi:phi+phi_width]
                                         print(x_range,q_range,t_range,phi_range,iteration,'of',total_its)
-                                        ####ic("Calculating unfolding matrix for x bins {} and q bins {}".format(x_range,q_range))
-                                        ###ic("Calculating unfolding matrix for x bins {} q bins {} t bins {} phi bins {}".format(x_range,q_range,t_range,phi_range))
                                         bin_ids = []
                                         for x_bin in x_range:
-                                                ###ic("x_bin is {}".format(x_bin))
                                                 for q_bin in q_range:
                                                         for t_bin in t_range:
                                                                 for phi_bin in phi_range:
@@ -344,25 +345,25 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                                         bin_ids = np.sort(bin_ids)
 
                                         v_ids.append(bin_ids)
-                                        #sort the bin_ids
-                                        ###ic("On iteration {}".format(iteration))
                                         unfolded_results,truth_data_patch,observed_data_patch,response_hist_patch,response_normalized_patch = unfold_function(truth_data=truth_data,
-                                                                                                        observed_data=observed_data,
-                                                                                                        response_hist=response_hist,
-                                                                                                        vector_ids=bin_ids)                
-                                        
-                                        ##ic(response_hist_patch[0][0])
-                                        unfolding_matrices.append(unfolded_results['unfolding_matrix'])
+                                                                                                                observed_data=observed_data,
+                                                                                                                response_hist=response_hist,
+                                                                                                                vector_ids=bin_ids)                
 
-                                        ##ic(unfolded_results['unfolding_matrix'])
+                                        unfolding_matrix = unfolded_results['unfolding_matrix']
+                                        unfolding_matrices.append(unfolding_matrix)
 
-                                        # Need to investigate priors, efficencies, and one other thing
-                                        # Can see everything avaliable with:
-                                        #####ic(unfolded_results.keys())
-                                        
-                                        stat_errors.append(np.diag(unfolded_results['stat_err']))
-                                        sys_errors.append(np.diag(unfolded_results['sys_err']))
+                                        stat_err = np.diag(unfolded_results['stat_err'])
+                                        sys_err = np.diag(unfolded_results['sys_err'])
 
+                                        stat_errors.append(stat_err)
+                                        sys_errors.append(sys_err)
+
+                                        # Save the data
+                                        np.save(os.path.join(save_dir, f'bin_ids_{iteration}.npy'), bin_ids)
+                                        np.save(os.path.join(save_dir, f'unfolding_matrix_{iteration}.npy'), unfolding_matrix)
+                                        np.save(os.path.join(save_dir, f'stat_err_{iteration}.npy'), stat_err)
+                                        np.save(os.path.join(save_dir, f'sys_err_{iteration}.npy'), sys_err)
 
                                         plotting = False
                                         if plotting:
