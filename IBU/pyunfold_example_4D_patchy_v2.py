@@ -205,16 +205,27 @@ def get_data():
 
         data_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
         read_in = True
+        validation = True
         if read_in:
                 # for each pickle file in datadir, read it in, and then combine into one dataframe
                 df = pd.DataFrame()
+                pickle_filelist = []
                 filelist = os.listdir(data_dir)
-                #drop last item in filelist
-                filelist_holdout = filelist[:-1]
-                for file in filelist_holdout:
-                        if file.endswith(".pkl"):
-                                ###ic(file)
-                                df = df.append(pd.read_pickle(data_dir+file), ignore_index=True)
+                for file in filelist:
+                    if file.endswith(".pkl"):
+                           pickle_filelist.append(file)
+                print(pickle_filelist)
+                files_training = pickle_filelist[:-1]
+                files_verification = [pickle_filelist[-1]]
+                if validation:
+                    print(files_verification)
+                    for file in files_verification:
+                        ic(file)
+                        df = df.append(pd.read_pickle(data_dir+file), ignore_index=True)
+                else: 
+                    print("training")
+                    for file in files_training:
+                        df = df.append(pd.read_pickle(data_dir+file), ignore_index=True)
         else:
                 #df = pd.read_pickle(df_name)#.head(300_00)
                 print("reading in")
