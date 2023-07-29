@@ -372,6 +372,7 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                                                                 response_normalized_patch, unfolded_results)
                                                 
                                 
+        print("done unstiching, unfolding, onto restiching")
         enlarged_unfolding_matrices = []
         enlarged_sys_errors_matrices = []
         enlarged_stat_errors_matrices = []
@@ -382,6 +383,7 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                 sys_errors_response = np.zeros((total_unrolled_number_of_bins,total_unrolled_number_of_bins))
                 stat_errors_response = np.zeros((total_unrolled_number_of_bins,total_unrolled_number_of_bins))
 
+                print("On restiching iteration {}".format(count))
                 ## replace all zeros with nan
                 unfolded_response[unfolded_response == 0] = np.nan
                 sys_errors_response[sys_errors_response == 0] = np.nan
