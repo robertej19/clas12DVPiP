@@ -205,7 +205,7 @@ def get_data():
 
         data_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
         read_in = True
-        validation = True
+        validation = False
         if read_in:
                 # for each pickle file in datadir, read it in, and then combine into one dataframe
                 df = pd.DataFrame()
@@ -582,6 +582,9 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                                 capsize=4,
                                 ls='None', marker='.', ms=10,
                                 label='Unfolded distribution')
+                        #set the x and y axis limits
+                        ax.set_xlim(0, total_unrolled_number_of_bins)
+                        ax.set_ylim(0,8000)
                         plt.show()
                         sys.exit()
 

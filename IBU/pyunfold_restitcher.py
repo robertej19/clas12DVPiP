@@ -129,8 +129,7 @@ def combine_matrices(response_matrices,normalization=True):
         return output_matrix
 
 
-
-def restitch(v_ids, unfolding_matrices, sys_errors, stat_errors, total_unrolled_number_of_bins):
+def restitc_original(v_ids, unfolding_matrices, sys_errors, stat_errors, total_unrolled_number_of_bins):
 
         # WE NEED TO RESTITCH THE UNFOLDING MATRICES 
         enlarged_unfolding_matrices = []
@@ -169,6 +168,98 @@ def restitch(v_ids, unfolding_matrices, sys_errors, stat_errors, total_unrolled_
         output_stat_err_matrix[np.isnan(output_stat_err_matrix)] = 0
 
         return output_matrix.T, output_sys_err_matrix.T, output_stat_err_matrix.T
+
+def restitch_old(v_ids, unfolding_matrices,total_unrolled_number_of_bins):
+
+        # WE NEED TO RESTITCH THE UNFOLDING MATRICES 
+        enlarged_unfolding_matrices = []
+
+        # Iterate over unfolding_matrices
+        for count, (element_id, unfolding_matrix) in enumerate(zip(v_ids,unfolding_matrices)):
+                unfolded_response = np.zeros((total_unrolled_number_of_bins,total_unrolled_number_of_bins))
+
+                print("On restiching iteration {}".format(count))
+                ## replace all zeros with nan
+                unfolded_response[unfolded_response == 0] = np.nan
+
+                for i in range(unfolding_matrix.shape[0]):  # iterating over rows
+                        for j in range(unfolding_matrix.shape[1]):  # iterating over columns
+                                unfolded_response[element_id[i],element_id[j]] = unfolding_matrix[i][j]
+
+                enlarged_unfolding_matrices.append(unfolded_response)
+
+        m, n, d = np.shape(enlarged_unfolding_matrices)
+
+        # Initialize an empty list to store the averaged rows
+        averaged_rows = []
+
+        # Process each row from the response matrices
+        for i in range(n):
+                # Extract the ith row from each matrix
+                rows = [matrix[i] for matrix in enlarged_unfolding_matrices]
+
+                arrays_2d = np.array(rows)
+
+                # Compute the mean of each column (i.e., each element across arrays), ignoring nan values
+                averages = np.nanmean(arrays_2d, axis=0)
+
+                # Normalize the averages so they sum to 1
+                averaged_normalized_row = averages / np.nansum(averages)
+                averaged_rows.append(averaged_normalized_row)
+
+        # Convert the list of averaged rows to a numpy array
+        output_matrix = np.array(averaged_rows)
+        #replace nan with zero
+        output_matrix[np.isnan(output_matrix)] = 0
+        return output_matrix.T
+
+def restitch(v_ids, unfolding_matrices, total_unrolled_number_of_bins,normalization=True):
+
+    # Initialize sums and counts matrix to compute mean
+    unfolding_sums = np.zeros((total_unrolled_number_of_bins, total_unrolled_number_of_bins))
+    unfolding_counts = np.zeros((total_unrolled_number_of_bins, total_unrolled_number_of_bins))
+
+    # Iterate over unfolding_matrices
+    for count, (element_id, unfolding_matrix) in enumerate(zip(v_ids, unfolding_matrices)):
+        print("On restitching iteration {}".format(count))
+
+        # Add unfolding matrix to the corresponding position in the sums matrix
+        unfolding_sums[np.ix_(element_id, element_id)] += unfolding_matrix
+
+        # Increment counts where a number was added in sums matrix
+        unfolding_counts[np.ix_(element_id, element_id)] += 1
+
+    # Calculate means while handling divide by zero
+    with np.errstate(divide='ignore', invalid='ignore'):
+        unfolded_means = np.true_divide(unfolding_sums, unfolding_counts)
+        unfolded_means[unfolding_counts == 0] = np.nan
+
+    # # Normalize the averages so they sum to 1 along each row
+    # row_sums = np.nansum(unfolded_means, axis=1, keepdims=True)
+    # with np.errstate(divide='ignore', invalid='ignore'):
+    #     output_matrix = np.true_divide(unfolded_means, row_sums)
+    #     output_matrix[row_sums == 0] = 0
+
+    # # replace nan with zero
+    # output_matrix[np.isnan(output_matrix)] = 0
+
+    row_sums = np.nansum(unfolded_means, axis=1, keepdims=True)
+
+    if normalization:
+        # Normalize the averages so they sum to 1 along each row
+        with np.errstate(divide='ignore', invalid='ignore'):
+            output_matrix = np.true_divide(unfolded_means, row_sums)
+    else:
+        output_matrix = unfolded_means
+
+    # If a row in row_sums is 0, then set the corresponding row in output_matrix to 0
+    output_matrix[(row_sums == 0).flatten(), :] = 0
+
+    # replace nan with zero
+    output_matrix[np.isnan(output_matrix)] = 0
+
+    return output_matrix.T
+
 
 
 def calc_resp_matrix(df, total_unrolled_number_of_bins):
@@ -217,7 +308,7 @@ def get_data():
 
         data_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/2_selected_dvpip_events/inb/rec/"
         read_in = True
-        validation = True
+        validation = False
         if read_in:
                 # for each pickle file in datadir, read it in, and then combine into one dataframe
                 df = pd.DataFrame()
@@ -316,9 +407,11 @@ def load_data(save_dir='./saved_data'):
     stat_errs = []
     sys_errs = []
 
+
     while True:
         try:
             # Load the data
+            print("loading iteration {}".format(iteration))
             bin_ids.append(np.load(os.path.join(save_dir, f'bin_ids_{iteration}.npy')))
             unfolding_matrices.append(np.load(os.path.join(save_dir, f'unfolding_matrix_{iteration}.npy')))
             stat_errs.append(np.load(os.path.join(save_dir, f'stat_err_{iteration}.npy')))
@@ -331,30 +424,42 @@ def load_data(save_dir='./saved_data'):
     return bin_ids, unfolding_matrices, stat_errs, sys_errs
 
 
-# data_dir = 'finalized_saved_data/'
-# bins = np.load(data_dir+'bin_ids_1.npy')
-# unfold_mat = np.load(data_dir+'unfolding_matrix_1.npy')
-# stat_err = np.load(data_dir+'stat_err_1.npy')
-# sys_err = np.load(data_dir+'sys_err_1.npy')
+data_dir = 'finalized_saved_data/'
+#data_dir = 'saved_data/'
 
-# ic(bins.shape)
-# ic(unfold_mat.shape)
-# ic(stat_err.shape)
-# ic(sys_err.shape)
 
 
 df, total_unrolled_number_of_bins, x_bins, q_bins, t_bins, phi_bins = get_data()
 truth_data, observed_data, response_hist, bins = calc_resp_matrix(df, total_unrolled_number_of_bins)
 
-v_ids, unfolding_matrices, stat_errors, sys_errors = load_data()
+np.save('final_truth_data.npy', truth_data)
+np.save('final_observed_data.npy', observed_data)
+np.save('bins.npy', bins)
+np.save('total_unrolled_number_of_bins.npy', total_unrolled_number_of_bins)
+sys.exit()
+
+v_ids, unfolding_matrices_to_process, stat_errors, sys_errors = load_data(save_dir=data_dir)
 print(len(v_ids))
 
 
-output_matrix, output_sys_err_matrix, output_stat_err_matrix = restitch(v_ids, unfolding_matrices, sys_errors, stat_errors, total_unrolled_number_of_bins)
+#output_matrix, output_sys_err_matrix, output_stat_err_matrix = restitch(v_ids, unfolding_matrices, sys_errors, stat_errors, total_unrolled_number_of_bins)
 
+output_matrix = restitch(v_ids, unfolding_matrices_to_process, total_unrolled_number_of_bins,normalization=True)
+output_sys_err_matrix = restitch(v_ids, sys_errors, total_unrolled_number_of_bins,normalization=False)
+output_stat_err_matrix = restitch(v_ids, stat_errors, total_unrolled_number_of_bins,normalization=False)
 
 unfolded_data = np.dot(output_matrix, observed_data)
 
+
+np.save('final_unfolded_data.npy', unfolded_data)
+np.save('final_output_matrix.npy', output_matrix)
+np.save('final_output_sys_err_matrix.npy', output_sys_err_matrix)
+np.save('final_output_stat_err_matrix.npy', output_stat_err_matrix)
+
+
+np.save('final_truth_data.npy', truth_data)
+np.save('bins.npy', bins)
+np.save('total_unrolled_number_of_bins.npy', total_unrolled_number_of_bins)
 
 #make a plot showing the unfolded data, the observed data, and the truth data
 fig, ax = plt.subplots()
@@ -369,7 +474,10 @@ ax.errorbar(bins, unfolded_data,
         capsize=4,
         ls='None', marker='.', ms=10,
         label='Unfolded distribution')
+ax.set_xlim(0, total_unrolled_number_of_bins)
+ax.set_ylim(0,8000)
 plt.show()
+
 sys.exit()
 
 #bins for test_3_saved_data
