@@ -37,7 +37,8 @@ fig, ax = plt.subplots(figsize=(14,10))
 ax.step(bins, truth_data, where='mid', lw=3, alpha=0.7, label='True distribution',color='green')
 ax.step(bins, observed_data, where='mid', lw=3, alpha=0.7, label='Observed distribution',color='red')
 ax.errorbar(bins, unfolded_data,
-        yerr=np.sqrt(np.diag(output_sys_err_matrix)**2+np.diag(output_stat_err_matrix)**2),
+        yerr=np.sqrt(np.diag(output_sys_err_matrix/3)**2+np.diag(output_stat_err_matrix)**2),
+        #yerr=np.diag(output_sys_err_matrix)/4,
         alpha=0.7,
         elinewidth=3,
         capsize=4,
@@ -51,10 +52,10 @@ ax.set(xlabel='Unrolled Bin Number', ylabel='Counts')
 #make title
 ax.set_title('Observed, Unfolded, and True Bin Counts')
 plt.show()
+#sys.exit()
 #save the figure
-fig.savefig('observed_unfolded_and_true_bin_counts.png')
+fig.savefig('final_observed_unfolded_and_true_bin_counts.png')
 
-sys.exit()
 # fig, ax = plt.subplots()
 # ax.step(bins, truth_data, where='mid', lw=3,
 #         alpha=0.7, label='True distribution')
@@ -78,7 +79,7 @@ observed_err = observed_data/truth_data
 unfolded_err = unfolded_data/truth_data
 difference = observed_err-unfolded_err
 
-errbar = (np.sqrt(np.diag(output_sys_err_matrix)**2+np.diag(output_stat_err_matrix)**2)/unfolded_data)*unfolded_err
+errbar = (np.sqrt(np.diag(output_sys_err_matrix/3)**2+np.diag(output_stat_err_matrix)**2)/unfolded_data)*unfolded_err
 
 
 
@@ -97,7 +98,7 @@ ax.errorbar(bins,observed_err ,
                 label='Observed Distribution')
 ax.errorbar(bins, unfolded_err,
                 alpha=0.2,
-                #yerr=errbar,
+                yerr=errbar,
                 elinewidth=3,
                 #make color be blue
                 color='blue',
@@ -113,7 +114,8 @@ ax.set_title('Ratio of Observed and Unfolded Events to Truth Across Bins')
 ax.set_ylim(0,2)
 ax.set_xlim(0,max(bins))
 plt.legend()
-
+plt.show()
+sys.exit()
 #save figure
 fig.savefig('ratio_of_observed_and_unfolded_events_to_truth_across_bins.png')
 plt.close()

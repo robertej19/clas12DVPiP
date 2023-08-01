@@ -241,7 +241,9 @@ if self_calc:
     print(df)
 else:
     
-    input_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/singles_t2/"
+    #input_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/singles_t2/"
+    input_dir = "/mnt/d/GLOBUS/CLAS12/Thesis/3_binned_dvpip/inb/exp/singles_t1/"
+
     #get a list of files in input_dir
     files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
 

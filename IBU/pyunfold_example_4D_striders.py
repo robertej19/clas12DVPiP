@@ -338,13 +338,16 @@ def unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
         for x in range(0,len(x_bins)-(x_width-1),x_stride):
                 for q in range(0,len(q_bins)-(q_width-1),q_stride):
                         for t in range(0,len(t_bins)-(t_width-1),t_stride):
-                                for phi in range(0, len(phi_bins), phi_stride):
+                                for phi in range(0,len(phi_bins)-(phi_width-1),phi_stride):
+                                        #for phi in range(0, len(phi_bins), phi_stride):
                                         iteration +=1
                                         x_range = x_bins[x:x+x_width]
                                         q_range = q_bins[q:q+q_width]
                                         t_range = t_bins[t:t+t_width]
-                                        phi_indices = [(phi + i) % len(phi_bins) for i in range(phi_width)]
-                                        phi_range = phi_bins[phi_indices]
+                                        phi_range = phi_bins[phi:phi+phi_width]
+                                #        phi_indices = [(phi + i) % len(phi_bins) for i in range(phi_width)]
+                                 #       phi_range = phi_bins[phi_indices]
+
 
                                         print(x_range,q_range,t_range,phi_range,iteration,'of',total_its)
                                         bin_ids = []
@@ -511,17 +514,24 @@ average_err = np.zeros((min_bin_span, min_bin_span))
 true_output_matrix = None  # Variable to hold the "true" output matrix
 
 
+
+
+
+
+
 for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, then kernel size can be 4,3,2
-                        stride_max = min(kernel_size, min_bin_span - kernel_size +1)
-                        stride_range = [0] if kernel_size == min_bin_span else range(1, stride_max + 1)  # add stride 0 if kernel size equals image size
-        #for stride in stride_range:
-                #if stride == 0 or (min_bin_span - kernel_size) % stride == 0:  # also handle stride=0 case
-                        kernel_size = 5
-                        stride = 1
-                        ##ic("Unfolding with x-q kernel of size {}x{} with strides of {}x{}".format(kernel_size, kernel_size, stride, stride))
-
+        stride_max = min(kernel_size, min_bin_span - kernel_size +1)
+        stride_range = [0] if kernel_size == min_bin_span else range(1, stride_max + 1)  # add stride 0 if kernel size equals image size
+        for stride in stride_range:
+                if stride == 0 or (min_bin_span - kernel_size) % stride == 0:  # also handle stride=0 case
+                        #kernel_size = 2
+                        #stride = 1
+                        print("Kernel size: {}, Stride: {}".format(kernel_size, stride))
                         start_time = time.time()
-
+                        kernel_size_bin = kernel_size
+                        stride_bin = stride
+                        kernel_size = min_bin_span
+                        stride = 0
                         output_matrix, output_sys_err_matrix, output_stat_err_matrix = unstich_unfold_restich(x_bins, q_bins, t_bins, phi_bins,
                                                                                                                 x_width=kernel_size,
                                                                                                                 q_width=kernel_size,
@@ -535,104 +545,98 @@ for kernel_size in range(min_bin_span,1,-1): #For example, if image is 4x4x4x4, 
                         # Compute elapsed time and store it in comp_time array
                         elapsed_time = time.time() - start_time
 
-                        #Save all 3 matrixes to csv files
-                        np.savetxt("recon_unfolding_matrix{}_{}_{}_{}.csv".format(len(x_bins),len(q_bins),len(t_bins),len(phi_bins)), output_matrix, delimiter=",")
-                        np.savetxt("recon_unfolding_sys_err_matrix{}_{}_{}_{}.csv".format(len(x_bins),len(q_bins),len(t_bins),len(phi_bins)), output_sys_err_matrix, delimiter=",")
-                        np.savetxt("recon_unfolding_stat_err_matrix{}_{}_{}_{}.csv".format(len(x_bins),len(q_bins),len(t_bins),len(phi_bins)), output_stat_err_matrix, delimiter=",")
 
                         # If this is the "true" output matrix (i.e., kernel size equals min_bin_span), store it
-                        if kernel_size == min_bin_span and stride == 0:
+                        if kernel_size == min_bin_span and stride == 0 and true_output_matrix is None:
                                 true_output_matrix = output_matrix
                                 basis_elapse_time = elapsed_time
                                 # #calcuate inverse of response matrix
                                 # response_matrix_inv = np.linalg.inv(response_hist)
                                 # #compare true_output_matrix to response matrix inverse
-                                # ###ic(true_output_matrix)
-                                # ###ic(response_matrix_inv)
+                                # ####ic(true_output_matrix)
+                                # ####ic(response_matrix_inv)
                                 # diffs = np.abs(true_output_matrix/response_matrix_inv-1)*100
                                 # #replace nan with zero
                                 # diffs[np.isnan(diffs)] = 0
                                 # # round each value to nearest int
                                 # diffs = np.round(diffs).astype(int)
-                                # ##ic(diffs)
+                                # ###ic(diffs)
                                 # sys.exit()
 
-                        # error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,
-                        #         (output_matrix - true_output_matrix) / true_output_matrix, 0)
+                        #error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,(output_matrix - true_output_matrix) / true_output_matrix, 0)
+                       # error_matrix = np.where(np.abs(true_output_matrix) > 1e-7,(output_matrix / true_output_matrix, 0)
+                        error_matrix = output_matrix/true_output_matrix
 
-                        # # Compute average absolute difference of all non-zero and non-nan elements in error_matrix
-                        # # and store it in average_err array as a percent
-                        # ##ic("Average error: ", np.nanmean(np.abs(error_matrix))*100)
-                        # ##ic("Computation time: ", elapsed_time/basis_elapse_time)
-                        # average_err[kernel_size-1][stride] = np.nanmean(np.abs(error_matrix))*100
-                        # comp_time[kernel_size-1][stride] = elapsed_time/basis_elapse_time#
+                        # Compute average absolute difference of all non-zero and non-nan elements in error_matrix
+                        # and store it in average_err array as a percent
+                        print("Average error: ", np.nanmean(np.abs(error_matrix))*1)
+                        print("Computation time: ", elapsed_time/basis_elapse_time)
+                        average_err[kernel_size_bin-1][stride_bin] = np.nanmean(np.abs(error_matrix))*1
+                        comp_time[kernel_size_bin-1][stride_bin] = elapsed_time/basis_elapse_time#
                         
                         unfolded_data = np.dot(output_matrix, observed_data)
 
 
-                        #make a plot showing the unfolded data, the observed data, and the truth data
-                        fig, ax = plt.subplots()
-                        ax.step(bins, truth_data, where='mid', lw=3,
-                                alpha=0.7, label='True distribution')
-                        ax.step(bins, observed_data, where='mid', lw=3,
-                                alpha=0.7, label='Observed distribution')
-                        ax.errorbar(bins, unfolded_data,
-                                yerr=np.sqrt(np.diag(output_sys_err_matrix)**2+np.diag(output_stat_err_matrix)**2),
-                                alpha=0.7,
-                                elinewidth=3,
-                                capsize=4,
-                                ls='None', marker='.', ms=10,
-                                label='Unfolded distribution')
-                        #set the x and y axis limits
-                        ax.set_xlim(0, total_unrolled_number_of_bins)
-                        ax.set_ylim(0,8000)
-                        plt.show()
-                        sys.exit()
+                        # #make a plot showing the unfolded data, the observed data, and the truth data
+                        # fig, ax = plt.subplots()
+                        # ax.step(bins, truth_data, where='mid', lw=3,
+                        #         alpha=0.7, label='True distribution')
+                        # ax.step(bins, observed_data, where='mid', lw=3,
+                        #         alpha=0.7, label='Observed distribution')
+                        # ax.errorbar(bins, unfolded_data,
+                        #         yerr=np.sqrt(np.diag(output_sys_err_matrix)**2+np.diag(output_stat_err_matrix)**2),
+                        #         alpha=0.7,
+                        #         elinewidth=3,
+                        #         capsize=4,
+                        #         ls='None', marker='.', ms=10,
+                        #         label='Unfolded distribution')
+                        # plt.show()
 
-plot_dists = False
-if plot_dists:
-        ##ic("Average error matrix:")
-        ##ic(average_err)
-        ##ic("Computation time matrix:")
-        ##ic(comp_time)
-        import numpy.ma as ma
-        import matplotlib.pyplot as plt
+print("Average error matrix:")
+print(average_err)
+print("Computation time matrix:")
+print(comp_time)
+import numpy.ma as ma
+import matplotlib.pyplot as plt
 
-        # Define your colormap
-        cmap = plt.cm.viridis
-        cmap.set_bad(color='white')
+#make font size 20
+plt.rcParams.update({'font.size': 20})
 
-        # Create the masked arrays
-        comp_time_masked = ma.masked_where(np.isnan(comp_time) | (comp_time == 0), comp_time)
-        average_err_masked = ma.masked_where(np.isnan(average_err) | (average_err == 0), average_err)
+# Define your colormap
+cmap = plt.cm.viridis
+cmap.set_bad(color='white')
 
-        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+# Create the masked arrays
+comp_time_masked = ma.masked_where(np.isnan(comp_time) | (comp_time == 0), comp_time)
+average_err_masked = ma.masked_where(np.isnan(average_err) | (average_err == 0), average_err)
 
-        x_ticks = np.arange(min_bin_span+1)  # consider additional column for stride=0
-        y_ticks = np.arange(min_bin_span) + 1
+fig, axs = plt.subplots(1, 2, figsize=(12, 6))
 
-        # Modify imshow calls to use masked array and the colormap with white for bad values
-        c1 = axs[0].imshow(comp_time_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
-        fig.colorbar(c1, ax=axs[0])
-        axs[0].set_title('Computation Time')
-        axs[0].set_xlabel('Kernel Size')
-        axs[0].set_ylabel('Stride')
-        axs[0].set_xticks(np.arange(min_bin_span))
-        axs[0].set_yticks(np.arange(min_bin_span+1))
-        axs[0].set_xticklabels(y_ticks)
-        axs[0].set_yticklabels(x_ticks)
+x_ticks = np.arange(min_bin_span+1)  # consider additional column for stride=0
+y_ticks = np.arange(min_bin_span) + 1
 
-        c2 = axs[1].imshow(average_err_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
-        fig.colorbar(c2, ax=axs[1])
-        axs[1].set_title('Average Error')
-        axs[1].set_xlabel('Kernel Size')
-        axs[1].set_ylabel('Stride')
-        axs[1].set_xticks(np.arange(min_bin_span))
-        axs[1].set_yticks(np.arange(min_bin_span+1))
-        axs[1].set_xticklabels(y_ticks)
-        axs[1].set_yticklabels(x_ticks)
+# Modify imshow calls to use masked array and the colormap with white for bad values
+c1 = axs[0].imshow(comp_time_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
+fig.colorbar(c1, ax=axs[0])
+axs[0].set_title('Ratio of Computation Time to Full IBU')
+axs[0].set_xlabel('Kernel Size')
+axs[0].set_ylabel('Stride')
+axs[0].set_xticks(np.arange(min_bin_span))
+axs[0].set_yticks(np.arange(min_bin_span+1))
+axs[0].set_xticklabels(y_ticks)
+axs[0].set_yticklabels(x_ticks)
 
-        plt.show()
+c2 = axs[1].imshow(average_err_masked.T, cmap=cmap, interpolation='nearest', origin='lower')
+fig.colorbar(c2, ax=axs[1])
+axs[1].set_title('Ratio of Unfolded Matrix to Full IBU')
+axs[1].set_xlabel('Kernel Size')
+axs[1].set_ylabel('Stride')
+axs[1].set_xticks(np.arange(min_bin_span))
+axs[1].set_yticks(np.arange(min_bin_span+1))
+axs[1].set_xticklabels(y_ticks)
+axs[1].set_yticklabels(x_ticks)
+
+plt.show()
 
 
 
