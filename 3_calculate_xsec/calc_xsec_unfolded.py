@@ -422,12 +422,17 @@ combined_df['acc_corr_counts_unfolded'] = combined_df['counts_unfolded'] / combi
 
 
 combined_df['acc_corr_counts_err'] = combined_df['acc_corr_counts']*np.sqrt(1/combined_df['counts']+1/combined_df['rec_counts']+1/combined_df['gen_counts'])
+combined_df['acc_corr_counts_err_unfolded'] = combined_df['acc_corr_counts_unfolded']*np.sqrt(1/combined_df['counts']+1/combined_df['rec_counts']+1/combined_df['gen_counts']+(combined_df['unfolded_data_rec_stat_err']/combined_df['rec_counts_unfolded'])**2)
 
 
 
 combined_df['acc_corr_counts_err'] = combined_df['acc_corr_counts_err'].fillna(0)
 combined_df['acc_corr_counts_err'] = combined_df['acc_corr_counts_err'].replace(np.inf, 0)
 combined_df['acc_corr_counts_err'] = combined_df['acc_corr_counts_err'].replace(np.nan, 0)
+#do the same for acc_corr_counts_err_unfolded
+combined_df['acc_corr_counts_err_unfolded'] = combined_df['acc_corr_counts_err_unfolded'].fillna(0)
+combined_df['acc_corr_counts_err_unfolded'] = combined_df['acc_corr_counts_err_unfolded'].replace(np.inf, 0)
+combined_df['acc_corr_counts_err_unfolded'] = combined_df['acc_corr_counts_err_unfolded'].replace(np.nan, 0)
 
 print(combined_df.columns.values)
 # combined_df['xsec'] = combined_df['acc_corr_counts']  /fs.f18_inbending_total_lumi_inv_fb *180/(3.14159) / combined_df['true_total_vol']
@@ -442,6 +447,7 @@ combined_df['xsec'] = combined_df['acc_corr_counts']  /fs.f18_inbending_total_lu
 combined_df['xsec_unfolded'] = combined_df['acc_corr_counts_unfolded']  /fs.f18_inbending_total_lumi_inv_fb *180/(3.14159) / combined_df['nominal_xbq2_bin_volume'] / combined_df['tp_bin_volume']
 
 combined_df['xsec_err'] = combined_df['acc_corr_counts_err'] /fs.f18_inbending_total_lumi_inv_fb*180/(3.14159)/ combined_df['nominal_xbq2_bin_volume'] / combined_df['tp_bin_volume']
+combined_df['xsec_err_unfolded'] = combined_df['acc_corr_counts_err_unfolded'] /fs.f18_inbending_total_lumi_inv_fb*180/(3.14159)/ combined_df['nominal_xbq2_bin_volume'] / combined_df['tp_bin_volume']
 
 
 #!!CONVERT PHI FROM DEG TO RAD
@@ -473,7 +479,49 @@ combined_df['folding_ratio_delta'] = np.sqrt((combined_df['xsec_red_unfolded']/c
 print(combined_df['folding_ratio_delta'].mean())
 print(combined_df['folding_ratio'].mean())
 
+# Group by 'pmin' and calculate the mean of 'folding_ratio_delta'
+names = ['$\phi$', '$Q^2$', 't', '$x_B$']
+for name,vari in zip(names,['p','q','t','x']):
+    combined_df['{}ave2'.format(vari)] = (combined_df['{}min'.format(vari)] + combined_df['{}max'.format(vari)]) / 2
 
+    first_pave = combined_df['{}ave2'.format(vari)].iloc[0]
+
+    # Print all values of "folding_ratio" for the first group
+    # first_group_folding_ratio = combined_df[combined_df['{}ave2'.format(vari)] == first_pave]['folding_ratio']
+    # ic(first_group_folding_ratio)
+    # #make histogram of folding ratio for each bin
+    # #set font size to be large
+    # plt.rcParams.update({'font.size': 20})
+    # fig, ax = plt.subplots(1,1, figsize=(12,6))
+    # ax.hist(first_group_folding_ratio, bins=100)#, range=[0,2])
+    # plt.show()
+    # print(first_group_folding_ratio.mean())
+    # print(first_group_folding_ratio.std())
+    # sys.exit()
+    grouped_df = combined_df.groupby('{}ave2'.format(vari)).agg({'folding_ratio': ['mean', 'std']}).reset_index()
+
+    # Flatten the multi-index columns
+    grouped_df.columns = ['_'.join(col).strip() for col in grouped_df.columns.values]
+
+    print(grouped_df)
+
+    # Create the scatter plot
+    #increase font size
+    plt.rcParams.update({'font.size': 20})
+    plt.figure(figsize=(14, 6))
+    plt.errorbar(grouped_df['{}ave2_'.format(vari)], grouped_df['folding_ratio_mean'], yerr=grouped_df['folding_ratio_std'], fmt='o',capsize=4)
+    #plt.scatter(grouped_df['{}ave2'.format(vari)], grouped_df['folding_ratio_delta'])
+    plt.xlabel('{} Bin Center'.format(name))
+    plt.ylabel('Normalized Difference Between \n Cross Section Results')
+    plt.title('Normalized Mean Difference in Cross Section Results for {} Bins'.format(name))
+    #plt.grid(True)
+    #plt.show()
+    #save the figure
+    plt.ylim(.4,2)
+    plt.savefig('folding_ratio_{}.png'.format(vari))
+    #close the figure
+    plt.close()
+sys.exit()
 
 # #plot histogram of folding ratio
 # #set font size to be large
@@ -504,6 +552,7 @@ print(combined_df['folding_ratio'].mean())
 
 
 combined_df['xsec_red_err'] = combined_df['xsec_err'] *pi2_fact/combined_df['Gamma']
+combined_df['xsec_red_err_unfolded'] = combined_df['xsec_err_unfolded'] *pi2_fact/combined_df['Gamma']
 
 combined_df['acc_corr_counts_err_alt'] = combined_df['acc_corr_counts']*np.sqrt(1/combined_df['counts'])#+1/combined_df['rec_counts']+1/combined_df['gen_counts'])
 
@@ -513,8 +562,8 @@ combined_df['xsec_err_alt'] = combined_df['acc_corr_counts_err_alt']  /fs.f18_in
 
 combined_df['xsec_red_err_alt'] = combined_df['xsec_err_alt'] 
 
-combined_df = combined_df[combined_df['counts'] >= 1]
-combined_df = combined_df[combined_df['counts_unfolded'] >= 1]
+combined_df = combined_df[combined_df['counts'] > 0]
+combined_df = combined_df[combined_df['counts_unfolded'] > 0]
 
 # combined_df = combined_df[combined_df['rec_counts'] >= 2]
 # combined_df = combined_df[combined_df['gen_counts'] >= 2]
@@ -523,7 +572,14 @@ combined_df = combined_df[combined_df['acc_corr_unfolded'] >= .005]
 
 combined_df = combined_df[combined_df['rad_corr_alt'] >= .5]
 combined_df = combined_df[combined_df['rad_corr_alt'] <= 2]
-
+#combined_df = combined_df[combined_df['volume_ratio'] >= .3]#dont want to mess around with bin volume effects too much
+#make histogram of volume_ratio
+#set font size to be large
+# plt.rcParams.update({'font.size': 20})
+# fig, ax = plt.subplots(1,1, figsize=(12,6))
+# ax.hist(combined_df['rad_corr_alt'], bins=100, range=[0,2])
+# plt.show()
+# sys.exit()
 
 # 45na-nom
 # 55na-nom
@@ -536,10 +592,11 @@ combined_df['sys_uncert_recon'] = (combined_df['sys_uncert_45na']+combined_df['s
 combined_df['sys_uncert_acc-corr'] = np.sqrt((1-combined_df['nom-nom'])**2)
 combined_df['sys_uncert_rad'] = combined_df['rad_corr_alt_err']
 
-#combined stat error
-combined_df['stat_uncert'] = combined_df['xsec_red']*np.sqrt(combined_df['sys_uncert_recon']**2+combined_df['sys_uncert_acc-corr']**2+combined_df['sys_uncert_rad']**2)
+#combined sys error
 
-combined_df['total_uncert'] = np.sqrt(combined_df['stat_uncert']**2+combined_df['xsec_red_err_alt']**2)
+combined_df['total_sys_uncert_unfolded'] = combined_df['xsec_red_unfolded']*np.sqrt(combined_df['sys_uncert_recon']**2+combined_df['sys_uncert_acc-corr']**2+combined_df['sys_uncert_rad']**2+(combined_df['unfolded_data_exp_sys_err']/combined_df['counts_unfolded'])**2)
+
+combined_df['total_uncert_unfolded'] = np.sqrt(combined_df['total_sys_uncert_unfolded']**2+combined_df['xsec_red_err_unfolded']**2)
 
 
 print(combined_df)
@@ -564,7 +621,7 @@ show_xsec_2 = 0
 show_xsec_22 = 0
 xerr_value = 0
 
-combine_plots = 0
+combine_plots = 1
 output_image_dir = "plot_test_t1_with_unfolding/"
 plot_corrs = 0
 
@@ -976,6 +1033,7 @@ if show_xsec:
 
 
     ind = 0
+    counter = 0
     for name, group in groups:
         #only plot if there are more than 10 bins
         print("in name")
@@ -1017,29 +1075,65 @@ if show_xsec:
             #for showing different uncertainties
             #plt.errorbar(group['pave'], group['xsec_red'], yerr=group['xsec_red_err'],fmt='r+', markersize=50,label=#slabel)
             #plot again but with red error bars
-            xerr_value = 10
-            plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=2*group['total_uncert'],fmt='r.',  markersize=5,elinewidth=5)
-            #,label="CLAS12 Data")#elabel)
+            xerr_value = 5
 
-            plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='k.',  markersize=5,label="CLAS12 Data",elinewidth=5)#elabel)
 
-            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='g.',  markersize=5,label="Unfolded",elinewidth=5)#elabel)
-
+            #plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='k.',  markersize=5,label="CLAS12 Data",elinewidth=5)#elabel)
 
 
 
 
             # fit the function to the data
-            popt, pcov = curve_fit(fit_function, group['pave'], group['xsec_red'], sigma=group['xsec_red_err'], absolute_sigma=True)
+            popt, pcov = curve_fit(fit_function, group['pave'], group['xsec_red_unfolded'], sigma=group['total_uncert_unfolded'], absolute_sigma=True)
 
-            # print out the fit parameters
-            print(f"A = {popt[0]}, B = {popt[1]}, C = {popt[2]}")
+            # calculate the standard deviation of the fitted parameters
+            perr = np.sqrt(np.diag(pcov))
 
-            # plot the fit
-            #phis = np.linspace(group['pave'].min(), group['pave'].max(), 1000)
+            # calculate the top and bottom bounds of the fit
             phis = np.linspace(0,360,1000)
-            plt.plot(phis, fit_function(phis, *popt), 'k-', label="CLAS12 Fit",linewidth=5)
-            #
+            y = fit_function(phis, *popt)
+            y_top = fit_function(phis, *(popt + perr))
+            y_bottom = fit_function(phis, *(popt - perr))
+
+            plt.plot(phis, y, 'b-', label="Trig. Fit",linewidth=5)
+            # # # plt.fill_between(phis, y_bottom, y_top, color='b', alpha=0.2)  # this adds the band of uncertainty
+
+            num_bands = 200  # number of bands in the gradient
+            cmap = plt.get_cmap('winter')  # get the colormap
+
+            for i in range(num_bands):
+                # Create a range of color values
+                color_val = i / num_bands
+                # Calculate the y value for this band
+                y_band_top = y_bottom + (y_top - y_bottom) * (i+1) / num_bands
+                y_band_bottom = y_bottom + (y_top - y_bottom) * i / num_bands
+                # Plot the band with the color from the colormap
+                plt.fill_between(phis, y_band_bottom, y_band_top, color=cmap(color_val),alpha=0.1)
+            
+            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=1.5*group['total_uncert_unfolded'],fmt='k.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_unfolded'],fmt='r.',  markersize=5,label="Unfolded",elinewidth=5)#,capsize=10, capthick=5)#elabel)
+            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=0,fmt='r.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+            #plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='g.',  markersize=5,label="Unfolded",elinewidth=5)#elabel)
+
+
+
+            plt.plot(group['pave']-6, group['xsec_red'], marker='^', color='orange', markersize=21, label="Bin-by-Bin",linestyle="None")
+
+            #             #get errors from covariance matrix
+            # perr = np.sqrt(np.diag(pcov))
+            # print(perr)
+
+
+            # errband_width
+
+            # #y_bottom = fit_function(phis, *popt)-errband_width
+            # #instead, calc y_bottom with errors from covariance matrix
+            
+            # y_top = fit_function(phis, *popt)+errband_width
+
+            # plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
+
+
 
             #blue_line = mlines.Line2D([], [], color='r', marker='None', markersize=10, linestyle='-', label=slabel)
             #red_line = mlines.Line2D([], [], color='k', marker='None', markersize=10, linestyle='-', label=elabel)
@@ -1049,8 +1143,11 @@ if show_xsec:
             plt.ylabel('Reduced Cross Section (nb/$GeV^2$)')
             #pltt = 'Reduced Cross Section in bin ({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
             pltt = '({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
-            
-            plt.title(pltt)
+            #instead make plot title as averages xave qave tave
+            #plot_title = '({})=({:.2f}, {:.2f}, {:.2f})'.format(r'$\langle x_{B}\rangle, \langle Q^2 \rangle, \lange t \rangle$',group['xave'].mean(),group['qave'].mean(),group['tave'].mean())
+            plot_title = '{}={:.2f},{}={:.2f} GeV$^2$,{}={:.2f} GeV$^2$'.format(r'$\langle x_{B}\rangle$',group['xave'].mean(), r'$\langle Q^2 \rangle$',group['qave'].mean(), r'$\langle t \rangle$',group['tave'].mean())
+
+            plt.title(plot_title)
             #plt.legend(handles=[blue_line, red_line])
 
 
@@ -1096,7 +1193,7 @@ if show_xsec:
 
                 print(A,B,C)
 
-                plt.plot(phi, y,'b-',label='CLAS6 Result',linewidth=5)
+                #plt.plot(phi, y,'b-',label='CLAS6 Result',linewidth=5)
                 #make line be 50% transparent
                 #plt.plot(phi, y+errband_width,'k-',label='CLAS6 Fit',alpha=0.5)#
                 #plt.plot(phi, y-errband_width,'k-',label='CLAS6 Fit',alpha=0.5)#
@@ -1104,7 +1201,7 @@ if show_xsec:
                 y_bottom = y-errband_width
                 y_top = y+errband_width
 
-                plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
+                #plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
 
                 #,linewidth = errband_width)
 
@@ -1152,14 +1249,19 @@ if show_xsec:
             #plt.title('Phi vs Fit Function')
             #plt.show()
 
-                #plt.legend()
+            #plt.legend()
 
                 #plt.show()
             #restrict vertical axis to start at 0
             
             plt.ylim(bottom=0)
+            #set xrange 0 to 360
+            plt.xlim([0,360])
             #plt.show()
-            #sys.exit()
+            counter +=1
+            print("counter",counter)
+            #if counter > 3:
+            #    sys.exit()
             plt.savefig(output_image_dir+pltt+".png",bbox_inches='tight')
             plt.close()
             # plt.show()
