@@ -2,7 +2,8 @@
 import os
 import PIL
 from PIL import Image
-img_dir = '/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/t_xsec_unfolded'
+#img_dir = '/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/t_xsec_unfolded'
+img_dir = '/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/tdep_combined_plot'
 
 Image.MAX_IMAGE_PIXELS = None
 #make a dir with the same name as image dir but with _resized at the end
