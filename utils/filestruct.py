@@ -146,9 +146,11 @@ class fs:
 
 
 		self.f18_inbending_total_lumi = 5.511802214933477e+40
+		self.f18_outbending_total_lumi = 4.651647453735352e+40
+
 		self.f18_inbending_total_lumi_inv_fb = 5.511802214933477e+7
 
-		self.f18_inbending_total_lumi_inv_nb = 5.511802214933477e+7
+		self.f18_outbending_total_lumi_inv_nb = 4.651647453735352e+7
 		#self.Ebeam = 10.604 #GeV, CLAS12 beam energy MOVE TO CONST.PY
 		#self.alpha = 1/137 #, fine structure constant MOVE TO CONST.PY
 		

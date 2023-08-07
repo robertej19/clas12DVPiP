@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 
 from utils import filestruct, const, make_histos
 
+# import time module
+import time
 
 import os
 from PIL import Image
@@ -479,49 +481,49 @@ combined_df['folding_ratio_delta'] = np.sqrt((combined_df['xsec_red_unfolded']/c
 print(combined_df['folding_ratio_delta'].mean())
 print(combined_df['folding_ratio'].mean())
 
-# Group by 'pmin' and calculate the mean of 'folding_ratio_delta'
-names = ['$\phi$', '$Q^2$', 't', '$x_B$']
-for name,vari in zip(names,['p','q','t','x']):
-    combined_df['{}ave2'.format(vari)] = (combined_df['{}min'.format(vari)] + combined_df['{}max'.format(vari)]) / 2
+# # Group by 'pmin' and calculate the mean of 'folding_ratio_delta'
+# names = ['$\phi$', '$Q^2$', 't', '$x_B$']
+# for name,vari in zip(names,['p','q','t','x']):
+#     combined_df['{}ave2'.format(vari)] = (combined_df['{}min'.format(vari)] + combined_df['{}max'.format(vari)]) / 2
 
-    first_pave = combined_df['{}ave2'.format(vari)].iloc[0]
+#     first_pave = combined_df['{}ave2'.format(vari)].iloc[0]
 
-    # Print all values of "folding_ratio" for the first group
-    # first_group_folding_ratio = combined_df[combined_df['{}ave2'.format(vari)] == first_pave]['folding_ratio']
-    # ic(first_group_folding_ratio)
-    # #make histogram of folding ratio for each bin
-    # #set font size to be large
-    # plt.rcParams.update({'font.size': 20})
-    # fig, ax = plt.subplots(1,1, figsize=(12,6))
-    # ax.hist(first_group_folding_ratio, bins=100)#, range=[0,2])
-    # plt.show()
-    # print(first_group_folding_ratio.mean())
-    # print(first_group_folding_ratio.std())
-    # sys.exit()
-    grouped_df = combined_df.groupby('{}ave2'.format(vari)).agg({'folding_ratio': ['mean', 'std']}).reset_index()
+#     # Print all values of "folding_ratio" for the first group
+#     # first_group_folding_ratio = combined_df[combined_df['{}ave2'.format(vari)] == first_pave]['folding_ratio']
+#     # ic(first_group_folding_ratio)
+#     # #make histogram of folding ratio for each bin
+#     # #set font size to be large
+#     # plt.rcParams.update({'font.size': 20})
+#     # fig, ax = plt.subplots(1,1, figsize=(12,6))
+#     # ax.hist(first_group_folding_ratio, bins=100)#, range=[0,2])
+#     # plt.show()
+#     # print(first_group_folding_ratio.mean())
+#     # print(first_group_folding_ratio.std())
+#     # sys.exit()
+#     grouped_df = combined_df.groupby('{}ave2'.format(vari)).agg({'folding_ratio': ['mean', 'std']}).reset_index()
 
-    # Flatten the multi-index columns
-    grouped_df.columns = ['_'.join(col).strip() for col in grouped_df.columns.values]
+#     # Flatten the multi-index columns
+#     grouped_df.columns = ['_'.join(col).strip() for col in grouped_df.columns.values]
 
-    print(grouped_df)
+#     print(grouped_df)
 
-    # Create the scatter plot
-    #increase font size
-    plt.rcParams.update({'font.size': 20})
-    plt.figure(figsize=(14, 6))
-    plt.errorbar(grouped_df['{}ave2_'.format(vari)], grouped_df['folding_ratio_mean'], yerr=grouped_df['folding_ratio_std'], fmt='o',capsize=4)
-    #plt.scatter(grouped_df['{}ave2'.format(vari)], grouped_df['folding_ratio_delta'])
-    plt.xlabel('{} Bin Center'.format(name))
-    plt.ylabel('Normalized Difference Between \n Cross Section Results')
-    plt.title('Normalized Mean Difference in Cross Section Results for {} Bins'.format(name))
-    #plt.grid(True)
-    #plt.show()
-    #save the figure
-    plt.ylim(.4,2)
-    plt.savefig('folding_ratio_{}.png'.format(vari))
-    #close the figure
-    plt.close()
-sys.exit()
+#     # Create the scatter plot
+#     #increase font size
+#     plt.rcParams.update({'font.size': 20})
+#     plt.figure(figsize=(14, 6))
+#     plt.errorbar(grouped_df['{}ave2_'.format(vari)], grouped_df['folding_ratio_mean'], yerr=grouped_df['folding_ratio_std'], fmt='o',capsize=4)
+#     #plt.scatter(grouped_df['{}ave2'.format(vari)], grouped_df['folding_ratio_delta'])
+#     plt.xlabel('{} Bin Center'.format(name))
+#     plt.ylabel('Normalized Difference Between \n Cross Section Results')
+#     plt.title('Normalized Mean Difference in Cross Section Results for {} Bins'.format(name))
+#     #plt.grid(True)
+#     #plt.show()
+#     #save the figure
+#     plt.ylim(.4,2)
+#     plt.savefig('folding_ratio_{}.png'.format(vari))
+#     #close the figure
+#     plt.close()
+# sys.exit()
 
 # #plot histogram of folding ratio
 # #set font size to be large
@@ -594,12 +596,59 @@ combined_df['sys_uncert_rad'] = combined_df['rad_corr_alt_err']
 
 #combined sys error
 
+combined_df['rel_sys_unfolding_uncert'] = combined_df['unfolded_data_exp_sys_err']/combined_df['counts_unfolded']
+
 combined_df['total_sys_uncert_unfolded'] = combined_df['xsec_red_unfolded']*np.sqrt(combined_df['sys_uncert_recon']**2+combined_df['sys_uncert_acc-corr']**2+combined_df['sys_uncert_rad']**2+(combined_df['unfolded_data_exp_sys_err']/combined_df['counts_unfolded'])**2)
 
 combined_df['total_uncert_unfolded'] = np.sqrt(combined_df['total_sys_uncert_unfolded']**2+combined_df['xsec_red_err_unfolded']**2)
 
 
-print(combined_df)
+print(combined_df.columns.values)
+
+uncertainties = ['sys_uncert_recon', 'sys_uncert_acc-corr', 'sys_uncert_rad', 'rel_sys_unfolding_uncert']
+
+combined_df = combined_df[~(combined_df[uncertainties] > 0.5).any(axis=1)]
+
+# # calculate and print mean and median for each column
+# colors = ['steelblue', 'firebrick', 'purple', 'green']
+# #increase fontsize
+# plt.rcParams.update({'font.size': 20})
+# plt.figure(figsize=(14,10))
+
+# for color, uncertainty in zip(colors, uncertainties):
+#     mean_value = combined_df[uncertainty].mean()
+#     median_value = combined_df[uncertainty].median()
+
+#     # format as percentage
+#     mean_percentage = "{:.1f}%".format(mean_value * 100)
+#     median_percentage = "{:.1f}%".format(median_value * 100)
+
+#     print(f'For {uncertainty}:')
+#     print(f'Mean = {mean_percentage}')
+#     print(f'Median = {median_percentage}\n')
+
+#     # plot histogram
+#     plt.hist(combined_df[uncertainty]*100, bins=50, color=color, alpha=0.5, label=uncertainty)
+
+# plt.title('Histogram of Uncertainties')
+# plt.xlabel('Uncertainty %')
+# #set xrange to 30
+# plt.xlim(0,30)
+# plt.ylabel('Number of Bins')
+# plt.legend(loc='upper right')
+# #plt.grid(True)
+# plt.show()
+
+
+
+
+
+
+
+# get mean and median value for sys_uncert_recon
+
+
+
 
 combined_df = combined_df.reset_index()
 
@@ -621,7 +670,7 @@ show_xsec_2 = 0
 show_xsec_22 = 0
 xerr_value = 0
 
-combine_plots = 1
+combine_plots = 0
 output_image_dir = "plot_test_t1_with_unfolding/"
 plot_corrs = 0
 
@@ -665,14 +714,191 @@ for column in clas_df.columns:
     clas_df[column] = clas_df[column].astype(float)
 print(clas_df.columns.values)
 
+print(clas_df.head(3))
+#['Q2_C6' 'xB_C6' 't_C6' 'tel_C6' 'telstat_C6' 'telsys_C6' 'lt_C6'
+#'ltstat_C6' 'ltsys_C6' 'tt_C6' 'ttstat_C6' 'ttsys_C6']
+#calc rel sys uncert for all 3 types
+clas_df['rel_telsys_uncert'] = np.abs(clas_df['telsys_C6']/clas_df['tel_C6'])*100
+clas_df['rel_ltsys_uncert'] = np.abs(clas_df['ltsys_C6']/clas_df['lt_C6'])*100
+clas_df['rel_ttsys_uncert'] = np.abs(clas_df['ttsys_C6']/clas_df['tt_C6'])*100
+
+# # #now make histograms for these 3, and color code them
+# # #set font size to be large
+# # plt.rcParams.update({'font.size': 20})
+# # fig, ax = plt.subplots(1,1, figsize=(12,6))
+# # ax.hist(clas_df['rel_telsys_uncert'], bins=100, range=[0,100],color='red', alpha=0.5, label='Tel')
+# # #ax.hist(clas_df['rel_ltsys_uncert'], bins=100, range=[0,1000],color='blue', alpha=0.5, label='LT')
+# # #ax.hist(clas_df['rel_ttsys_uncert'], bins=100, range=[0,1000],color='green', alpha=0.5, label='TT')
+# # plt.show()
+# # sys.exit()
+
+
 clas_dtp = pd.read_csv("3_calculate_xsec/xs_clas6.csv")
 #set the columns
 #the columns are the first row
 #clas_dtp.columns = clas_dtp.iloc[0]
 
-#print(clas_dtp)
-#sys.exit()
+clas_dtp['rel'] =clas_dtp['sys']/clas_dtp['dsdtdp']*100
+#make histogram of clas_dtp['sys]/clas_dtp['dsdtdp']
+#set font size to be large
+# # plt.rcParams.update({'font.size': 20})
+# # fig, ax = plt.subplots(1,1, figsize=(12,6))
+# # ax.hist(clas_dtp['rel'], bins=100)#, range=[0,0.15])
+# # print(clas_dtp['rel'].mean())
+# # print(clas_dtp['rel'].median())
+# # plt.show()
+# # sys.exit()
 
+
+print(clas_dtp)
+
+def match_row(row):
+    # Identify the rows in clas_df that fall within the ranges specified in row
+    matching_rows = clas_dtp[
+        (clas_dtp['q'] > row['qmin']) & (clas_dtp['q'] < row['qmax']) & 
+        (clas_dtp['x'] > row['xmin']) & (clas_dtp['x'] < row['xmax']) &
+        (clas_dtp['t'] > row['tmin']) & (clas_dtp['t'] < row['tmax']) &
+        (clas_dtp['p'] > row['pmin']) & (clas_dtp['p'] < row['pmax'])
+    ]
+
+    # If no matching rows, return NaN
+    if matching_rows.empty:
+        return np.nan, np.nan, np.nan
+    #print(matching_rows)
+
+    # If there are matching rows, calculate average of dsdtdp, stat, and sys
+    avg_dsdtdp = matching_rows['dsdtdp'].mean()
+    avg_stat = matching_rows['stat'].mean()
+    avg_sys = matching_rows['sys'].mean()
+
+    return avg_dsdtdp, avg_stat, avg_sys
+
+# # # # # # # # # # # Apply match_row function to each row in combined_df
+# # # # # # # # # # combined_df[['avg_dsdtdp', 'avg_stat', 'avg_sys']] = combined_df.apply(match_row, axis=1, result_type='expand')
+
+# # # # # # # # # # #make histogram of avg_dsdtdp
+# # # # # # # # # # # #set font size to be large
+# # # # # # # # # # # plt.rcParams.update({'font.size': 20})
+# # # # # # # # # # # fig, ax = plt.subplots(1,1, figsize=(12,6))
+# # # # # # # # # # # ax.hist(combined_df['avg_dsdtdp'], bins=100)#, range=[0,0.15])
+# # # # # # # # # # # plt.show()
+
+# # # # # # # # # # # remove bins where tav is greater than 0.4
+# # # # # # # # # # #combined_df = combined_df[combined_df['tave'] < 1]
+# # # # # # # # # # simple_ratio = True
+# # # # # # # # # # if simple_ratio:
+# # # # # # # # # #     combined_df['ratio_c612'] = combined_df['xsec_red_unfolded'] / combined_df['avg_dsdtdp']
+# # # # # # # # # #     combined_df['total_uncertainty_c612'] = np.sqrt((combined_df['avg_sys']/combined_df['avg_dsdtdp'])**2 + (combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'])**2)
+
+# # # # # # # # # #     # Filter rows that have non-null ratio and total_uncertainty values
+# # # # # # # # # #     filtered_df = combined_df[combined_df[['ratio_c612', 'total_uncertainty_c612']].notnull().all(axis=1)]
+
+# # # # # # # # # #     # Create a new x-axis
+# # # # # # # # # #     x_axis = np.arange(len(filtered_df))
+
+# # # # # # # # # #     # Plot
+# # # # # # # # # #     plt.errorbar(x_axis, filtered_df['ratio_c612'], yerr=filtered_df['total_uncertainty_c612'], fmt='o')
+# # # # # # # # # #     plt.xlabel('Continuous Index')
+# # # # # # # # # #     plt.ylabel('Ratio')
+# # # # # # # # # #     plt.title('Ratio of xsec_red_unfolded to avg_dsdtdp')
+# # # # # # # # # #     #log y axis
+# # # # # # # # # #     plt.yscale('log')
+# # # # # # # # # #     #y axis 0.1 to 10
+# # # # # # # # # #     plt.ylim(.5,2)
+# # # # # # # # # #     plt.show()
+# # # # # # # # # #     #create histogram of log_ratio_c612
+# # # # # # # # # #     #set font size to be large
+# # # # # # # # # #     plt.rcParams.update({'font.size': 20})
+# # # # # # # # # #     fig, ax = plt.subplots(1,1, figsize=(12,6))
+# # # # # # # # # #     ax.hist(combined_df['ratio_c612'], bins=100)#, range=[0,0.15])
+# # # # # # # # # #     #set xlim to 0.5 to 2
+# # # # # # # # # #     ax.set_xlim(.5,2)
+# # # # # # # # # #     plt.show()
+# # # # # # # # # #     #print mean of ratio
+# # # # # # # # # #     print(combined_df['ratio_c612'].mean())
+# # # # # # # # # #     print(combined_df['ratio_c612'].std())
+# # # # # # # # # #     print(combined_df['ratio_c612'].median())
+# # # # # # # # # # else:
+# # # # # # # # # #     combined_df['log_ratio_c612'] = np.log2(combined_df['xsec_red_unfolded'] / combined_df['avg_dsdtdp'])
+# # # # # # # # # #     combined_df['total_uncertainty_c612'] = np.sqrt((combined_df['avg_sys']/combined_df['avg_dsdtdp'])**2 + (combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'])**2)
+
+# # # # # # # # # #     # Filter rows that have non-null ratio and total_uncertainty values
+# # # # # # # # # #     filtered_df = combined_df[combined_df[['log_ratio_c612', 'total_uncertainty_c612']].notnull().all(axis=1)]
+
+# # # # # # # # # #     # Create a new x-axis
+# # # # # # # # # #     x_axis = np.arange(len(filtered_df))
+
+# # # # # # # # # #     # Plot
+# # # # # # # # # #     plt.errorbar(x_axis, filtered_df['log_ratio_c612'], yerr=filtered_df['total_uncertainty_c612'], fmt='o')
+# # # # # # # # # #     plt.xlabel('Continuous Index')
+# # # # # # # # # #     plt.ylabel('Log Ratio')
+# # # # # # # # # #     #y range -1 to 1
+# # # # # # # # # #     plt.ylim(-1,1)
+# # # # # # # # # #     plt.title('Log Ratio of xsec_red_unfolded to avg_dsdtdp')
+# # # # # # # # # #     plt.show()
+
+# # # # # # # # # #     #create histogram of log_ratio_c612
+# # # # # # # # # #     #set font size to be large
+# # # # # # # # # #     plt.rcParams.update({'font.size': 20})
+# # # # # # # # # #     fig, ax = plt.subplots(1,1, figsize=(12,6))
+# # # # # # # # # #     ax.hist(combined_df['log_ratio_c612'], bins=25, range=[-1,1])
+
+# # # # # # # # # #     plt.show()
+
+# # # # # # # # # # # combined_df['q_avg'] = (combined_df['tmax'] + combined_df['tmin']) / 2
+
+# # # # # # # # # # # # Filter rows that have non-null 'log_ratio_c612' and 'q_avg' values
+# # # # # # # # # # # filtered_df = combined_df[combined_df[['ratio_c612', 'q_avg']].notnull().all(axis=1)]
+
+# # # # # # # # # # # # Create a 2D histogram
+# # # # # # # # # # # plt.hist2d(filtered_df['q_avg'], filtered_df['ratio_c612'], bins=[50, 50], cmap='plasma')
+
+# # # # # # # # # # # # Add a colorbar
+# # # # # # # # # # # plt.colorbar(label='Counts')
+
+# # # # # # # # # # # # Add labels and a title
+# # # # # # # # # # # plt.xlabel('Mean of qmax and qmin')
+# # # # # # # # # # # plt.ylabel('Log Ratio')
+# # # # # # # # # # # plt.title('2D Histogram of Log Ratio vs Mean of qmax and qmin')
+
+# # # # # # # # # # # plt.show()
+
+# # # # # # # # # # import scipy.stats as stats
+
+# # # # # # # # # # # your measurements and uncertainties
+# # # # # # # # # # measurements = filtered_df['ratio_c612'].values
+# # # # # # # # # # uncertainties = filtered_df['total_uncertainty_c612'].values
+
+# # # # # # # # # # # expected value
+# # # # # # # # # # expected = 1.0
+
+# # # # # # # # # # # calculate chi-square
+# # # # # # # # # # chi_square = np.sum(((measurements - expected) / uncertainties)**2)
+
+# # # # # # # # # # # degrees of freedom is number of measurements - 1
+# # # # # # # # # # dof = len(measurements) - 1
+
+# # # # # # # # # # # find the p-value
+# # # # # # # # # # p_value = 1 - stats.chi2.cdf(chi_square, dof)
+
+# # # # # # # # # # print(f"Chi-square: {chi_square}, p-value: {p_value}")
+
+# # # # # # # # # # # calculate mean and standard deviation
+# # # # # # # # # # mean = np.mean(measurements)
+# # # # # # # # # # std_dev = np.std(measurements)
+
+# # # # # # # # # # # number of measurements
+# # # # # # # # # # n = len(measurements)
+
+# # # # # # # # # # # z-score for 90% confidence
+# # # # # # # # # # z_score = stats.norm.ppf(0.95)  # for two-sided 90% confidence interval
+
+# # # # # # # # # # # calculate confidence interval
+# # # # # # # # # # lower_bound = mean - z_score * (std_dev / np.sqrt(n))
+# # # # # # # # # # upper_bound = mean + z_score * (std_dev / np.sqrt(n))
+
+# # # # # # # # # # print(f"90% confidence interval: ({lower_bound}, {upper_bound})")
+# # # # # # # # # # sys.exit()
 
 if plot_corrs:
 
@@ -874,7 +1100,7 @@ if show_xsec_22:
             #plt.errorbar(group['pave'], group['xsec_red'], yerr=group['xsec_red_err'],fmt='r+', markersize=50,label=#slabel)
             #plot again but with red error bars
             xerr_value = 10
-            ax.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['total_uncert'],fmt='r.',  markersize=5,elinewidth=5)
+            ax.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['total_uncert_unfolded'],fmt='r.',  markersize=5,elinewidth=5)
             #,label="CLAS12 Data")#elabel)
 
             ax.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='k.',  markersize=5,label="CLAS12 Data",elinewidth=5)#elabel)
@@ -919,6 +1145,7 @@ if show_xsec_22:
 
                 filtered_df_dtp = clas_dtp[mask]
                 print(filtered_df_dtp)
+                sys.exit()
 
                 #plt.errorbar(filtered_df_dtp['p'], filtered_df_dtp['dsdtdp'], yerr=np.sqrt(filtered_df_dtp['stat']**2+filtered_df_dtp['sys']**2),fmt='r+', markersize=50,label='CLAS6')
 
@@ -1019,9 +1246,9 @@ if show_xsec_22:
             #sys.exit()
 
         # show the plot
-        plt.tight_layout()  # adjust the layout to prevent overlap
+        #plt.tight_layout()  # adjust the layout to prevent overlap
 
-        plt.show()
+        #plt.show()
 
 if show_xsec:
 
@@ -1065,7 +1292,7 @@ if show_xsec:
             print("skipping")
             continue
         else:
-            print("PLOTTING")
+            print("PLOTTING HOPEFULLY")
             plt.rcParams["font.size"] = "30"
             plt.figure(figsize=(20,14))
 
@@ -1109,9 +1336,11 @@ if show_xsec:
                 y_band_bottom = y_bottom + (y_top - y_bottom) * i / num_bands
                 # Plot the band with the color from the colormap
                 plt.fill_between(phis, y_band_bottom, y_band_top, color=cmap(color_val),alpha=0.1)
-            
+            xerr_value = 0
             plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=1.5*group['total_uncert_unfolded'],fmt='k.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+            xerr_value=9
             plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_unfolded'],fmt='r.',  markersize=5,label="Unfolded",elinewidth=5)#,capsize=10, capthick=5)#elabel)
+            xerr_value = 0
             plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=0,fmt='r.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
             #plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='g.',  markersize=5,label="Unfolded",elinewidth=5)#elabel)
 
@@ -1168,7 +1397,7 @@ if show_xsec:
 
 
 
-            # plot the CLAS6 fit if it exists
+                # plot the CLAS6 fit if it exists
                 print("PLOTTING CLAS6 FIT")
 
                 phi = np.linspace(0, 360, 1000)  # Replace 100 with the desired number of points
@@ -1201,11 +1430,15 @@ if show_xsec:
                 y_bottom = y-errband_width
                 y_top = y+errband_width
 
-                #plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
+                plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
 
                 #,linewidth = errband_width)
 
                 phi = np.linspace(0, 360, 1000)  # Replace 100 with the desired number of points
+
+                plt.show()
+                sys.exit()
+                #pause to get input
 
                 # Assuming taking the first row of the filtered DataFrame
                 #print("FILTERED DF IS:")
@@ -1253,22 +1486,25 @@ if show_xsec:
 
                 #plt.show()
             #restrict vertical axis to start at 0
-            
-            plt.ylim(bottom=0)
-            #set xrange 0 to 360
-            plt.xlim([0,360])
-            #plt.show()
-            counter +=1
-            print("counter",counter)
-            #if counter > 3:
-            #    sys.exit()
-            plt.savefig(output_image_dir+pltt+".png",bbox_inches='tight')
-            plt.close()
-            # plt.show()
-            # ind += 1
-            # if ind > 20:
-            #     break
-                #plt.close()
+            else:
+                print("NO CLAS6 DATA, SKIPPING")
+                plt.close()
+                    #pass
+            # # plt.ylim(bottom=0)
+            # # #set xrange 0 to 360
+            # # plt.xlim([0,360])
+            # # #plt.show()
+            # # counter +=1
+            # # print("counter",counter)
+            # # #if counter > 3:
+            # # #    sys.exit()
+            # # plt.savefig(output_image_dir+pltt+".png",bbox_inches='tight')
+            # # plt.close()
+            # # # plt.show()
+            # # # ind += 1
+            # # # if ind > 20:
+            # # #     break
+            # #     #plt.close()
 
 if combine_plots:
     for t_val in combined_df['tmin'].unique():
