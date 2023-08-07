@@ -156,15 +156,20 @@ def create_image_grid(image_dict, xBbins, Q2bins, dir_path="."):
 
     # assume all images are the same size
     img_width, img_height = next(iter(images.values())).size
+    
+    # cut the bottom 5% of every image
+    cut_height = int(0.08* img_height)
+    cropped_height = img_height - cut_height
 
     # create new image
-    combined = Image.new("RGB", (img_width * len(xBbins), img_height * len(Q2bins)),"white")
+    combined = Image.new("RGB", (img_width * len(xBbins), cropped_height * len(Q2bins)), "white")
 
     # place images
     for i, xB in enumerate(xBbins):
         for j, Q2 in enumerate(reversed(Q2bins)):
             if (xB, Q2) in images:
-                combined.paste(images[(xB, Q2)], (i * img_width, j * img_height))
+                cropped_img = images[(xB, Q2)].crop((0, 0, img_width, cropped_height))
+                combined.paste(cropped_img, (i * img_width, j * cropped_height))
 
     return combined
 
@@ -665,13 +670,13 @@ combined_df.to_pickle("full_cross_section_clas12_unfolded.pkl")
 
 # sys.exit()
 show_plots = 0
-show_xsec = 1
+show_xsec = 0
 show_xsec_2 = 0
 show_xsec_22 = 0
 xerr_value = 0
 
-combine_plots = 0
-output_image_dir = "plot_test_t1_with_unfolding/"
+combine_plots = 1
+output_image_dir = "plot_t1_with_unfolding/"
 plot_corrs = 0
 
 
@@ -1253,6 +1258,8 @@ if show_xsec_22:
 if show_xsec:
 
 
+    # drop rows from combined_df where uncertainty/value > 1
+    combined_df = combined_df[combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'] < 1]
 
     # grouping by 'xmin', 'qmin', 'tmin'
     groups = combined_df.groupby(['xmin', 'qmin', 'tmin'])
@@ -1279,39 +1286,40 @@ if show_xsec:
        (clas_df['t_C6'] >= group['tmin'].values[0]) & (clas_df['t_C6'] <= group['tmax'].values[0])
 
         filtered_df = clas_df[mask]
-
-
-        if len(group) < 5:
-            print("skipping")
-            continue
-        # Also need to skip if there is no data between 'pave' = 100 and 'pave' = 260
-        # select the elements with 100<pave<260
         filtered_group = group[(group['pave'] > 100) & (group['pave'] < 260)]
 
-        if len(filtered_group) == 0:
+        if len(group) < 1:
             print("skipping")
             continue
+
+        plt.rcParams["font.size"] = "30"
+        plt.figure(figsize=(20,14))
+        slabel = "Stat. Err. from Sim."
+        elabel = "Stat. Err. from Exp."
+        #plot with larger marker size
+        #for showing different uncertainties
+        #plt.errorbar(group['pave'], group['xsec_red'], yerr=group['xsec_red_err'],fmt='r+', markersize=50,label=#slabel)
+        #plot again but with red error bars
+        xerr_value = 5
+
+        if len(group) < 5 or len(filtered_group) == 0:
+        
+            xerr_value = 0
+            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=1.5*group['total_uncert_unfolded'],fmt='k.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+            xerr_value=9
+            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_unfolded'],fmt='r.',  markersize=5,label="Unfolded",elinewidth=5)#,capsize=10, capthick=5)#elabel)
+            xerr_value = 0
+            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=0,fmt='r.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+
+
+
+            plt.plot(group['pave']-6, group['xsec_red'], marker='^', color='orange', markersize=21, label="Bin-by-Bin",linestyle="None")
+
         else:
-            print("PLOTTING HOPEFULLY")
-            plt.rcParams["font.size"] = "30"
-            plt.figure(figsize=(20,14))
-
-            slabel = "Stat. Err. from Sim."
-            elabel = "Stat. Err. from Exp."
-            #plot with larger marker size
-            #for showing different uncertainties
-            #plt.errorbar(group['pave'], group['xsec_red'], yerr=group['xsec_red_err'],fmt='r+', markersize=50,label=#slabel)
-            #plot again but with red error bars
-            xerr_value = 5
-
-
-            #plt.errorbar(group['pave'], group['xsec_red'], xerr=xerr_value,yerr=group['xsec_red_err_alt'],fmt='k.',  markersize=5,label="CLAS12 Data",elinewidth=5)#elabel)
-
-
-
-
             # fit the function to the data
             popt, pcov = curve_fit(fit_function, group['pave'], group['xsec_red_unfolded'], sigma=group['total_uncert_unfolded'], absolute_sigma=True)
+            popt_top, pcov_top = curve_fit(fit_function, group['pave'], group['xsec_red_unfolded']+group['total_uncert_unfolded'], sigma=group['total_uncert_unfolded'], absolute_sigma=True)
+            popt_bot, pcov_bot = curve_fit(fit_function, group['pave'], group['xsec_red_unfolded']-group['total_uncert_unfolded'], sigma=group['total_uncert_unfolded'], absolute_sigma=True)
 
             # calculate the standard deviation of the fitted parameters
             perr = np.sqrt(np.diag(pcov))
@@ -1319,13 +1327,15 @@ if show_xsec:
             # calculate the top and bottom bounds of the fit
             phis = np.linspace(0,360,1000)
             y = fit_function(phis, *popt)
-            y_top = fit_function(phis, *(popt + perr))
-            y_bottom = fit_function(phis, *(popt - perr))
+            #y_top = fit_function(phis, *(popt + perr))
+            y_top = fit_function(phis, *(popt_top))#+np.sqrt(np.diag(pcov_top))))
+            #y_bottom = fit_function(phis, *(popt - perr))
+            y_bottom = fit_function(phis, *(popt_bot))#-np.sqrt(np.diag(pcov_bot))))
 
             plt.plot(phis, y, 'b-', label="Trig. Fit",linewidth=5)
             # # # plt.fill_between(phis, y_bottom, y_top, color='b', alpha=0.2)  # this adds the band of uncertainty
 
-            num_bands = 200  # number of bands in the gradient
+            num_bands = 500  # number of bands in the gradient
             cmap = plt.get_cmap('winter')  # get the colormap
 
             for i in range(num_bands):
@@ -1368,76 +1378,85 @@ if show_xsec:
             #red_line = mlines.Line2D([], [], color='k', marker='None', markersize=10, linestyle='-', label=elabel)
 
 
-            plt.xlabel('Lepton-Hadron Angle $\phi$')
-            plt.ylabel('Reduced Cross Section (nb/$GeV^2$)')
-            #pltt = 'Reduced Cross Section in bin ({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
-            pltt = '({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
-            #instead make plot title as averages xave qave tave
-            #plot_title = '({})=({:.2f}, {:.2f}, {:.2f})'.format(r'$\langle x_{B}\rangle, \langle Q^2 \rangle, \lange t \rangle$',group['xave'].mean(),group['qave'].mean(),group['tave'].mean())
-            plot_title = '{}={:.2f},{}={:.2f} GeV$^2$,{}={:.2f} GeV$^2$'.format(r'$\langle x_{B}\rangle$',group['xave'].mean(), r'$\langle Q^2 \rangle$',group['qave'].mean(), r'$\langle t \rangle$',group['tave'].mean())
+        plt.xlabel('Lepton-Hadron Angle $\phi$')
+        plt.ylabel('Reduced Cross Section (nb/$GeV^2$)')
+        #set xaxis range from 0 to 360
+        plt.xlim([0,360])
+        #set y bottom to 0
+        plt.ylim(bottom=0)
+        #pltt = 'Reduced Cross Section in bin ({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
+        pltt = '({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
+        #instead make plot title as averages xave qave tave
+        #plot_title = '({})=({:.2f}, {:.2f}, {:.2f})'.format(r'$\langle x_{B}\rangle, \langle Q^2 \rangle, \lange t \rangle$',group['xave'].mean(),group['qave'].mean(),group['tave'].mean())
+        plot_title = '{}={:.2f},{}={:.2f} GeV$^2$,{}={:.2f} GeV$^2$'.format(r'$\langle x_{B}\rangle$',group['xave'].mean(), r'$\langle Q^2 \rangle$',group['qave'].mean(), r'$\langle t \rangle$',group['tave'].mean())
 
-            plt.title(plot_title)
-            #plt.legend(handles=[blue_line, red_line])
+        plt.title(plot_title)
+        plt.show()
+
+       # plt.savefig(output_image_dir+pltt+".png",bbox_inches='tight')
+        #plt.close()
+            # if counter > 3:
+            #     sys.exit()
+            # #plt.legend(handles=[blue_line, red_line])
 
 
 
-            if len(filtered_df) > 0:
-                mask = (clas_dtp['q'] >= group['qmin'].values[0]) & (clas_dtp['q'] <= group['qmax'].values[0]) & \
-                (clas_dtp['x'] >= group['xmin'].values[0]) & (clas_dtp['x'] <= group['xmax'].values[0]) & \
-                (clas_dtp['t'] >= group['tmin'].values[0]) & (clas_dtp['t'] <= group['tmax'].values[0])
+            # if len(filtered_df) > 0:
+            #     mask = (clas_dtp['q'] >= group['qmin'].values[0]) & (clas_dtp['q'] <= group['qmax'].values[0]) & \
+            #     (clas_dtp['x'] >= group['xmin'].values[0]) & (clas_dtp['x'] <= group['xmax'].values[0]) & \
+            #     (clas_dtp['t'] >= group['tmin'].values[0]) & (clas_dtp['t'] <= group['tmax'].values[0])
 
-                filtered_df_dtp = clas_dtp[mask]
-                print(filtered_df_dtp)
+            #     filtered_df_dtp = clas_dtp[mask]
+            #     print(filtered_df_dtp)
 
-                #plt.errorbar(filtered_df_dtp['p'], filtered_df_dtp['dsdtdp'], yerr=np.sqrt(filtered_df_dtp['stat']**2+filtered_df_dtp['sys']**2),fmt='r+', markersize=50,label='CLAS6')
+            #     #plt.errorbar(filtered_df_dtp['p'], filtered_df_dtp['dsdtdp'], yerr=np.sqrt(filtered_df_dtp['stat']**2+filtered_df_dtp['sys']**2),fmt='r+', markersize=50,label='CLAS6')
 
-                errband_width = np.sqrt(filtered_df_dtp['stat']**2+filtered_df_dtp['sys']**2).mean()
+            #     errband_width = np.sqrt(filtered_df_dtp['stat']**2+filtered_df_dtp['sys']**2).mean()
 
                 
 
 
 
-                # plot the CLAS6 fit if it exists
-                print("PLOTTING CLAS6 FIT")
+            #     # plot the CLAS6 fit if it exists
+            #     print("PLOTTING CLAS6 FIT")
 
-                phi = np.linspace(0, 360, 1000)  # Replace 100 with the desired number of points
+            #     phi = np.linspace(0, 360, 1000)  # Replace 100 with the desired number of points
 
-                # Assuming taking the first row of the filtered DataFrame
-                print("FILTERED DF IS:")
-                print(group.columns.values)
-                print(filtered_df)
-                print("xsec values are")
-                print(group['pave'])
-                row = filtered_df.iloc[0]
+            #     # Assuming taking the first row of the filtered DataFrame
+            #     print("FILTERED DF IS:")
+            #     print(group.columns.values)
+            #     print(filtered_df)
+            #     print("xsec values are")
+            #     print(group['pave'])
+            #     row = filtered_df.iloc[0]
 
-                A = row['tel_C6']
-                B = row['tt_C6']
-                C = row['lt_C6']
-                pi = 3.14159
-                #fact = group['Gamma'].mean()/(2*pi)
-                fact = 1/(2*pi)
-                fact2 = fact*group['epsilon'].mean()
-                fact3 = fact*np.sqrt(2*group['epsilon'].mean()*(1+group['epsilon'].mean()))
-                y = fit_function(phi, A*fact, B*fact2, C*fact3)
+            #     A = row['tel_C6']
+            #     B = row['tt_C6']
+            #     C = row['lt_C6']
+            #     pi = 3.14159
+            #     #fact = group['Gamma'].mean()/(2*pi)
+            #     fact = 1/(2*pi)
+            #     fact2 = fact*group['epsilon'].mean()
+            #     fact3 = fact*np.sqrt(2*group['epsilon'].mean()*(1+group['epsilon'].mean()))
+            #     y = fit_function(phi, A*fact, B*fact2, C*fact3)
 
-                print(A,B,C)
+            #     print(A,B,C)
 
-                #plt.plot(phi, y,'b-',label='CLAS6 Result',linewidth=5)
-                #make line be 50% transparent
-                #plt.plot(phi, y+errband_width,'k-',label='CLAS6 Fit',alpha=0.5)#
-                #plt.plot(phi, y-errband_width,'k-',label='CLAS6 Fit',alpha=0.5)#
+            #     #plt.plot(phi, y,'b-',label='CLAS6 Result',linewidth=5)
+            #     #make line be 50% transparent
+            #     #plt.plot(phi, y+errband_width,'k-',label='CLAS6 Fit',alpha=0.5)#
+            #     #plt.plot(phi, y-errband_width,'k-',label='CLAS6 Fit',alpha=0.5)#
                 
-                y_bottom = y-errband_width
-                y_top = y+errband_width
+            #     y_bottom = y-errband_width
+            #     y_top = y+errband_width
 
-                plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
+            #     plt.fill_between(phi, y_bottom, y_top, color='b', alpha=.1)#, label='CLAS6 Fit')
 
-                #,linewidth = errband_width)
+            #     #,linewidth = errband_width)
 
-                phi = np.linspace(0, 360, 1000)  # Replace 100 with the desired number of points
+            #     phi = np.linspace(0, 360, 1000)  # Replace 100 with the desired number of points
 
-                plt.show()
-                sys.exit()
+
                 #pause to get input
 
                 # Assuming taking the first row of the filtered DataFrame
@@ -1486,9 +1505,9 @@ if show_xsec:
 
                 #plt.show()
             #restrict vertical axis to start at 0
-            else:
-                print("NO CLAS6 DATA, SKIPPING")
-                plt.close()
+            # else:
+            #     print("NO CLAS6 DATA, SKIPPING")
+            #     plt.close()
                     #pass
             # # plt.ylim(bottom=0)
             # # #set xrange 0 to 360
@@ -1498,8 +1517,7 @@ if show_xsec:
             # # print("counter",counter)
             # # #if counter > 3:
             # # #    sys.exit()
-            # # plt.savefig(output_image_dir+pltt+".png",bbox_inches='tight')
-            # # plt.close()
+
             # # # plt.show()
             # # # ind += 1
             # # # if ind > 20:
@@ -1511,6 +1529,6 @@ if combine_plots:
         print("t_val",t_val)
         #only plot if there are more than 10 bins
         # use it for t_min = 1.0 and directory "images"
-        t_output_image_dir = "t_xsec_unfolded/"
+        t_output_image_dir = "t_xsec_unfolded_0807/"
 
         main(t_val, fs.xBbins, fs.Q2bins, output_image_dir,t_output_image_dir)
