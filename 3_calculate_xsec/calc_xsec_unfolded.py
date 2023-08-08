@@ -158,17 +158,20 @@ def create_image_grid(image_dict, xBbins, Q2bins, dir_path="."):
     img_width, img_height = next(iter(images.values())).size
     
     # cut the bottom 5% of every image
-    cut_height = int(0.08* img_height)
+    cut_height = int(0.1* img_height)
     cropped_height = img_height - cut_height
+    cut_width = int(0.15* img_width)
+
+    cropped_width = img_width - cut_width
 
     # create new image
-    combined = Image.new("RGB", (img_width * len(xBbins), cropped_height * len(Q2bins)), "white")
+    combined = Image.new("RGB", (cropped_width * len(xBbins), cropped_height * len(Q2bins)), "white")
 
     # place images
     for i, xB in enumerate(xBbins):
         for j, Q2 in enumerate(reversed(Q2bins)):
             if (xB, Q2) in images:
-                cropped_img = images[(xB, Q2)].crop((0, 0, img_width, cropped_height))
+                cropped_img = images[(xB, Q2)].crop((0, cut_width, img_width, cropped_height))
                 combined.paste(cropped_img, (i * img_width, j * cropped_height))
 
     return combined
@@ -182,6 +185,17 @@ def main(t, xBbins, Q2bins, in_dir_path=".",out_dir_path="."):
 
 #pd.set_option('mode.chained_assignment', None)
 
+# sys.exit()
+show_plots = 0
+show_xsec = 0
+show_xsec_2 = 0
+show_xsec_22 = 0
+xerr_value = 0
+plot_ylabel = 0 
+
+combine_plots = 1
+output_image_dir = "plot_t1_with_unfolding/"
+plot_corrs = 0
 
 PhysicsConstants = const.PhysicsConstants()
 
@@ -668,16 +682,6 @@ combined_df.to_pickle("full_cross_section_clas12_unfolded.pkl")
 #     print('tmin:', row['tmin'], 'pmin:', row['pmin'], 'xmin:', row['xmin'], 'qmin:', row['qmin'],
 #           'counts:', row['counts'], 'rec_counts:', row['rec_counts'], 'gen_counts:', row['gen_counts'])
 
-# sys.exit()
-show_plots = 0
-show_xsec = 0
-show_xsec_2 = 0
-show_xsec_22 = 0
-xerr_value = 0
-
-combine_plots = 1
-output_image_dir = "plot_t1_with_unfolding/"
-plot_corrs = 0
 
 
 if show_plots:
@@ -1259,7 +1263,14 @@ if show_xsec:
 
 
     # drop rows from combined_df where uncertainty/value > 1
-    combined_df = combined_df[combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'] < 1]
+    combined_df = combined_df[combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'] < .7] #cutoff chosen emperically
+
+    # make histogram of total_uncert_unfolded
+    # plt.hist(combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'], bins=100)
+    # #set y axis to log
+    # plt.yscale('log')
+    # plt.show()
+    # sys.exit()
 
     # grouping by 'xmin', 'qmin', 'tmin'
     groups = combined_df.groupby(['xmin', 'qmin', 'tmin'])
@@ -1271,6 +1282,8 @@ if show_xsec:
     for name, group in groups:
         #only plot if there are more than 10 bins
         print("in name")
+        counter += 1
+        print(counter)
         print(clas_df[['Q2_C6', 'xB_C6', 't_C6']].dtypes)
         print(group[['qmin', 'xmin', 'tmin', 'qmax', 'xmax', 'tmax']].dtypes)
 
@@ -1293,7 +1306,7 @@ if show_xsec:
             continue
 
         plt.rcParams["font.size"] = "30"
-        plt.figure(figsize=(20,14))
+        fig, ax = plt.subplots(figsize=(20,14))
         slabel = "Stat. Err. from Sim."
         elabel = "Stat. Err. from Exp."
         #plot with larger marker size
@@ -1303,17 +1316,18 @@ if show_xsec:
         xerr_value = 5
 
         if len(group) < 5 or len(filtered_group) == 0:
+            
         
             xerr_value = 0
-            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=1.5*group['total_uncert_unfolded'],fmt='k.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+            ax.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=1.5*group['total_uncert_unfolded'],fmt='k.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
             xerr_value=9
-            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_unfolded'],fmt='r.',  markersize=5,label="Unfolded",elinewidth=5)#,capsize=10, capthick=5)#elabel)
+            ax.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=group['xsec_red_err_unfolded'],fmt='r.',  markersize=5,label="Unfolded",elinewidth=5)#,capsize=10, capthick=5)#elabel)
             xerr_value = 0
-            plt.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=0,fmt='r.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
+            ax.errorbar(group['pave'], group['xsec_red_unfolded'], xerr=xerr_value,yerr=0,fmt='r.',  markersize=5,elinewidth=5,capsize=10, capthick=5)#elabel)
 
 
 
-            plt.plot(group['pave']-6, group['xsec_red'], marker='^', color='orange', markersize=21, label="Bin-by-Bin",linestyle="None")
+            ax.plot(group['pave']-6, group['xsec_red'], marker='^', color='orange', markersize=21, label="Bin-by-Bin",linestyle="None")
 
         else:
             # fit the function to the data
@@ -1378,23 +1392,57 @@ if show_xsec:
             #red_line = mlines.Line2D([], [], color='k', marker='None', markersize=10, linestyle='-', label=elabel)
 
 
-        plt.xlabel('Lepton-Hadron Angle $\phi$')
-        plt.ylabel('Reduced Cross Section (nb/$GeV^2$)')
+        ax.set_xlabel('Lepton-Hadron Angle $\phi$')
+        if plot_ylabel:
+            ax.set_ylabel('Reduced Cross Section (nb/$GeV^2$)')
         #set xaxis range from 0 to 360
-        plt.xlim([0,360])
+        ax.set_xlim([0,360])
         #set y bottom to 0
-        plt.ylim(bottom=0)
+        ax.set_ylim(bottom=0)
         #pltt = 'Reduced Cross Section in bin ({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
         pltt = '({})={}'.format(r'$x_{B,min} Q^2_{min} t_{min}$',str(name))
         #instead make plot title as averages xave qave tave
         #plot_title = '({})=({:.2f}, {:.2f}, {:.2f})'.format(r'$\langle x_{B}\rangle, \langle Q^2 \rangle, \lange t \rangle$',group['xave'].mean(),group['qave'].mean(),group['tave'].mean())
         plot_title = '{}={:.2f},{}={:.2f} GeV$^2$,{}={:.2f} GeV$^2$'.format(r'$\langle x_{B}\rangle$',group['xave'].mean(), r'$\langle Q^2 \rangle$',group['qave'].mean(), r'$\langle t \rangle$',group['tave'].mean())
 
-        plt.title(plot_title)
-        plt.show()
+        ax.set_title(plot_title)
 
-       # plt.savefig(output_image_dir+pltt+".png",bbox_inches='tight')
-        #plt.close()
+
+        # Update the y-tick labels color based on their values
+        yticks = ax.get_yticks()
+        colors = []
+
+        # for value in yticks:
+        #     print(yticks)
+        #     if value < 10:
+        #         colors.append('black')
+        #     elif 10 <= value < 100:
+        #         colors.append('green')
+        #     else:
+        #         colors.append('red')
+        # ax.set_yticklabels(yticks, colors=colors)
+        yticks = ax.get_yticks()
+        for i, value in enumerate(yticks):
+            if value < 10:
+                ax.get_yticklabels()[i].set_color('black')
+            elif 10 <= value < 100:
+                ax.get_yticklabels()[i].set_color('green')
+            else:
+                ax.get_yticklabels()[i].set_color('red')
+        # Format y-axis tick labels to show rounded integers
+        # Format y-axis tick labels based on the criteria
+        def custom_formatter(x, _):
+            if x < 10:
+                return f'{x:.1f}'
+            else:
+                return f'{int(np.round(x))}'
+
+        ax.yaxis.set_major_formatter(custom_formatter)
+
+        #plt.show()
+        
+        plt.savefig(output_image_dir+pltt+".png")#,bbox_inches='tight')
+        plt.close()
             # if counter > 3:
             #     sys.exit()
             # #plt.legend(handles=[blue_line, red_line])

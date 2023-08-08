@@ -1002,9 +1002,10 @@ int main (int argc, char** argv){
     double m_Q2_space = atof(argv[6]);
 
     //create spacing for t
-    double m_t_start = -0.1;
+    //double m_t_start = -0.1; in principle should correctly calculate tmin and start there
+    double m_t_start = -0.7;
     double m_t_end = -2.0;
-    double m_t_space = 0.1;
+    double m_t_space = 0.05;
 
     const char* output_file_base_name = argv[7];  // Base name of the output file
 
