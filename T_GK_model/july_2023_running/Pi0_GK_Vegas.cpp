@@ -1003,7 +1003,7 @@ int main (int argc, char** argv){
 
     //create spacing for t
     //double m_t_start = -0.1; in principle should correctly calculate tmin and start there
-    double m_t_start = -0.7;
+    double m_t_start = -0.2;
     double m_t_end = -2.0;
     double m_t_space = 0.05;
 

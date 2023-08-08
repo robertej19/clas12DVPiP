@@ -280,16 +280,16 @@ if individual:
         plt.ylabel('d$\sigma$/dt [nb/$GeV^2$]')
         if group[['c6_tel', 'c6_tt', 'c6_lt']].notna().any().any():
             # Set the background color to light gray
-            #pass
-            plt.gca().set_facecolor('lightgray')
-            legend_added['CLAS6'] = True
+            pass
+            #plt.gca().set_facecolor('lightgray')
+            #legend_added['CLAS6'] = True
             
 
         # Create each line on the plot
         for count, (val, err, x_axis, color,mfcolor, fmt,shift,error_color,cap_color) in enumerate(zip(values_to_plot, errors_to_plot, x_axes, colors, 
                                                                                 markerfacecolors,formats,x_shifts,error_colors,cap_colors)):
             label = None
-            if count<10: #optional, for turning off plotting of CLAS6
+            if count<3: #optional, for turning off plotting of CLAS6
                 count+=1
                 if val in ['A', 'B', 'C'] and not legend_added[val]:
                     label = val
@@ -299,83 +299,12 @@ if individual:
                 
                 (_, caps, _) = plt.errorbar(group[x_axis]-shift, group[val], yerr=err, color=color,  
                              markerfacecolor=mfcolor, label=label, fmt=fmt, 
-                             markersize=35, elinewidth=8, capsize=20,
+                             markersize=15, elinewidth=4, capsize=10,
                              ecolor=error_color)
                 print(group[val],err)
                 for cap in caps:
                     cap.set_color(cap_color)
-            #plt.errorbar(x, df['A'], yerr=a_err, fmt='o', label='A', capsize=5)
-            #plt.errorbar(x, df['B'], yerr=b_err, fmt='^', label='B', capsize=5)
-            #plt.errorbar(x, df['C'], yerr=c_err, fmt='s', label='C', capsize=5)
 
-
-        # Plot GK data
-        # print the number of unique Q2 and xB values:
-        #print group name values
-        if len(filtered_df['Q2'].unique()) > 0 or len(filtered_df['xB'].unique()) > 0:
-            
-            
-            if len(filtered_df['Q2'].unique()) > 1 or len(filtered_df['xB'].unique()) > 1:
-                print("DUPLICATES FOUND")
-                print(filtered_df['Q2'].unique())
-                print(filtered_df['xB'].unique())
-                print(group['xave'].mean())
-                print(group['qave'].mean())
-
-                filtered_df = filter_dataframe(filtered_df, group['xave'].mean(), group['qave'].mean())
-
-            #sys.exit()
-
-            values_to_plot = [filtered_df['sigma_T']+filtered_df['epsilon']*filtered_df['sigma_L'], filtered_df['sigma_TT'], filtered_df['sigma_LT']]
-            x_axes = [filtered_df['mt'], filtered_df['mt'], filtered_df['mt']]
-            colors = ['black', 'blue', 'red']
-
-            # for now, spline until get more real datapoints
-            # Create a cubic interpolation function
-
-
-            for val, x_axis, color in zip(values_to_plot, x_axes, colors):
-                #f = interp1d(x_axis,val,kind='linear')#, kind='cubic')
-                #remove any nan values
-                mask2 = np.isnan(val) | np.isnan(x_axis)
-
-                # Use this mask to select only the entries where neither is np.nan
-                val_filtered = val[~mask2]
-                x_axis_filtered = x_axis[~mask2]
-
-                #remove any nan values from val
-                #print x_axis_filtered and val_filtered
-                print("HERE IS X AXIS AND VAL")
-                #print group name values
-                print(name)
-                print(x_axis_filtered)
-                print(val_filtered)
-                # if there are no values, skip
-                if len(x_axis_filtered) == 0:
-                    continue
-
-                # if there is only one value, skip
-                if len(x_axis_filtered) == 1:
-                    continue
-
-                # if there are only 2 values, can't spline
-                if len(x_axis_filtered) == 2:
-                    continue
-
-                X_Y_Spline = make_interp_spline(x_axis_filtered, val_filtered)
-                #get max and min of x_axis
-                x_max = np.max(x_axis_filtered)
-                x_min = np.min(x_axis_filtered)
-                xnew = np.linspace(x_min, x_max,100, endpoint=True)
-                #ynew = f(xnew)  # use interpolation function returned by `interp1d`
-                ynew = X_Y_Spline(xnew)
-
-                label = None
-                if not legend_added['GK']:
-                    label = 'GK model'
-                    legend_added['GK'] = True
-                plt.plot(xnew, ynew, color=color, label=label,linewidth=5)
-            
 
         plt.title(r'$\langle x_B \rangle$'+'={:.2f}'.format(group['xave'].mean())+r', $\langle Q^2 \rangle$'+'={:.2f}'.format(group['qave'].mean())+' GeV$^2$',
                   y=0.94,x=0.45,bbox=dict(facecolor='white', alpha=1, edgecolor='none'))
@@ -407,11 +336,11 @@ if individual:
         #sys.exit()
 
         #plt.show()
-        plt.savefig("tdep_unfolded_all_features/"+f'figure_{name[0]}_{name[1]}.png')
+        plt.savefig("tdep_integrated/"+f'figure_{name[0]}_{name[1]}.png')
         plt.close()
 
 if combine:
-    main(fs.xBbins, fs.Q2bins, in_dir_path="tdep_unfolded_all_features/",out_dir_path="tdep_combined_all_features")
+    main(fs.xBbins, fs.Q2bins, in_dir_path="tdep_integrated/",out_dir_path="tdep_integrated_combined")
 
 
 
