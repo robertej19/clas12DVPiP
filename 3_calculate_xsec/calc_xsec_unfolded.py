@@ -158,11 +158,14 @@ def create_image_grid(image_dict, xBbins, Q2bins, dir_path="."):
     img_width, img_height = next(iter(images.values())).size
     
     # cut the bottom 5% of every image
-    cut_height = int(0.1* img_height)
-    cropped_height = img_height - cut_height
-    cut_width = int(0.15* img_width)
+    cut_height = int(0.1075* img_height)
+    cut_height_end = int(0.895* img_height)
 
-    cropped_width = img_width - cut_width
+    cropped_height = cut_height_end - cut_height
+    cut_width = int(0.070* img_width)
+    cut_end_width = int(0.901* img_width)
+
+    cropped_width = cut_end_width - cut_width
 
     # create new image
     combined = Image.new("RGB", (cropped_width * len(xBbins), cropped_height * len(Q2bins)), "white")
@@ -171,8 +174,11 @@ def create_image_grid(image_dict, xBbins, Q2bins, dir_path="."):
     for i, xB in enumerate(xBbins):
         for j, Q2 in enumerate(reversed(Q2bins)):
             if (xB, Q2) in images:
-                cropped_img = images[(xB, Q2)].crop((0, cut_width, img_width, cropped_height))
-                combined.paste(cropped_img, (i * img_width, j * cropped_height))
+                cropped_img = images[(xB, Q2)].crop((cut_width, cut_height, cut_end_width, cut_height_end))
+                # show the cropped_img
+                #cropped_img.show()
+                #sys.exit()
+                combined.paste(cropped_img, (i * cropped_width, j * cropped_height))
 
     return combined
 
@@ -187,14 +193,14 @@ def main(t, xBbins, Q2bins, in_dir_path=".",out_dir_path="."):
 
 # sys.exit()
 show_plots = 0
-show_xsec = 0
+show_xsec = 1
 show_xsec_2 = 0
 show_xsec_22 = 0
 xerr_value = 0
-plot_ylabel = 0 
+plot_ylabel = 1
 
-combine_plots = 1
-output_image_dir = "plot_t1_with_unfolding/"
+combine_plots = 0
+output_image_dir = "plot_t1_singles/"
 plot_corrs = 0
 
 PhysicsConstants = const.PhysicsConstants()
@@ -937,7 +943,7 @@ if plot_corrs:
         filtered_df = clas_df[mask]
 
 
-        if len(group) < 5:
+        if len(group) < 3:
             print("skipping")
             continue
         # Also need to skip if there is no data between 'pave' = 100 and 'pave' = 260
@@ -1087,7 +1093,7 @@ if show_xsec_22:
         filtered_df = clas_df[mask]
 
 
-        if len(group) < 5:
+        if len(group) < 3:
             print("skipping")
             continue
         # Also need to skip if there is no data between 'pave' = 100 and 'pave' = 260
@@ -1265,6 +1271,9 @@ if show_xsec:
     # drop rows from combined_df where uncertainty/value > 1
     combined_df = combined_df[combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'] < .7] #cutoff chosen emperically
 
+    # make a histogram of xsec_red_err_unfolded
+
+
     # make histogram of total_uncert_unfolded
     # plt.hist(combined_df['total_uncert_unfolded']/combined_df['xsec_red_unfolded'], bins=100)
     # #set y axis to log
@@ -1315,7 +1324,7 @@ if show_xsec:
         #plot again but with red error bars
         xerr_value = 5
 
-        if len(group) < 5 or len(filtered_group) == 0:
+        if len(group) < 3 or len(filtered_group) == 0:
             
         
             xerr_value = 0
@@ -1405,39 +1414,41 @@ if show_xsec:
         #plot_title = '({})=({:.2f}, {:.2f}, {:.2f})'.format(r'$\langle x_{B}\rangle, \langle Q^2 \rangle, \lange t \rangle$',group['xave'].mean(),group['qave'].mean(),group['tave'].mean())
         plot_title = '{}={:.2f},{}={:.2f} GeV$^2$,{}={:.2f} GeV$^2$'.format(r'$\langle x_{B}\rangle$',group['xave'].mean(), r'$\langle Q^2 \rangle$',group['qave'].mean(), r'$\langle t \rangle$',group['tave'].mean())
 
-        ax.set_title(plot_title)
 
+        #ax.set_title("Your Plot Title", y=0.95)
+        ax.set_title(plot_title)#,y=0.94,bbox=dict(facecolor='white', alpha=0.5, edgecolor='none'))
 
-        # Update the y-tick labels color based on their values
-        yticks = ax.get_yticks()
-        colors = []
+        # ymin, ymax = ax.get_ylim()
 
-        # for value in yticks:
-        #     print(yticks)
+        # # Calculate the new limits
+        # new_ymax = ymax + 0.035 * (ymax - ymin)
+        # #new_ymin = ymin - 0.10 * (ymax - ymin)
+
+        # # Set new y-axis limits
+        # ax.set_ylim(ymin, new_ymax)
+
+        # yticks = ax.get_yticks()[1:][:-1]
+
+        # # Set the yticks without the first value
+        # ax.set_yticks(yticks)
+
+        # #yticks = ax.get_yticks()
+        # for i, value in enumerate(yticks):
         #     if value < 10:
-        #         colors.append('black')
+        #         ax.get_yticklabels()[i].set_color('black')
         #     elif 10 <= value < 100:
-        #         colors.append('green')
+        #         ax.get_yticklabels()[i].set_color('green')
         #     else:
-        #         colors.append('red')
-        # ax.set_yticklabels(yticks, colors=colors)
-        yticks = ax.get_yticks()
-        for i, value in enumerate(yticks):
-            if value < 10:
-                ax.get_yticklabels()[i].set_color('black')
-            elif 10 <= value < 100:
-                ax.get_yticklabels()[i].set_color('green')
-            else:
-                ax.get_yticklabels()[i].set_color('red')
-        # Format y-axis tick labels to show rounded integers
-        # Format y-axis tick labels based on the criteria
-        def custom_formatter(x, _):
-            if x < 10:
-                return f'{x:.1f}'
-            else:
-                return f'{int(np.round(x))}'
+        #         ax.get_yticklabels()[i].set_color('red')
+        # # Format y-axis tick labels to show rounded integers
+        # # Format y-axis tick labels based on the criteria
+        # def custom_formatter(x, _):
+        #     if x < 10:
+        #         return f'{x:.1f}'
+        #     else:
+        #         return f'{int(np.round(x))}'
 
-        ax.yaxis.set_major_formatter(custom_formatter)
+        # ax.yaxis.set_major_formatter(custom_formatter)
 
         #plt.show()
         
