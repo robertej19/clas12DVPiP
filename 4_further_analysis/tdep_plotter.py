@@ -200,14 +200,14 @@ df_GK = get_GK()
 
 
 individual = True
-combine = False
+combine = True
 
 
 if individual:
     df = pd.read_pickle("t_dep_of_xsec_unfolded.pkl")
 
     #keep only t values less than 0.3
-    df = df[df['tave'] < 0.3]
+    #df = df[df['tave'] < 0.3]
 
     # Compute actual error values
     # 
@@ -261,7 +261,7 @@ if individual:
                             [group['c_err_lo'],group['c_err_hi']],
                             0,0,0]
 
-        formats = ['.', '.', '.', '^', '^', '^']
+        formats = ['o', 'o', 'o', '^', '^', '^']
         x_axes = ['tave', 'tave', 'tave', 'tave_c6', 'tave_c6', 'tave_c6']
         colors = ['black', 'blue', 'red', 'black', 'blue', 'red']
         markerfacecolors = ['black', 'blue', 'red', 'green', 'green', 'green']
@@ -299,7 +299,7 @@ if individual:
                 
                 (_, caps, _) = plt.errorbar(group[x_axis]-shift, group[val], yerr=err, color=color,  
                              markerfacecolor=mfcolor, label=label, fmt=fmt, 
-                             markersize=35, elinewidth=8, capsize=20,
+                             markersize=45, elinewidth=12, capsize=30,
                              ecolor=error_color)
                 print(group[val],err)
                 for cap in caps:

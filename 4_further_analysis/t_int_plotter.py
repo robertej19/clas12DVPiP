@@ -89,255 +89,110 @@ def main(xBbins, Q2bins, in_dir_path=".",out_dir_path="."):
     print(image_dict)
     combined = create_image_grid(image_dict, xBbins, Q2bins, in_dir_path)
 
-    combined.save(os.path.join(out_dir_path, f"combined_t.png"))    
+    combined.save(os.path.join(out_dir_path, f"combined_t_int.png"))    
     
-
-
-def get_GK():
-    
-    single = False
-    if single:
-        gk_location = "/mnt/d/GLOBUS/CLAS12/Thesis/the_GK_model_results/cross_section_pi0_10600_big.txt"
-        df_GK = pd.read_csv(gk_location, sep='\t', header=0)
-    else:
-        gk_dir = "/mnt/c/Users/rober/Dropbox/Bobby/Linux/work/CLAS12/mit-clas12-analysis/theana/paragon/analysis/threnody/T_GK_model/july_2023_running/outputs/"
-        csv_files = [f for f in os.listdir(gk_dir) if f.endswith('.txt')]
-
-        # Initialize an empty dataframe
-        all_data = pd.DataFrame()
-
-        column_names = ['Q2', 'xB', 'mt', 'sigma_T', 'sigma_L', 'sigma_LT', 'sigma_TT', 'W', 'y', 'epsilon', 'gammaa', 'tmin']
-
-        # Iterate over all csv files and append to all_data dataframe
-        for file in csv_files:
-            data = pd.read_csv(os.path.join(gk_dir, file),sep='\t',names=column_names)
-            all_data = all_data.append(data, ignore_index=True)
-
-        # Remove duplicate rows
-        df_GK = all_data.drop_duplicates()
-
-        print(df_GK)
-        
-        df_GK.to_csv("df_gk_saved.csv",index=False)
-        #df_GK_calc = pd.read_csv('GK_Model/cross_section_pi0_10600_big.txt', sep='\t', header=0)
-        #df_GK_calc = pd.read_csv('cross_section_pi0_575_new_big_1.txt', sep='\t', header=0)
-        # Data Structure:
-        #     Q2	xB	mt	sigma_T	sigma_L	sigma_LT	sigma_TT	W	y	epsilon	gammaa	tmin
-        #  1.75 	 0.225 	 -0.020 	 nan 	 nan 	 -nan 	 nan 	 2.6282355 	 0.0806671 	 0.9961151 	 0.3190776 	 -0.0574737
-
-    #for col in df_GK_calc.columns:
-    #    print(col)
-
-    df_GK['sigma_T'] = pd.to_numeric(df_GK["sigma_T"], errors='coerce')
-    df_GK['sigma_L'] = pd.to_numeric(df_GK["sigma_L"], errors='coerce')
-    df_GK['sigma_LT'] = pd.to_numeric(df_GK["sigma_LT"], errors='coerce')
-    df_GK['sigma_TT'] = pd.to_numeric(df_GK["sigma_TT"], errors='coerce')
-    df_GK['W'] = pd.to_numeric(df_GK["W"], errors='coerce')
-    df_GK = df_GK.query('W > 2')
-    print(df_GK)
-    print(df_GK.columns.values)
-    #multiply mt by -1
-    df_GK['mt'] = df_GK['mt']*-1
-    #print unique values of 'Q2' 'xB' 'mt' and 'tmin'
-    print(df_GK['Q2'].unique())
-    print(df_GK['xB'].unique())
-    print(df_GK['mt'].unique())
-    print(df_GK['tmin'].unique())
-
-
-    return df_GK
-
-def filter_dataframe(df, xB_true, Q2_true):
-    # Check if there are more than one unique values for either "Q2" or "xB"
-    if len(df["Q2"].unique()) > 1 or len(df["xB"].unique()) > 1:
-        # Calculate absolute differences from the true values
-        df["diff_Q2"] = np.abs(df["Q2"] - Q2_true)
-        df["diff_xB"] = np.abs(df["xB"] - xB_true)
-        
-        # Get indices of rows with the smallest difference for "Q2" and "xB"
-        idx_Q2_min_diff = df["diff_Q2"].idxmin()
-        idx_xB_min_diff = df["diff_xB"].idxmin()
-
-        #get value of Q2 and xB for these indices
-        Q2_min_diff = df["Q2"][idx_Q2_min_diff]
-        xB_min_diff = df["xB"][idx_xB_min_diff]
-
-        #Get all rows that have these values of Q2 and xB
-        df_Q2_min_diff = df[df["Q2"] == Q2_min_diff]
-        df_xB_min_diff = df[df["xB"] == xB_min_diff]
-        
-        #print them
-        print("Q2_min_diff")
-        print(df_Q2_min_diff)
-        print("xB_min_diff")
-        print(df_xB_min_diff)
-
-        #Only keep rows that have both values of Q2 and xB
-        df = pd.merge(df_Q2_min_diff, df_xB_min_diff)
-        # if len(df)=0, just take the longer df instead
-        if len(df) == 0:
-            if len(df_Q2_min_diff) > len(df_xB_min_diff):
-                df = df_Q2_min_diff
-            else:
-                df = df_xB_min_diff
-        # # If indices are the same, keep that row
-        # if idx_Q2_min_diff == idx_xB_min_diff:
-        #     df = df.loc[[idx_Q2_min_diff]]
-        # else:
-        #     # If indices are different, keep both rows
-        #     df = df.loc[[idx_Q2_min_diff, idx_xB_min_diff]]
-        
-        # # Remove temporary difference columns
-        df = df.drop(columns=["diff_Q2", "diff_xB"])
-
-        print(df)
-    return df
-
-
-
-df_GK = get_GK()
 
 
 
 individual = True
-combine = False
+combine = True
 
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+# Load the data
 if individual:
-    df = pd.read_pickle("t_dep_of_xsec_unfolded.pkl")
+    df = pd.read_pickle("t_int_of_xsec_unfolded.pkl")
 
-    #keep only t values less than 0.3
-    df = df[df['tave'] < 0.3]
+    # keep only where xmin and qmin are in the bins we want - (0.38, 3.0)
+    #df = df[(df['xmin'] >= 0.38) & (df['qmin'] >= 3.0)]
+    #df = df[(df['xmin'] <= 0.438) & (df['qmin'] <= 3.20)]
 
-    # Compute actual error values
-    # 
-    df['a_err_hi'] = df['A_uncert_top']-df['A']
-    df['a_err_lo'] = df['A']-df['A_uncert_bot']
-    df['b_err_hi'] = df['B_uncert_top']-df['B']
-    df['b_err_lo'] = df['B']-df['B_uncert_bot']
-    df['c_err_hi'] = df['C_uncert_top']-df['C']
-    df['c_err_lo'] = df['C']-df['C_uncert_bot']
+    # only keep when int_value greater than 0
+    df = df[df['int_value'] > 0]
+    
+    # Define the fit function
+    def fit_func(t, A, B):
+        return A * np.exp(-B * t)
 
-    df = df[~((np.abs(df['B']) > 500))]
+    # Create an empty dataframe to store results
+    results = pd.DataFrame(columns=['xave', 'qave', 'A', 'B', 'A_error', 'B_error'])
 
-    #remove any rows where qmin >4.4 and abs(B)>50 at the same time
-    df = df[~((df['qmin'] > 4.4) & (np.abs(df['B']) > 50))]
-    df = df[~((df['qmin'] > 3.6) & (np.abs(df['B']) > 100))]
-
-    #df = df[df['A'] > 0]
-
-    #get df where qmin = 3.5 and xmin = 0.48
-    #df = df[(df['qmin'] == 3.5) & (df['xmin'] == 0.48)]
-    # Define the data and group it
+    # Group by 'xmin' and 'qmin'
     groups = df.groupby(['xmin', 'qmin'])
 
-    #
-
-    #drop the first 4 entries in groups
-
-    # Create a plot for each group
     for i, (name, group) in enumerate(groups):
-        #if i < 5:  # Skip the first four entries
-        #    continue
-        # if group['qmin'].values[0] != 2 or group['xmin'].values[0] != 0.3:
-        #      continue
-        # print(name)
+        if len(group) <= 3:
+            continue
 
-
-        # get proper GK data
-        mask = (df_GK['Q2'] >= group['qmin'].values[0]) & (df_GK['Q2'] <= group['qmax'].values[0]) & \
-        (df_GK['xB'] >= group['xmin'].values[0]) & (df_GK['xB'] <= group['xmax'].values[0])
-
-        filtered_df = df_GK[mask]
+        # Plotting
+      
+        # Fitting
+        print(group['tave'][1:],         group['int_value'][1:])#, sigma=group['int_err_top'][1:])
+        popt, pcov = curve_fit(fit_func, group['tave'][1:],         group['int_value'][1:], sigma=group['int_err_top'][1:], absolute_sigma=True)
+        popt_top, pcov_top = curve_fit(fit_func, group['tave'][1:], group['int_value'][1:]+group['int_err_top'][1:], sigma=group['int_err_top'][1:], absolute_sigma=True)
+        popt_bot, pcov_bot = curve_fit(fit_func, group['tave'][1:], group['int_value'][1:]-group['int_err_bot'][1:], sigma=group['int_err_bot'][1:], absolute_sigma=True)
         
-        # Define the values and errors to plot
-        values_to_plot = ['A', 'B', 'C', 'c6_tel', 'c6_tt', 'c6_lt']
-        #errors_to_plot = [[group['a_err_lo'],group['a_err_hi']],
-        #                    [group['b_err_lo'],group['b_err_hi']],
-        #                    [group['c_err_lo'],group['c_err_hi']],
-        #                    group['c6_tel_err'], group['c6_tt_err'], group['c6_lt_err']]
-        errors_to_plot = [[group['a_err_lo'],group['a_err_hi']],
-                            [group['b_err_lo'],group['b_err_hi']],
-                            [group['c_err_lo'],group['c_err_hi']],
-                            0,0,0]
 
-        formats = ['.', '.', '.', '^', '^', '^']
-        x_axes = ['tave', 'tave', 'tave', 'tave_c6', 'tave_c6', 'tave_c6']
-        colors = ['black', 'blue', 'red', 'black', 'blue', 'red']
-        markerfacecolors = ['black', 'blue', 'red', 'green', 'green', 'green']
-        x_shifts = [0, 0, 0, 0.025, 0.025, 0.025]
-        #error_colors = ['black', 'blue', 'red', 'green', 'green', 'green']
-        #cap_colors = ['black', 'blue', 'red', 'black', 'blue', 'red']
-        error_colors = ['black', 'blue', 'red', 'none', 'none', 'none']
-        cap_colors = ['black', 'blue', 'red', 'none', 'none', 'none']
+        A, B = popt
+        A_top, B_top = popt_top
+        A_bot, B_bot = popt_bot
+        A_error, B_error = np.sqrt(np.diag(pcov))
 
-
-        legend_added = {'A': False, 'B': False, 'C': False, 'CLAS6': False, 'GK': False}
-
+        if B<0:
+            continue
+        
         plt.rcParams["font.size"] = "30"
         plt.figure(figsize=(20,14))
         plt.xlabel('-t [GeV$^2$]')
-        plt.ylabel('d$\sigma$/dt [nb/$GeV^2$]')
-        if group[['c6_tel', 'c6_tt', 'c6_lt']].notna().any().any():
-            # Set the background color to light gray
-            pass
-            #plt.gca().set_facecolor('lightgray')
-            #legend_added['CLAS6'] = True
-            
+        #plt.ylabel('d$\sigma$/dt [nb/$GeV^2$]')
 
-        # Create each line on the plot
-        for count, (val, err, x_axis, color,mfcolor, fmt,shift,error_color,cap_color) in enumerate(zip(values_to_plot, errors_to_plot, x_axes, colors, 
-                                                                                markerfacecolors,formats,x_shifts,error_colors,cap_colors)):
-            label = None
-            if count<3: #optional, for turning off plotting of CLAS6
-                count+=1
-                if val in ['A', 'B', 'C'] and not legend_added[val]:
-                    label = val
-                    legend_added[val] = True
-                elif fmt == '^' and not legend_added['CLAS6']:
-                    label = 'CLAS6'
-                
-                (_, caps, _) = plt.errorbar(group[x_axis]-shift, group[val], yerr=err, color=color,  
-                             markerfacecolor=mfcolor, label=label, fmt=fmt, 
-                             markersize=15, elinewidth=4, capsize=10,
-                             ecolor=error_color)
-                print(group[val],err)
-                for cap in caps:
-                    cap.set_color(cap_color)
+        plt.errorbar(group['tave'], group['int_value'], yerr=[group['int_err_top'],group['int_err_bot']], fmt='k.', markersize=20, 
+                    elinewidth=4, capsize=10, capthick=4)#, label='Integrated')
+        
 
-
+        #get minimum and maximum t values
+        t_min = group['tave'].min()
+        t_max = group['tave'].max()
+        t_vals = np.linspace(t_min,t_max, 1000)  # or use the t range you prefer
+        #make line thickness 3
+        # Calculate the upper and lower bound for the fit
+        y_upper = fit_func(t_vals, A_top, B_top)
+        y_lower = fit_func(t_vals, A_bot, B_bot)
+        
+        plt.fill_between(t_vals, y_lower, y_upper, color='red', alpha=0.2, label='Fit error band')
+        
+        plt.plot(t_vals, fit_func(t_vals, *popt), 'r-', label='Fit: B={:.2f} $\\pm$ {:.2f}'.format(B, B_error), linewidth=3)
         plt.title(r'$\langle x_B \rangle$'+'={:.2f}'.format(group['xave'].mean())+r', $\langle Q^2 \rangle$'+'={:.2f}'.format(group['qave'].mean())+' GeV$^2$',
-                  y=0.94,x=0.45,bbox=dict(facecolor='white', alpha=1, edgecolor='none'))
+                  y=0.94,x=0.4,bbox=dict(facecolor='white', alpha=1, edgecolor='none'))
 
-        legend_elements = [Line2D([0], [0], marker='o', color='black', label='$\sigma_T+\epsilon \sigma_L$', markersize=15,linestyle='None'),
-                    Line2D([0], [0], marker='o', color='blue', label=r'$\sigma_{TT}$', markersize=15,linestyle='None'),
-                    Line2D([0], [0], marker='o', color='red', label=r'$\sigma_{LT}$', markersize=15,linestyle='None'),
-                    #no line on legend
-                    Line2D([0], [0], marker='^', color='black', label='CLAS6', markersize=15,linestyle='None'),
-                    Line2D([0], [0], color='black', label='GK model', markersize=15)]
-
-        # Create the figure and plot.
-
-        #get the values of legend_added
-        legend_added_list = list(legend_added.values())
-        print(legend_added_list)
-
-        # Filter the legend elements based on the boolean values in legend_added_list
-        filtered_legend_elements = [element for element, is_added in zip(legend_elements, legend_added_list) if is_added]
-
-        # Add your custom legend.
-        plt.legend(handles=filtered_legend_elements, loc='upper right')
-        #plt.show()
-
-        #set x axis range to (0.1,2.0)
-        plt.xlim(0.1,2.0)
-
-        #plt.show()
-        #sys.exit()
-
+        # Configuration and show plot
+        plt.legend()
+        plt.yscale('log')
+        plt.xlim(0.1,1.7)
+        plt.ylim(.1,800)
+        print(name)
         #plt.show()
         plt.savefig("tdep_integrated/"+f'figure_{name[0]}_{name[1]}.png')
         plt.close()
+
+        A_err_total = A_top-A_bot
+        B_err_total = B_top-B_bot
+        # Append results to the dataframe
+        results = results.append({
+            'xave': group['xave'].mean(),  # Assuming you want the average xave and qave for each group
+            'qave': group['qave'].mean(),
+            'A': A,
+            'B': B,
+            'A_error': A_err_total,
+            'B_error': B_err_total
+        }, ignore_index=True)
+
+    print(results)
+    results.to_pickle("t_int_of_xsec_with_fit.pkl")
 
 if combine:
     main(fs.xBbins, fs.Q2bins, in_dir_path="tdep_integrated/",out_dir_path="tdep_integrated_combined")

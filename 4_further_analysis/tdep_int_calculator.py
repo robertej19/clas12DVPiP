@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from scipy.optimize import curve_fit
 from utils import filestruct, const, make_histos
-
+from scipy.integrate import quad
 
 import os
 from PIL import Image
@@ -125,6 +125,17 @@ if show_xsec1:
             #y_bottom = fit_function(phis, *(popt - perr))
             y_bottom = fit_function(phis, *(popt_bot))#-np.sqrt(np.diag(pcov_bot))))
 
+            #now we need to integrate y over the phi range
+
+            integral_y, _ = quad(lambda phi: fit_function(phi, *popt), 0, 360)
+            integral_y_top, _ = quad(lambda phi: fit_function(phi, *(popt_top)), 0, 360)
+            integral_y_bottom, _ = quad(lambda phi: fit_function(phi, *(popt_bot)), 0, 360)
+
+
+            print("Integral of y:", integral_y)
+            print("Integral of y_top:", integral_y_top)
+            print("Integral of y_bottom:", integral_y_bottom)
+
             plt.plot(phis, y, 'b-', label="Trig. Fit",linewidth=5)
             # # # plt.fill_between(phis, y_bottom, y_top, color='b', alpha=0.2)  # this adds the band of uncertainty
 
@@ -168,7 +179,6 @@ if show_xsec1:
 
 
     
-
             #blue_line = mlines.Line2D([], [], color='r', marker='None', markersize=10, linestyle='-', label=slabel)
             #red_line = mlines.Line2D([], [], color='k', marker='None', markersize=10, linestyle='-', label=elabel)
 
@@ -195,6 +205,9 @@ if show_xsec1:
         prefact_C = prefact_A*np.sqrt(2*group['epsilon'].mean()*(1+group['epsilon'].mean()))
 
     
+        int_top_err = integral_y_top - integral_y
+        int_bot_err = integral_y - integral_y_bottom
+
         fit_results.append([name[0],
         name[1],
         name[2],
@@ -204,9 +217,9 @@ if show_xsec1:
         group['xave'].mean(),
         group['qave'].mean(),
         group['tave'].mean(),    
-        popt[0],
-        popt_top[0],
-        popt_bot[0],])
+        integral_y*3.14159/180,#convert from degrees to radians
+        int_top_err*3.14159/180,
+        int_bot_err*3.14159/180,])
 
         #print popt values and uncertainties
         print("popt values are")
@@ -227,4 +240,4 @@ if show_xsec1:
 fit_results_df = pd.DataFrame(fit_results,columns=['xmin', 'qmin', 'tmin', 'xmax', 'qmax', 'tmax', 'xave', 'qave',
                                                  'tave', 'int_value', 'int_err_top', 'int_err_bot'])
 print(fit_results_df)
-fit_results_df.to_pickle("t_dep_of_xsec_unfolded.pkl")
+fit_results_df.to_pickle("t_int_of_xsec_unfolded.pkl")
